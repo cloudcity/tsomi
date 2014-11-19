@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>The Sphere of My Influence</title>
+    <script src="lib/d3.min.js"></script>
+    <script src="lib/tgraph.js"></script>
+    <script src="lib/browserdetect.js"></script>
+    <script src="lib/jquery-1.7.1.min.js"></script>
+    <!-- <script src="http://code.jquery.com/jquery-1.7.1.min.js"></script> -->
+    <script src="tsomi-rdf.js"></script>
+    <link type="text/css" rel="stylesheet" href="tsomi.css"/>
+  </head>
+
+  <body>
+    <table id="table-header">
+      <tr id= "header">
+        <td id="title">The Sphere of My Influence</td>
+        <td id="about"><a href="/fdl/tsomi" target="_blank">About<a></td>
+      </tr>
+    </table>
+    <div id="container">
+      <div id="chartdiv">
+        <div id="chart"> </div>
+        <div id="wikiconnect">
+          <img
+             src="images/Wikipedia-logo.png"
+             onClick="connectToWiki()"
+             onmouseover="wcMouseEvent(true)"
+             onmouseout="wcMouseEvent(false)"
+             title="View in Wikipedia">
+          </img>
+        </div>
+      </div>
+      <div id="wikidiv">
+        <iframe name="wiki" id="wikiframe" src="">
+        </iframe>
+      </div>
+    </div>
+    <script type="text/javascript" src="tsomi.js"></script>
+  </body>
+
+  <!-- google analytics   -->
+
+  <script type="text/javascript">
+
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-31130304-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+
+  </script>
+</html>
