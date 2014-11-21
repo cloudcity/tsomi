@@ -7,7 +7,7 @@
 
   - [Albert Einstein](http://treboresque.github.io/tsomi?subject=Albert_Einstein)
   - [Joni_Mitchell](http://treboresque.github.io/tsomi?subject=Joni_Mitchell)
-  - [Charlotte_Perkins_Gilman](http://treboresque.github.io/tsomi?subject=Charlotte_Perkins_Gilman)
+  - [Teresa_of_Ávila](http://treboresque.github.io/tsomi?subject=Teresa_of_Ávila)
   - [](http://treboresque.github.io/tsomi?subject=)
   - [](http://treboresque.github.io/tsomi?subject=)
 
