@@ -20,4 +20,4 @@ This project is fairly bare bones, and could use some love.  Some ideas for futu
   - Better Documentation
   - URL update to current subject
 
-This project is opensourced under the [MIT License](http://opensource.org/licenses/MIT).  Please clone and fork; your contributions are encouraged.
+This project is opensourced under the [MIT License](http://opensource.org/licenses/MIT).  Your contributions are encouraged, please clone and fork.
