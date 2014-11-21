@@ -8,6 +8,8 @@
   - [Albert Einstein](http://treboresque.github.io/tsomi?subject=Albert_Einstein)
   - [Joni_Mitchell](http://treboresque.github.io/tsomi?subject=Joni_Mitchell)
   - [Teresa_of_Ávila](http://treboresque.github.io/tsomi?subject=Teresa_of_Ávila)
-  - [Susanne_Langer](http://treboresque.github.io/tsomi?subject=Susanne_Langer)
-  - [](http://treboresque.github.io/tsomi?subject=)
+  - [Immanuel Kant](http://treboresque.github.io/tsomi?subject=Immanuel_Kant)
+
+## Data
+The data for the visualization come the [Wikipedia](http://wikipedia.org) by way o [DBpedia](http://dbpedia.org).
 
