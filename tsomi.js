@@ -44,6 +44,10 @@ var WIKI_LOGO = "images/Wikipedia-logo.png";
 var tsomiPast = [];
 var tsomiFuture = [];
 
+// daet formatter
+
+var dateFormat = d3.time.format("%Y-%m-%d");
+
 // create the svg instance
 
 var svg = d3.select("#chart")
@@ -271,7 +275,7 @@ var centerPerson;
 
 $(document).ready(function() {
   createSpecialData(function() {
-    var subject = estabishInitialSubject();
+    var subject = establishInitialSubject();
     querySubject(lengthen(subject, true), true, false, function () {
       svg.selectAll("text.static-text")
         .transition()
@@ -297,7 +301,7 @@ $(document).ready(function() {
   });
 });
 
-function estabishInitialSubject() {
+function establishInitialSubject() {
   var subject = subjects.oats;
   //var subject = subjects.bronte;
   //var subject = subjects.munro;
@@ -306,12 +310,6 @@ function estabishInitialSubject() {
   //var subject = subjects.vonnegut;
   //var subject = subjects.kant;
   //var subject = subjects.mock;
-
-  var convertSpaces = function(element) {
-    element = element.replace("%20", "_");
-    element = element.replace(" ", "_");
-    return element;
-  }
 
   var urlSubject = getURLParameter("subject");
 
@@ -323,15 +321,15 @@ function estabishInitialSubject() {
     if (urlSubject != "null") {
       subject = "dbpedia:" + urlSubject;
     }
-    else {
-      var elementSubject = getURLElement();
-      if (elementSubject != "null") {
-        subject = "dbpedia:" + convertSpaces(elementSubject);
-      }
-    }
   }
 
   return subject;
+}
+
+function convertSpaces(element) {
+  element = element.replace("%20", "_");
+  element = element.replace(" ", "_");
+  return element;
 }
 
 function connectToWiki() {
@@ -424,6 +422,10 @@ function scaleElement(element, scale, duration, ease) {
   if (duration !== undefined) te.duration(duration);
 }
 
+function parseDate(dateString) {
+  return dateFormat.parse(dateString.substr(0, 10));
+}
+
 function updateChart(graph) {
 
   // check each physicalNode and, if it already exited, reestablish it's old positions
@@ -447,7 +449,7 @@ function updateChart(graph) {
     var dobStr = physicalNode.getProperty("dob");
     var dob = undefined;
     if (dobStr !== undefined) {
-      var dob = new Date(dobStr);
+      dob = parseDate(dobStr);
       physicalNode.setProperty("birthDate", dob);
     }
       
@@ -457,7 +459,7 @@ function updateChart(graph) {
     var dod = undefined;
 
     if (dodStr !== undefined) {
-      dod = new Date(dodStr);
+      dod = parseDate(dodStr);
       physicalNode.setProperty("deathDate", dod);
     }
     else if (dob != undefined) {
