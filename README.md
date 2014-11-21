@@ -3,11 +3,11 @@
 
 
 ## About
-[**The Sphere of My Influence**](http://treboresque.github.io/tsomi/) is a tool for exploring people on Wikipedia, and how they influece each other.  [The tool](http://treboresque.github.io/tsomi/) defaults to Joice Carol Oates, but you can specify a starting person by appendng `?subject=Wikipedia_Name` to the URL.  For example:
+[**The Sphere of My Influence**](http://treboresque.github.io/tsomi/) is a tool for exploring people on Wikipedia, and how they influece each other.  [The tool](http://treboresque.github.io/tsomi/) defaults to Joice Carol Oates, howeve an alternate starting point can specified by appendng `?subject=Wikipedia_Name` to the URL.  For example:
 
   - [Albert Einstein](http://treboresque.github.io/tsomi?subject=Albert_Einstein)
-  - [Joni_Mitchell](http://treboresque.github.io/tsomi?subject=Joni_Mitchell)
-  - [Teresa_of_Ávila](http://treboresque.github.io/tsomi?subject=Teresa_of_Ávila)
+  - [Joni Mitchell](http://treboresque.github.io/tsomi?subject=Joni_Mitchell)
+  - [Teresa of Ávila](http://treboresque.github.io/tsomi?subject=Teresa_of_Ávila)
   - [Immanuel Kant](http://treboresque.github.io/tsomi?subject=Immanuel_Kant)
 
 ## Data
