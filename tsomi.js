@@ -1,5 +1,5 @@
-var width = $("#chart").width();
-var height = $("#chart").height();
+var width = $('#chart').width();
+var height = $('#chart').height();
 
 var color = d3.scale.category20();
 var nextMidId = 0;
@@ -9,7 +9,7 @@ var TIMELINE_HIGHLIGHT_OPACITY = 0.4;
 var HEAD_ANGLE = Math.PI / 6;
 var ARROW_WIDTH = 6;
 var WIKI_ICON_WIDTH = 30;
-var PRINTABLE_PARAM = "?printable=yes";
+var PRINTABLE_PARAM = '?printable=yes';
 var GRAVITY = 0;
 var CHARGE_HIDDEN = 50;
 var CHARGE_BASE = 200;
@@ -25,7 +25,7 @@ var BANNER_SIZE = 25;
 var BANNER_X = IMAGE_SIZE;
 var BANNER_Y = 52;
 var PRINTABLE = true;
-var STOCK_EASE = "elastic";
+var STOCK_EASE = 'elastic';
 var DEFAULT_DURATION = 1000;
 var TIMELINE_MARGIN = 50;
 var TIMELINE_Y = (height - 20);
@@ -33,10 +33,10 @@ var MAX_SCREEN_NODES = 25;
 
 // image for unknown person
 
-var BACK_BUTTON = "images/backbutton.png";
-var FORWARD_BUTTON = "images/forwardbutton.png";
-var UNKNOWN_PERSON = "images/unknown.png";
-var WIKI_LOGO = "images/Wikipedia-logo.png";
+var BACK_BUTTON = 'images/backbutton.png';
+var FORWARD_BUTTON = 'images/forwardbutton.png';
+var UNKNOWN_PERSON = 'images/unknown.png';
+var WIKI_LOGO = 'images/Wikipedia-logo.png';
 
 // the history of tsomi
 
@@ -45,34 +45,34 @@ var tsomiFuture = [];
 
 // daet formatter
 
-var dateFormat = d3.time.format("%Y-%m-%d");
+var dateFormat = d3.time.format('%Y-%m-%d');
 
 // create the svg instance
 
-var svg = d3.select("#chart")
-  .append("svg:svg")
-  .attr("width", width)
-  .attr("height", height);
+var svg = d3.select('#chart')
+  .append('svg:svg')
+  .attr('width', width)
+  .attr('height', height);
 
 // create a definitions section
 
-var defs = svg.append("defs");
+var defs = svg.append('defs');
 
 // create clip path for image
 
-defs.append("svg:clipPath")
-  .attr("id", "image-clip")
-  .append("svg:circle")
-  .attr("cx", 0)
-  .attr("cy", 0)
-  .attr("r", IMAGE_SIZE / 2);
+defs.append('svg:clipPath')
+  .attr('id', 'image-clip')
+  .append('svg:circle')
+  .attr('cx', 0)
+  .attr('cy', 0)
+  .attr('r', IMAGE_SIZE / 2);
 
 defs.append('svg:linearGradient')
   .attr('id', 'loading-gradient')
-  .attr('x1', "0%")
-  .attr('y1', "0%")
-  .attr('x2', "100%")
-  .attr('y2', "0%")
+  .attr('x1', '0%')
+  .attr('y1', '0%')
+  .attr('x2', '100%')
+  .attr('y2', '0%')
   .call(function(gradient) {
     gradient.append('svg:stop')
       .attr('offset', '0%')
@@ -90,10 +90,10 @@ defs.append('svg:linearGradient')
  
 defs.append('svg:linearGradient')
   .attr('id', 'image-gradient')
-  .attr('x1', "0%")
-  .attr('y1', "0%")
-  .attr('x2', "100%")
-  .attr('y2', "0%")
+  .attr('x1', '0%')
+  .attr('y1', '0%')
+  .attr('x2', '100%')
+  .attr('y2', '0%')
   .call(function(gradient) {
     gradient.append('svg:stop')
       .attr('offset', '0%')
@@ -123,46 +123,46 @@ defs.append('svg:linearGradient')
 
 defs.append('mask')
   .attr('id', 'image-mask')
-  .append("rect")
+  .append('rect')
   .attr('x', IMAGE_SIZE / -2)
   .attr('y', IMAGE_SIZE / -2)
   .attr('width', IMAGE_SIZE)
   .attr('height', IMAGE_SIZE)
-  .style("fill", "url(#image-gradient)");
+  .style('fill', 'url(#image-gradient)');
 
-defs.append("svg:clipPath")
-  .attr("id", "loading-clip")
-  .append("svg:circle")
-  .attr("cx", 0)
-  .attr("cy", 0)
-  .attr("r", IMAGE_SIZE / 2 + 10);
+defs.append('svg:clipPath')
+  .attr('id', 'loading-clip')
+  .append('svg:circle')
+  .attr('cx', 0)
+  .attr('cy', 0)
+  .attr('r', IMAGE_SIZE / 2 + 10);
 
 // create path for names
 
-defs.append("path")
-  .attr("id", "namepath")
-  .attr("d", function() {
+defs.append('path')
+  .attr('id', 'namepath')
+  .attr('d', function() {
     var r = (NODE_SIZE - BANNER_SIZE) / 2;
-    return "M 0 " + (-r) + " a " + r + " " + r + " 0 1 0 0.01 0 Z";
+    return 'M 0 ' + (-r) + ' a ' + r + ' ' + r + ' 0 1 0 0.01 0 Z';
   });
 
-defs.append("path")
-  .attr("id", "bannerpath")
-  .attr("d", populate_path(
-    "M X0 Y0 L X1 Y1",
+defs.append('path')
+  .attr('id', 'bannerpath')
+  .attr('d', populate_path(
+    'M X0 Y0 L X1 Y1',
     [{x: -BANNER_X, y: BANNER_Y},
      {x: +BANNER_X, y: BANNER_Y}]));
 
 // create path for titles
 
-defs.append("path")
-  .attr("id", "titlepath")
-  .attr("d", function() {
+defs.append('path')
+  .attr('id', 'titlepath')
+  .attr('d', function() {
     var inset = 60;
     var len = 550;
     var curve = 130;
     return populate_path(
-      "M X0 Y0 L X1 Y1 A X2 Y2 0 0 1 X3 Y3 L X4 Y4", [
+      'M X0 Y0 L X1 Y1 A X2 Y2 0 0 1 X3 Y3 L X4 Y4', [
         {x: inset, y: len},
         {x: inset, y: inset + curve},
         {x: curve, y: curve},
@@ -171,20 +171,20 @@ defs.append("path")
       ]);
   });
 
-svg.append("text")
-  .classed("loading", true)
-  .attr("x", width / 2)
-  .attr("y", height / 2)
-  .attr("text-anchor", "middle")
-  .text("Loading...");
+svg.append('text')
+  .classed('loading', true)
+  .attr('x', width / 2)
+  .attr('y', height / 2)
+  .attr('text-anchor', 'middle')
+  .text('Loading...');
 
-svg.append("text")
-  .classed("nodata", true)
-  .attr("visibility", "hidden")
-  .attr("x", width / 2)
-  .attr("y", height / 2)
-  .attr("text-anchor", "middle")
-  .text("No Data.");
+svg.append('text')
+  .classed('nodata', true)
+  .attr('visibility', 'hidden')
+  .attr('x', width / 2)
+  .attr('y', height / 2)
+  .attr('text-anchor', 'middle')
+  .text('No Data.');
 
 // add back button
 
@@ -193,48 +193,48 @@ var FB_BUTTON_X_OFF = (80 - FB_BUTTON_SIZE) / 2;
 var FB_BUTTON_X = width - 60;
 var FB_BUTTON_Y = 125;
 
-svg.append("g")
-  .attr("transform", "translate(" +
-        (FB_BUTTON_X - FB_BUTTON_X_OFF) + ", " +
-        (FB_BUTTON_Y) + ")")
-  .append("image")
-  .classed("backbutton", true)
-  .attr("transform", "scale(0)")
-  .attr("xlink:href", BACK_BUTTON)
-  .style("opacity", .7)
-  .attr("x", FB_BUTTON_SIZE / -2)
-  .attr("y", FB_BUTTON_SIZE / -2)
-  .attr("width", FB_BUTTON_SIZE)
-  .attr("height", FB_BUTTON_SIZE)
-  .append("title")
-  .text("Go Back (Left Arrow)");
+svg.append('g')
+  .attr('transform', 'translate(' +
+        (FB_BUTTON_X - FB_BUTTON_X_OFF) + ', ' +
+        (FB_BUTTON_Y) + ')')
+  .append('image')
+  .classed('backbutton', true)
+  .attr('transform', 'scale(0)')
+  .attr('xlink:href', BACK_BUTTON)
+  .style('opacity', .7)
+  .attr('x', FB_BUTTON_SIZE / -2)
+  .attr('y', FB_BUTTON_SIZE / -2)
+  .attr('width', FB_BUTTON_SIZE)
+  .attr('height', FB_BUTTON_SIZE)
+  .append('title')
+  .text('Go Back (Left Arrow)');
 
-svg.append("g")
-  .attr("transform", "translate(" +
-        (FB_BUTTON_X + FB_BUTTON_X_OFF) + ", " +
-        (FB_BUTTON_Y) + ")")
-  .append("image")
-  .classed("forwardbutton", true)
-  .attr("transform", "scale(0)")
-  .attr("xlink:href", FORWARD_BUTTON)
-  .style("opacity", .7)
-  .attr("x", FB_BUTTON_SIZE / -2)
-  .attr("y", FB_BUTTON_SIZE / -2)
-  .attr("width", FB_BUTTON_SIZE)
-  .attr("height", FB_BUTTON_SIZE)
-  .append("title")
-  .text("Go Forward (Right Arrow)");
+svg.append('g')
+  .attr('transform', 'translate(' +
+        (FB_BUTTON_X + FB_BUTTON_X_OFF) + ', ' +
+        (FB_BUTTON_Y) + ')')
+  .append('image')
+  .classed('forwardbutton', true)
+  .attr('transform', 'scale(0)')
+  .attr('xlink:href', FORWARD_BUTTON)
+  .style('opacity', .7)
+  .attr('x', FB_BUTTON_SIZE / -2)
+  .attr('y', FB_BUTTON_SIZE / -2)
+  .attr('width', FB_BUTTON_SIZE)
+  .attr('height', FB_BUTTON_SIZE)
+  .append('title')
+  .text('Go Forward (Right Arrow)');
 
 // add groups for links and nodes
 
-var timelinesGroup = svg.append("g").classed("timelines", true);
-var linkGroup = svg.append("g").classed("links", true);
-var nodeGroup = svg.append("g").classed("nodes", true);
+var timelinesGroup = svg.append('g').classed('timelines', true);
+var linkGroup = svg.append('g').classed('links', true);
+var nodeGroup = svg.append('g').classed('nodes', true);
 var axiesGroup = svg
-  .append("g")
-  .attr("transform", "translate(0, " + TIMELINE_Y + ")")
-  .classed("axies", true)
-  .attr("class", "axis");
+  .append('g')
+  .attr('transform', 'translate(0, ' + TIMELINE_Y + ')')
+  .classed('axies', true)
+  .attr('class', 'axis');
 
 // setup the axies
 
@@ -254,7 +254,7 @@ var force = d3.layout.force()
   .gravity(GRAVITY)
   .linkStrength(LINK_STRENGHT)
   .charge(function(d) {
-    return d.getProperty("hidden")
+    return d.getProperty('hidden')
       ? -CHARGE_HIDDEN
       : -(Math.random() * CHARGE_RANDOM + CHARGE_BASE);})
   .linkDistance(function(link) {
@@ -276,14 +276,14 @@ $(document).ready(function() {
   createSpecialData(function() {
     var subject = establishInitialSubject();
     querySubject(lengthen(subject, true), true, false, function () {
-      svg.selectAll("text.static-text")
+      svg.selectAll('text.static-text')
         .transition()
         .duration(2000)
-        .style("fill", "#bbb");
+        .style('fill', '#bbb');
 
-      svg.selectAll("text.loading")
+      svg.selectAll('text.loading')
         .transition()
-        .style("fill", "white")
+        .style('fill', 'white')
         .remove();
     });
 
@@ -310,15 +310,15 @@ function establishInitialSubject() {
   //var subject = subjects.kant;
   //var subject = subjects.mock;
 
-  var urlSubject = getURLParameter("subject");
+  var urlSubject = getURLParameter('subject');
 
-  if (urlSubject != "null") {
-    subject = "dbpedia:" + convertSpaces(urlSubject);
+  if (urlSubject != 'null') {
+    subject = 'dbpedia:' + convertSpaces(urlSubject);
   }
   else {
-    urlSubject = getURLParameter("subject_raw");
-    if (urlSubject != "null") {
-      subject = "dbpedia:" + urlSubject;
+    urlSubject = getURLParameter('subject_raw');
+    if (urlSubject != 'null') {
+      subject = 'dbpedia:' + urlSubject;
     }
   }
 
@@ -326,13 +326,13 @@ function establishInitialSubject() {
 }
 
 function convertSpaces(element) {
-  element = element.replace("%20", "_");
-  element = element.replace(" ", "_");
+  element = element.replace('%20', '_');
+  element = element.replace(' ', '_');
   return element;
 }
 
 function connectToWiki() {
-  window.open(d3.select("#wikiframe").attr("src").replace(PRINTABLE_PARAM, ""),'_blank');
+  window.open(d3.select('#wikiframe').attr('src').replace(PRINTABLE_PARAM, ''),'_blank');
 }
 
 function querySubject(subjectId, recordPast, recordFuture, callback) {
@@ -340,10 +340,10 @@ function querySubject(subjectId, recordPast, recordFuture, callback) {
   recordPast = recordPast !== undefined ? recordPast : true;
   recordFuture = recordFuture !== undefined ? recordFuture : false;
 
-  //console.log("query for subject", subjectId);
+  //console.log('query for subject', subjectId);
   getPerson(subjectId, function(graph) {
 
-    //console.log(subjectId + " has nodes ", graph.getNodes().length);
+    //console.log(subjectId + ' has nodes ', graph.getNodes().length);
     if (graph.getNodes().length > 0) {
 
       if (recordPast) savePast();
@@ -373,7 +373,7 @@ function limitScreenNodes(graph) {
     // only those with the highest scores.  it would probably be better to represent
     // influencers and influencies proportionally.
 
-    nodes.sort(function(a, b) {return b.getProperty("score") - a.getProperty("score");});
+    nodes.sort(function(a, b) {return b.getProperty('score') - a.getProperty('score');});
     nodes.forEach(function(node, i) {
       if (i >= MAX_SCREEN_NODES && node != centerPerson) {
         graph.removeNode(node);
@@ -384,23 +384,23 @@ function limitScreenNodes(graph) {
 
 function setWikiPage(node) {
   setWikiConnectButtonVisibility(false);
-  var page = node.getProperty("wikiTopic");
+  var page = node.getProperty('wikiTopic');
 
-  if (PRINTABLE && page.indexOf("wikipedia.org") >= 0)
+  if (PRINTABLE && page.indexOf('wikipedia.org') >= 0)
     page += PRINTABLE_PARAM;
 
-  var wiki = d3.select("#wikiframe")
-    .attr("onload", "setWikiConnectButtonVisibility(true)")
-    .attr("src", page);
+  var wiki = d3.select('#wikiframe')
+    .attr('onload', 'setWikiConnectButtonVisibility(true)')
+    .attr('src', page);
 }
 
 function wcMouseEvent(over) {
-  var wc = d3.select("#wikiconnect");
+  var wc = d3.select('#wikiconnect');
   scaleElement(wc, over ? 1.2 : 1, DEFAULT_DURATION, STOCK_EASE);
 }
 
 function setWikiConnectButtonVisibility(visible) {
-  var wc = d3.select("#wikiconnect");
+  var wc = d3.select('#wikiconnect');
   if (visible) {
     scaleElement(wc, 1, DEFAULT_DURATION, STOCK_EASE);
   } else {
@@ -411,11 +411,11 @@ function setWikiConnectButtonVisibility(visible) {
 function scaleElement(element, scale, duration, ease) {
   var te = element
       .transition()
-      .style("transform", "scale(" + scale + ")")
-      .style("-o-transform", "scale(" + scale + ")")
-      .style("-ms-transform", "scale(" + scale + ")")
-      .style("-moz-transform", "scale(" + scale + ")")
-      .style("-webkit-transform", "scale(" + scale + ")");
+      .style('transform', 'scale(' + scale + ')')
+      .style('-o-transform', 'scale(' + scale + ')')
+      .style('-ms-transform', 'scale(' + scale + ')')
+      .style('-moz-transform', 'scale(' + scale + ')')
+      .style('-webkit-transform', 'scale(' + scale + ')');
 
   if (ease !== undefined) te.ease(ease);
   if (duration !== undefined) te.duration(duration);
@@ -445,25 +445,25 @@ function updateChart(graph) {
 
     // establish date of birth
 
-    var dobStr = physicalNode.getProperty("dob");
+    var dobStr = physicalNode.getProperty('dob');
     var dob = undefined;
     if (dobStr !== undefined) {
       dob = parseDate(dobStr);
-      physicalNode.setProperty("birthDate", dob);
+      physicalNode.setProperty('birthDate', dob);
     }
 
     // establish date of death
 
-    var dodStr = physicalNode.getProperty("dod");
+    var dodStr = physicalNode.getProperty('dod');
     var dod = undefined;
 
     if (dodStr !== undefined) {
       dod = parseDate(dodStr);
-      physicalNode.setProperty("deathDate", dod);
+      physicalNode.setProperty('deathDate', dod);
     }
     else if (dob != undefined) {
       dod = new Date();
-      physicalNode.setProperty("deathDate", dod);
+      physicalNode.setProperty('deathDate', dod);
     }
 
     // establish min max dates
@@ -506,7 +506,7 @@ function updateChart(graph) {
 
   svg.transition()
     .duration(2000)
-    .select(".axis")
+    .select('.axis')
     .call(timelineAxis);
 
   var physicalLinks = [];
@@ -516,7 +516,7 @@ function updateChart(graph) {
 
   graph.getLinks().forEach(function(link) {
     var src = link.getSource();
-    var mid = new TNode("mid" + nextMidId++, {isMiddel: true, hidden: true});
+    var mid = new TNode('mid' + nextMidId++, {isMiddel: true, hidden: true});
     var trg = link.getTarget();
 
     // place the virtual node right between the source and the the target
@@ -533,7 +533,7 @@ function updateChart(graph) {
 
   // filter out hidden nodes so they are not rendered
 
-  var renderedNodes = physicalNodes.filter(function(d) {return !d.getProperty("hidden");});
+  var renderedNodes = physicalNodes.filter(function(d) {return !d.getProperty('hidden');});
 
   // create the force directed layout
 
@@ -544,59 +544,59 @@ function updateChart(graph) {
 
   // remove all links, they will all be created from scratch
 
-  linkGroup.selectAll(".link").remove();
+  linkGroup.selectAll('.link').remove();
 
-  var allLink = linkGroup.selectAll(".link")
+  var allLink = linkGroup.selectAll('.link')
     .data(renderedLinks);
 
   var enterLinks = allLink
     .enter();
 
   enterLinks
-    .append("path")
-    .attr("visibility", "hidden")
-    .classed("link", true)
-    .classed("to", function(d) {return d.target.getId() == centerPerson.getId();})
-    .classed("from", function(d) {return d.source.getId() == centerPerson.getId();})
-    .style("stroke-width", ARROW_WIDTH);
-    // .append("title")
-    // .text(function(d) {return d.getProperty("type")});
+    .append('path')
+    .attr('visibility', 'hidden')
+    .classed('link', true)
+    .classed('to', function(d) {return d.target.getId() == centerPerson.getId();})
+    .classed('from', function(d) {return d.source.getId() == centerPerson.getId();})
+    .style('stroke-width', ARROW_WIDTH);
+    // .append('title')
+    // .text(function(d) {return d.getProperty('type')});
 
-  svg.selectAll("path.link")
+  svg.selectAll('path.link')
     .transition()
     .duration(0)
     .delay(DEFAULT_DURATION)
-    .attr("visibility", "visibile");
+    .attr('visibility', 'visibile');
 
   // add timeline paths for each node
 
-  timelinesGroup.selectAll("path.timeline")
+  timelinesGroup.selectAll('path.timeline')
     .remove();
 
-  timelinesGroup.selectAll("path.timeline")
+  timelinesGroup.selectAll('path.timeline')
     .data(renderedNodes)
     .enter()
-    .append("path")
-    .filter(function(d) {return d.getProperty("birthDate") !== undefined;})
-    .classed("timeline", true)
-    .style("opacity", 0)
+    .append('path')
+    .filter(function(d) {return d.getProperty('birthDate') !== undefined;})
+    .classed('timeline', true)
+    .style('opacity', 0)
     .transition()
     .duration(2000)
-    .style("opacity", function(d) {return d.getId() == centerPerson.getId() ? TIMELINE_HIGHLIGHT_OPACITY : TIMELINE_OPACITY;});
+    .style('opacity', function(d) {return d.getId() == centerPerson.getId() ? TIMELINE_HIGHLIGHT_OPACITY : TIMELINE_OPACITY;});
 
   //var exitLinks = allLink.exit().remove();
 
-  var allNodes = nodeGroup.selectAll(".node")
+  var allNodes = nodeGroup.selectAll('.node')
     .data(renderedNodes, function(d) {return d.id;});
 
   var enterNodes = allNodes.enter();
   var exitNodes = allNodes.exit();
 
   exitNodes
-    .selectAll(".scale")
+    .selectAll('.scale')
     .transition()
     .duration(DEFAULT_DURATION)
-    .attr("transform", "scale(0)");
+    .attr('transform', 'scale(0)');
 
   exitNodes
     .transition()
@@ -604,48 +604,48 @@ function updateChart(graph) {
     .remove();
 
   var nodeGroups = enterNodes
-    .append("g")
-    .classed("node", true)
-    .on("click", onNodeClick)
-    .on("mouseover", onNodeMouseOver)
-    .on("mouseout", onNodeMouseOut)
+    .append('g')
+    .classed('node', true)
+    .on('click', onNodeClick)
+    .on('mouseover', onNodeMouseOver)
+    .on('mouseout', onNodeMouseOut)
     .call(force.drag);
 
   allNodes
-    .selectAll(".scale")
-    .attr("transform", function(d) {return "scale(" + computeNodeScale(d) + ")";});
+    .selectAll('.scale')
+    .attr('transform', function(d) {return 'scale(' + computeNodeScale(d) + ')';});
 
   var scaleGroups = nodeGroups
-    .append("g")
-    .attr("clip-path", "url(#image-clip)")
-    .attr("transform", "scale(0)")
-    .classed("scale", true);
+    .append('g')
+    .attr('clip-path', 'url(#image-clip)')
+    .attr('transform', 'scale(0)')
+    .classed('scale', true);
 
   scaleGroups
     .transition()
     .duration(DEFAULT_DURATION)
-    .attr("transform", function(d) {return "scale(" + computeNodeScale(d) + ")";});
+    .attr('transform', function(d) {return 'scale(' + computeNodeScale(d) + ')';});
 
   scaleGroups
-    .append("circle")
-    .classed("backdrop", true)
-    .attr("r", IMAGE_SIZE / 2);
+    .append('circle')
+    .classed('backdrop', true)
+    .attr('r', IMAGE_SIZE / 2);
 
   scaleGroups
-    .append("image")
-    .attr("pointer-events", "none")
-    .attr("xlink:href", function(d) {
+    .append('image')
+    .attr('pointer-events', 'none')
+    .attr('xlink:href', function(d) {
 
       // create the list of all plausible images in preference order
 
-      var thumbnail = d.getProperty("thumbnail");
+      var thumbnail = d.getProperty('thumbnail');
       var altThumbnail = thumbnail !== undefined
-        ? thumbnail.replace("wikipedia/commons", "wikipedia/en")
+        ? thumbnail.replace('wikipedia/commons', 'wikipedia/en')
         : undefined;
 
-      var depiction = d.getProperty("depiction");
+      var depiction = d.getProperty('depiction');
       var altDepiction = depiction !== undefined
-        ? depiction.replace("wikipedia/commons", "wikipedia/en")
+        ? depiction.replace('wikipedia/commons', 'wikipedia/en')
         : undefined;
 
       d.images = [
@@ -659,87 +659,87 @@ function updateChart(graph) {
 
       return d.images.shift();
     })
-    .on("error", function(d) {this.setAttribute("href", d.images.shift());})
-    .attr("x", -IMAGE_SIZE / 2)
-    .attr("y", -IMAGE_SIZE / 2)
-    .attr("width", IMAGE_SIZE)
-    .attr("height", IMAGE_SIZE);
+    .on('error', function(d) {this.setAttribute('href', d.images.shift());})
+    .attr('x', -IMAGE_SIZE / 2)
+    .attr('y', -IMAGE_SIZE / 2)
+    .attr('width', IMAGE_SIZE)
+    .attr('height', IMAGE_SIZE);
 
   scaleGroups
-    .append("path")
-    .classed("banner", true)
-    .style("stroke-width", BANNER_SIZE)
-    .attr("d", populate_path(
-      "M X0 Y0 L X1 Y1",
+    .append('path')
+    .classed('banner', true)
+    .style('stroke-width', BANNER_SIZE)
+    .attr('d', populate_path(
+      'M X0 Y0 L X1 Y1',
       [{x: -BANNER_X, y: BANNER_Y},
        {x: +BANNER_X, y: BANNER_Y}]));
 
  // scaleGroups
- //    .append("text")
- //    .attr("pointer-events", "none")
- //    .attr("dx", BrowserDetect.browser == "Firefox" ? "403" : "203")
- //    .attr("dy", "0.3em")
- //    .attr("text-anchor", "middle")
- //    .append("textPath")
- //    .classed("name", true)
- //    .attr("xlink:href", "#namepath")
- //    .text(function(d) { return d.getProperty("name")});
+ //    .append('text')
+ //    .attr('pointer-events', 'none')
+ //    .attr('dx', BrowserDetect.browser == 'Firefox' ? '403' : '203')
+ //    .attr('dy', '0.3em')
+ //    .attr('text-anchor', 'middle')
+ //    .append('textPath')
+ //    .classed('name', true)
+ //    .attr('xlink:href', '#namepath')
+ //    .text(function(d) { return d.getProperty('name')});
 
   // scaleGroups
-  //   .append("text")
-  //   .attr("pointer-events", "none")
-  //   .attr("text-anchor", "middle")
-  //   .attr("x", 50)
-  //   .append("textPath")
-  //   .classed("name", true)
-  //   .attr("xlink:href", "#bannerpath")
-  //   .text(function(d) { return d.getProperty("name")});
+  //   .append('text')
+  //   .attr('pointer-events', 'none')
+  //   .attr('text-anchor', 'middle')
+  //   .attr('x', 50)
+  //   .append('textPath')
+  //   .classed('name', true)
+  //   .attr('xlink:href', '#bannerpath')
+  //   .text(function(d) { return d.getProperty('name')});
 
   scaleGroups
-    .append("text")
-    .classed("name", true)
-    .attr("pointer-events", "none")
-    .attr("text-anchor", "middle")
-    .attr("y", BANNER_Y)
-    .attr("dy", "0.3em")
-    .text(function(d) { return d.getProperty("name");});
+    .append('text')
+    .classed('name', true)
+    .attr('pointer-events', 'none')
+    .attr('text-anchor', 'middle')
+    .attr('y', BANNER_Y)
+    .attr('dy', '0.3em')
+    .text(function(d) { return d.getProperty('name');});
 
   scaleGroups
-    .append("circle")
-    .classed("loading-ring", true)
+    .append('circle')
+    .classed('loading-ring', true)
     .attr('fill', 'none')
     .attr('visibility', 'hidden')
     .attr('stroke', 'url(#loading-gradient)')
     .attr('stroke-width', RIM_SIZE)
-    .attr("r", (IMAGE_SIZE - RIM_SIZE) / 2 - RIM_SIZE / 2);
+    .attr('r', (IMAGE_SIZE - RIM_SIZE) / 2 - RIM_SIZE / 2);
 
   scaleGroups
-    .append("g")
-    .attr("transform", "translate(" +
-          (IMAGE_SIZE - 2 * WIKI_ICON_WIDTH) / 2 + ", " +
-          WIKI_ICON_WIDTH + ")")
-    .append("image")
-    .classed("wikibutton", true)
-    .attr("xlink:href", WIKI_LOGO)
-    .attr("x", -WIKI_ICON_WIDTH / 2)
-    .attr("y", -WIKI_ICON_WIDTH / 2)
-    .attr("width", WIKI_ICON_WIDTH)
-    .attr("height", WIKI_ICON_WIDTH)
-    .attr("transform", "scale(0)")
-    .on("mouseover", onWikipediaMouseOver)
-    .on("mouseout", onWikipediaMouseOut)
-    .on("click", onWikipediaClick)
-    .append("title")
-    .text("Show Wiki Text");
+    .append('g')
+    .attr('transform', 'translate(' +
+          (IMAGE_SIZE - 2 * WIKI_ICON_WIDTH) / 2 + ', ' +
+          WIKI_ICON_WIDTH + ')')
+    .append('image')
+    .classed('wikibutton', true)
+    .attr('xlink:href', WIKI_LOGO)
+    .attr('x', -WIKI_ICON_WIDTH / 2)
+    .attr('y', -WIKI_ICON_WIDTH / 2)
+    .attr('width', WIKI_ICON_WIDTH)
+    .attr('height', WIKI_ICON_WIDTH)
+    .attr('transform', 'scale(0)')
+    .on('mouseover', onWikipediaMouseOver)
+    .on('mouseout', onWikipediaMouseOut)
+    .on('click', onWikipediaClick)
+    .append('title')
+    .text('Show Wiki Text');
 
-  force.on("tick", function(event) {
+  force.on('tick', function(event) {
 
     var k2 = 15 * event.alpha;
     var k = .5 * event.alpha;
     centerPerson.x += (width  / 2 - centerPerson.x) * k;
     centerPerson.y += (height / 2 - centerPerson.y) * k;
 
-    d3.selectAll("path.link")
+    d3.selectAll('path.link')
       .each(function(link) {
         if (link.source.getId() == centerPerson.getId()) {
           link.target.x += k2;
@@ -748,13 +748,13 @@ function updateChart(graph) {
           link.source.x -= k2;
         }
       })
-      .attr("d", arrowPath);
+      .attr('d', arrowPath);
 
-    timelinesGroup.selectAll(".timeline")
-      .classed("highlight", function(d) {return d.getId() == centerPerson.getId();})
-      .attr("d", timelinePath);
+    timelinesGroup.selectAll('.timeline')
+      .classed('highlight', function(d) {return d.getId() == centerPerson.getId();})
+      .attr('d', timelinePath);
 
-    var nodes = nodeGroup.selectAll("g.node");
+    var nodes = nodeGroup.selectAll('g.node');
     var margin = NODE_SIZE / 2 / 2;
     var x1 = margin;
     var x2 = width - margin;
@@ -771,8 +771,8 @@ function updateChart(graph) {
 
     // update transoform
 
-    nodes.attr("transform", function(d) {
-      return populate_path("translate(X0, Y0)", [d]);
+    nodes.attr('transform', function(d) {
+      return populate_path('translate(X0, Y0)', [d]);
     });
   });
 }
@@ -780,15 +780,15 @@ function updateChart(graph) {
 function timelinePath(node) {
   var TIMELINE_UPSET = 50;
 
-  var birth = {x: timelineScale(node.getProperty("birthDate")), y: TIMELINE_Y};
+  var birth = {x: timelineScale(node.getProperty('birthDate')), y: TIMELINE_Y};
   var bc1 = {x: node.x, y: TIMELINE_Y - TIMELINE_UPSET};
   var bc2 = {x: birth.x, y: TIMELINE_Y - TIMELINE_UPSET};
-  var death = {x: timelineScale(node.getProperty("deathDate")), y: TIMELINE_Y};
+  var death = {x: timelineScale(node.getProperty('deathDate')), y: TIMELINE_Y};
   var dc1 = {x: death.x, y: TIMELINE_Y - TIMELINE_UPSET};
   var dc2 = {x: node.x, y: TIMELINE_Y - TIMELINE_UPSET};
 
   return populate_path(
-    "M X0 Y0 C X1 Y1 X2 Y2 X3 Y3 L X4 Y4 C X5 Y5 X6 Y6 X7 Y7", [node, bc1, bc2, birth, death, dc1, dc2, node]);
+    'M X0 Y0 C X1 Y1 X2 Y2 X3 Y3 L X4 Y4 C X5 Y5 X6 Y6 X7 Y7', [node, bc1, bc2, birth, death, dc1, dc2, node]);
 }
 
 function arrowPath(link) {
@@ -803,8 +803,8 @@ function arrowPath(link) {
   var left = radial(tip, 20, angle + HEAD_ANGLE);
   var right = radial(tip, 20, angle - HEAD_ANGLE);
 
-  //return populate_path("M X0 Y0 L X1 Y1 L X2 Y2 M X3 Y3 L X4 Y4 L X5 Y5",
-  return populate_path("M X0 Y0 Q X1 Y1 X2 Y2 M X3 Y3 L X4 Y4 L X5 Y5",
+  //return populate_path('M X0 Y0 L X1 Y1 L X2 Y2 M X3 Y3 L X4 Y4 L X5 Y5',
+  return populate_path('M X0 Y0 Q X1 Y1 X2 Y2 M X3 Y3 L X4 Y4 L X5 Y5',
                        [s, m, tip, left, tip, right]);
 }
 
@@ -833,32 +833,32 @@ function computeNodeScale(node, isMouseOver) {
 }
 
 function scaleNode(node, isMouseOver) {
-  scaleNodeThing(node, "g.scale", computeNodeScale(node, isMouseOver));
+  scaleNodeThing(node, 'g.scale', computeNodeScale(node, isMouseOver));
 }
 
 function onNodeMouseOut(node) {
-  if (d3.event.target.tagName != "image")
-    scaleNodeThing(node, ".wikibutton", 0);
+  if (d3.event.target.tagName != 'image')
+    scaleNodeThing(node, '.wikibutton', 0);
 
   scaleNode(node, false);
-  timelinesGroup.selectAll(".timeline")
+  timelinesGroup.selectAll('.timeline')
     .filter(function(d) {
       return d.getId() == node.getId() && d.getId() != centerPerson.getId();
     })
-    .classed("highlight", false)
+    .classed('highlight', false)
     .transition()
     .duration(DEFAULT_DURATION)
     .ease(STOCK_EASE)
-    .style("opacity", TIMELINE_OPACITY);
+    .style('opacity', TIMELINE_OPACITY);
 }
 
 function onNodeMouseOver(node) {
-  if (d3.event.target.tagName != "image")
-    scaleNodeThing(node, ".wikibutton", 1);
+  if (d3.event.target.tagName != 'image')
+    scaleNodeThing(node, '.wikibutton', 1);
 
   // move node to top of the stack
 
-  $("g.node").each(function(i, e) {
+  $('g.node').each(function(i, e) {
     if (e.__data__ == node) {
       $e = $(e);
       var parent = $e.parent();
@@ -871,13 +871,13 @@ function onNodeMouseOver(node) {
 
   scaleNode(node, true);
 
-  timelinesGroup.selectAll(".timeline")
+  timelinesGroup.selectAll('.timeline')
     .filter(function(d) {return d.getId() == node.getId() && d.getId() != centerPerson.getId();})
-    .classed("highlight", true)
+    .classed('highlight', true)
     .transition()
     .duration(DEFAULT_DURATION)
     .ease(STOCK_EASE)
-    .style("opacity", TIMELINE_HIGHLIGHT_OPACITY);
+    .style('opacity', TIMELINE_HIGHLIGHT_OPACITY);
 
 //  event.stopPropagation();
 }
@@ -885,17 +885,17 @@ function onNodeMouseOver(node) {
 function onImageClick(node) {
   node.open = !node.open || false;
   if (node.open)
-    $("#wikidiv").animate({left: "100px"});
+    $('#wikidiv').animate({left: '100px'});
   else
-    $("#wikidiv").animate({right: "100px"});
+    $('#wikidiv').animate({right: '100px'});
 }
 
 function onWikipediaMouseOver(node) {
-  scaleNodeThing(node, ".wikibutton", 1.5);
+  scaleNodeThing(node, '.wikibutton', 1.5);
 }
 
 function onWikipediaMouseOut(node) {
-  scaleNodeThing(node, ".wikibutton", 1);
+  scaleNodeThing(node, '.wikibutton', 1);
 }
 
 function scaleNodeThing(node, selector, scale) {
@@ -904,7 +904,7 @@ function scaleNodeThing(node, selector, scale) {
     .transition()
     .duration(DEFAULT_DURATION)
     .ease(STOCK_EASE)
-    .attr("transform", "scale(" + scale + ")");
+    .attr('transform', 'scale(' + scale + ')');
 }
 
 function onBackbuttonMouseOver(node) {
@@ -973,7 +973,7 @@ function onWikipediaClick(node) {
     .transition()
     .duration(DEFAULT_DURATION)
     .ease(STOCK_EASE)
-    .attr("transform", "scale(1)");
+    .attr('transform', 'scale(1)');
 
   var event = d3.event;
   setWikiPage(node);
@@ -981,51 +981,51 @@ function onWikipediaClick(node) {
 }
 
 function showBackButton() {
-  d3.select(".backbutton")
-    .on("mouseover", onBackbuttonMouseOver)
-    .on("mouseout", onBackbuttonMouseOut)
-    .on("click", onBackbuttonClick);
+  d3.select('.backbutton')
+    .on('mouseover', onBackbuttonMouseOver)
+    .on('mouseout', onBackbuttonMouseOut)
+    .on('click', onBackbuttonClick);
   scaleBackButton(1);
 }
 
 function hideBackButton() {
-  d3.select(".backbutton")
-    .on("mouseover", undefined)
-    .on("mouseout", undefined)
-    .on("click", undefined);
+  d3.select('.backbutton')
+    .on('mouseover', undefined)
+    .on('mouseout', undefined)
+    .on('click', undefined);
   scaleBackButton(0);
 }
 
 function showForwardButton() {
-  d3.select(".forwardbutton")
-    .on("mouseover", onForwardbuttonMouseOver)
-    .on("mouseout", onForwardbuttonMouseOut)
-    .on("click", onForwardbuttonClick);
+  d3.select('.forwardbutton')
+    .on('mouseover', onForwardbuttonMouseOver)
+    .on('mouseout', onForwardbuttonMouseOut)
+    .on('click', onForwardbuttonClick);
   scaleForwardButton(1);
 }
 
 function hideForwardButton() {
-  d3.select(".forwardbutton")
-    .on("mouseover", undefined)
-    .on("mouseout", undefined)
-    .on("click", undefined);
+  d3.select('.forwardbutton')
+    .on('mouseover', undefined)
+    .on('mouseout', undefined)
+    .on('click', undefined);
   scaleForwardButton(0);
 }
 
 function scaleBackButton(scale) {
-  d3.select(".backbutton")
+  d3.select('.backbutton')
     .transition()
     .duration(DEFAULT_DURATION)
     .ease(STOCK_EASE)
-    .attr("transform", "scale(" + scale + ")");
+    .attr('transform', 'scale(' + scale + ')');
 }
 
 function scaleForwardButton(scale) {
-  d3.select(".forwardbutton")
+  d3.select('.forwardbutton')
     .transition()
     .duration(DEFAULT_DURATION)
     .ease(STOCK_EASE)
-    .attr("transform", "scale(" + scale + ")");
+    .attr('transform', 'scale(' + scale + ')');
 }
 
 function onNodeClick(node) {
@@ -1038,25 +1038,25 @@ function startSpinner(node) {
   var loadingDuration = 500;
   var stop = false;
 
-  var ring = d3.selectAll(".loading-ring")
+  var ring = d3.selectAll('.loading-ring')
     .filter(function(d) {return d.getId() == node.getId();});
 
   ring
     .attr('visibility', 'visibile')
-    .attr("transform", function(d) {return "rotate(0)";})
+    .attr('transform', function(d) {return 'rotate(0)';})
     .transition()
     .duration(loadingDuration)
-    .ease("linear")
-    .attr("transform", function(d) {return "rotate(120)";})
+    .ease('linear')
+    .attr('transform', function(d) {return 'rotate(120)';})
     .transition()
     .duration(loadingDuration)
-    .ease("linear")
-    .attr("transform", function(d) {return "rotate(240)";})
+    .ease('linear')
+    .attr('transform', function(d) {return 'rotate(240)';})
     .transition()
     .duration(loadingDuration)
-    .ease("linear")
-    .attr("transform", function(d) {return "rotate(360)";})
-    .each("end", function() {
+    .ease('linear')
+    .attr('transform', function(d) {return 'rotate(360)';})
+    .each('end', function() {
       if (ring.attr('visibility') == 'visibile')
         startSpinner(node);
     });
@@ -1071,8 +1071,8 @@ function startSpinner(node) {
 function populate_path(path, points) {
   for(var index in points) {
     path = path
-      .replace("X" + index, points[index].x)
-      .replace("Y" + index, points[index].y);
+      .replace('X' + index, points[index].x)
+      .replace('Y' + index, points[index].y);
   };
   return path;
 }
@@ -1084,11 +1084,11 @@ function getURLParameter(name) {
 }
 
 function getURLElement(name) {
-  var sections = location.pathname.split("/");
+  var sections = location.pathname.split('/');
   var e1 = sections[sections.length - 2];
   var e2 = sections[sections.length - 1];
 
-  return e1 == "tsomi"
+  return e1 == 'tsomi'
     ? decodeURI(e2)
-    : "null";
+    : 'null';
 }
