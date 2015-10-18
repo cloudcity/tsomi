@@ -5,7 +5,6 @@ var color = d3.scale.category20();
 var nextMidId = 0;
 
 var TIMELINE_OPACITY = 0.03;
-var TIMELINE_OPACITY = 0.03;
 var TIMELINE_HIGHLIGHT_OPACITY = 0.4;
 var HEAD_ANGLE = Math.PI / 6;
 var ARROW_WIDTH = 6;
@@ -121,7 +120,7 @@ defs.append('svg:linearGradient')
       .style('stop-color', 'white')
       .style('stop-opacity', '0');
   });
- 
+
 defs.append('mask')
   .attr('id', 'image-mask')
   .append("rect")
@@ -130,7 +129,7 @@ defs.append('mask')
   .attr('width', IMAGE_SIZE)
   .attr('height', IMAGE_SIZE)
   .style("fill", "url(#image-gradient)");
- 
+
 defs.append("svg:clipPath")
   .attr("id", "loading-clip")
   .append("svg:circle")
@@ -150,7 +149,7 @@ defs.append("path")
 defs.append("path")
   .attr("id", "bannerpath")
   .attr("d", populate_path(
-    "M X0 Y0 L X1 Y1", 
+    "M X0 Y0 L X1 Y1",
     [{x: -BANNER_X, y: BANNER_Y},
      {x: +BANNER_X, y: BANNER_Y}]));
 
@@ -255,9 +254,9 @@ var force = d3.layout.force()
   .gravity(GRAVITY)
   .linkStrength(LINK_STRENGHT)
   .charge(function(d) {
-    return d.getProperty("hidden") 
+    return d.getProperty("hidden")
       ? -CHARGE_HIDDEN
-      : -(Math.random() * CHARGE_RANDOM + CHARGE_BASE)})
+      : -(Math.random() * CHARGE_RANDOM + CHARGE_BASE);})
   .linkDistance(function(link) {
     var base = LINK_BASE;
 
@@ -353,7 +352,7 @@ function querySubject(subjectId, recordPast, recordFuture, callback) {
       centerPerson = graph.getNode(subjectId);
       limitScreenNodes(graph);
       updateChart(graph);
-      
+
       // set wiki page
 
       setWikiPage(centerPerson);
@@ -374,7 +373,7 @@ function limitScreenNodes(graph) {
     // only those with the highest scores.  it would probably be better to represent
     // influencers and influencies proportionally.
 
-    nodes.sort(function(a, b) {return b.getProperty("score") - a.getProperty("score")});
+    nodes.sort(function(a, b) {return b.getProperty("score") - a.getProperty("score");});
     nodes.forEach(function(node, i) {
       if (i >= MAX_SCREEN_NODES && node != centerPerson) {
         graph.removeNode(node);
@@ -445,14 +444,14 @@ function updateChart(graph) {
     physicalNodes.push(physicalNode);
 
     // establish date of birth
-    
+
     var dobStr = physicalNode.getProperty("dob");
     var dob = undefined;
     if (dobStr !== undefined) {
       dob = parseDate(dobStr);
       physicalNode.setProperty("birthDate", dob);
     }
-      
+
     // establish date of death
 
     var dodStr = physicalNode.getProperty("dod");
@@ -468,7 +467,7 @@ function updateChart(graph) {
     }
 
     // establish min max dates
-      
+
     if (dob !== undefined && dod !== undefined) {
       sampleDate(dod);
       sampleDate(dob);
@@ -499,7 +498,7 @@ function updateChart(graph) {
 
   timelineScale.domain([minDate, maxDate]);
   timelineScale.domain([
-    timelineScale.invert(timelineScale.range()[0] - TIMELINE_MARGIN), 
+    timelineScale.invert(timelineScale.range()[0] - TIMELINE_MARGIN),
     timelineScale.invert(timelineScale.range()[1] + TIMELINE_MARGIN)
   ]);
 
@@ -534,7 +533,7 @@ function updateChart(graph) {
 
   // filter out hidden nodes so they are not rendered
 
-  var renderedNodes = physicalNodes.filter(function(d) {return !d.getProperty("hidden")});
+  var renderedNodes = physicalNodes.filter(function(d) {return !d.getProperty("hidden");});
 
   // create the force directed layout
 
@@ -583,10 +582,10 @@ function updateChart(graph) {
     .style("opacity", 0)
     .transition()
     .duration(2000)
-    .style("opacity", function(d) {return d.getId() == centerPerson.getId() ? TIMELINE_HIGHLIGHT_OPACITY : TIMELINE_OPACITY});
+    .style("opacity", function(d) {return d.getId() == centerPerson.getId() ? TIMELINE_HIGHLIGHT_OPACITY : TIMELINE_OPACITY;});
 
   //var exitLinks = allLink.exit().remove();
-  
+
   var allNodes = nodeGroup.selectAll(".node")
     .data(renderedNodes, function(d) {return d.id;});
 
@@ -614,7 +613,7 @@ function updateChart(graph) {
 
   allNodes
     .selectAll(".scale")
-    .attr("transform", function(d) {return "scale(" + computeNodeScale(d) + ")"});
+    .attr("transform", function(d) {return "scale(" + computeNodeScale(d) + ")";});
 
   var scaleGroups = nodeGroups
     .append("g")
@@ -625,7 +624,7 @@ function updateChart(graph) {
   scaleGroups
     .transition()
     .duration(DEFAULT_DURATION)
-    .attr("transform", function(d) {return "scale(" + computeNodeScale(d) + ")"});
+    .attr("transform", function(d) {return "scale(" + computeNodeScale(d) + ")";});
 
   scaleGroups
     .append("circle")
@@ -640,25 +639,25 @@ function updateChart(graph) {
       // create the list of all plausible images in preference order
 
       var thumbnail = d.getProperty("thumbnail");
-      var altThumbnail = thumbnail !== undefined 
+      var altThumbnail = thumbnail !== undefined
         ? thumbnail.replace("wikipedia/commons", "wikipedia/en")
         : undefined;
 
       var depiction = d.getProperty("depiction");
-      var altDepiction = depiction !== undefined 
+      var altDepiction = depiction !== undefined
         ? depiction.replace("wikipedia/commons", "wikipedia/en")
         : undefined;
 
       d.images = [
-        thumbnail, 
-        altThumbnail, 
-        depiction, 
+        thumbnail,
+        altThumbnail,
+        depiction,
         altDepiction,
-        UNKNOWN_PERSON].filter(function(d) {return d !== undefined});
+        UNKNOWN_PERSON].filter(function(d) {return d !== undefined;});
 
       // return first of those images
 
-      return d.images.shift(); 
+      return d.images.shift();
     })
     .on("error", function(d) {this.setAttribute("href", d.images.shift());})
     .attr("x", -IMAGE_SIZE / 2)
@@ -671,7 +670,7 @@ function updateChart(graph) {
     .classed("banner", true)
     .style("stroke-width", BANNER_SIZE)
     .attr("d", populate_path(
-      "M X0 Y0 L X1 Y1", 
+      "M X0 Y0 L X1 Y1",
       [{x: -BANNER_X, y: BANNER_Y},
        {x: +BANNER_X, y: BANNER_Y}]));
 
@@ -703,7 +702,7 @@ function updateChart(graph) {
     .attr("text-anchor", "middle")
     .attr("y", BANNER_Y)
     .attr("dy", "0.3em")
-    .text(function(d) { return d.getProperty("name")});
+    .text(function(d) { return d.getProperty("name");});
 
   scaleGroups
     .append("circle")
@@ -716,8 +715,8 @@ function updateChart(graph) {
 
   scaleGroups
     .append("g")
-    .attr("transform", "translate(" + 
-          (IMAGE_SIZE - 2 * WIKI_ICON_WIDTH) / 2 + ", " + 
+    .attr("transform", "translate(" +
+          (IMAGE_SIZE - 2 * WIKI_ICON_WIDTH) / 2 + ", " +
           WIKI_ICON_WIDTH + ")")
     .append("image")
     .classed("wikibutton", true)
@@ -754,7 +753,7 @@ function updateChart(graph) {
     timelinesGroup.selectAll(".timeline")
       .classed("highlight", function(d) {return d.getId() == centerPerson.getId();})
       .attr("d", timelinePath);
-    
+
     var nodes = nodeGroup.selectAll("g.node");
     var margin = NODE_SIZE / 2 / 2;
     var x1 = margin;
@@ -771,9 +770,9 @@ function updateChart(graph) {
     });
 
     // update transoform
-    
+
     nodes.attr("transform", function(d) {
-        return populate_path("translate(X0, Y0)", [d])
+      return populate_path("translate(X0, Y0)", [d]);
     });
   });
 }
@@ -794,7 +793,7 @@ function timelinePath(node) {
 
 function arrowPath(link) {
   var s = link.source;
-  var m = link.mid;  
+  var m = link.mid;
   var t = link.target;
 
   var angle = angleRadians(t, m);
@@ -816,7 +815,7 @@ function angleRadians(p1, p2) {
 function radial(point, radius, radians) {
   return {
     x: Math.cos(radians) * radius + point.x,
-    y: Math.sin(radians) * radius + point.y,
+    y: Math.sin(radians) * radius + point.y
   };
 }
 
@@ -885,7 +884,7 @@ function onNodeMouseOver(node) {
 
 function onImageClick(node) {
   node.open = !node.open || false;
-  if (node.open) 
+  if (node.open)
     $("#wikidiv").animate({left: "100px"});
   else
     $("#wikidiv").animate({right: "100px"});
@@ -969,7 +968,6 @@ function clearFuture() {
   hideForwardButton();
 }
 
-
 function onWikipediaClick(node) {
   d3.select(d3.event.target)
     .transition()
@@ -1039,25 +1037,25 @@ function onNodeClick(node) {
 function startSpinner(node) {
   var loadingDuration = 500;
   var stop = false;
-  
+
   var ring = d3.selectAll(".loading-ring")
-    .filter(function(d) {return d.getId() == node.getId()});
+    .filter(function(d) {return d.getId() == node.getId();});
 
   ring
     .attr('visibility', 'visibile')
-    .attr("transform", function(d) {return "rotate(0)"})
+    .attr("transform", function(d) {return "rotate(0)";})
     .transition()
     .duration(loadingDuration)
     .ease("linear")
-    .attr("transform", function(d) {return "rotate(120)"})
+    .attr("transform", function(d) {return "rotate(120)";})
     .transition()
     .duration(loadingDuration)
     .ease("linear")
-    .attr("transform", function(d) {return "rotate(240)"})
+    .attr("transform", function(d) {return "rotate(240)";})
     .transition()
     .duration(loadingDuration)
     .ease("linear")
-    .attr("transform", function(d) {return "rotate(360)"})
+    .attr("transform", function(d) {return "rotate(360)";})
     .each("end", function() {
       if (ring.attr('visibility') == 'visibile')
         startSpinner(node);
@@ -1071,7 +1069,7 @@ function startSpinner(node) {
 }
 
 function populate_path(path, points) {
-  for(index in points) {
+  for(var index in points) {
     path = path
       .replace("X" + index, points[index].x)
       .replace("Y" + index, points[index].y);

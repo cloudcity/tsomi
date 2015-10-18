@@ -31,7 +31,7 @@ var predicates = {
   wikiTopic: "foaf:isPrimaryTopicOf",
   occupation: "dbprop:occupation",
   dob: "dbpedia-owl:birthDate",
-  dod: "dbpedia-owl:deathDate",
+  dod: "dbpedia-owl:deathDate"
 };
 
 var subjects = {
@@ -62,7 +62,7 @@ var subjects = {
   dawkins:    "dbpedia:Richard_Dawkins",
   norman:     "dbpedia:Donald_Norman",
   mccloud:    "dbpedia:Scott_McCloud",
-  pinker:     "dbpedia:Steven_Pinker",
+  pinker:     "dbpedia:Steven_Pinker"
 };
 
 var personalDetails = [
@@ -81,8 +81,8 @@ personCache[lengthen(subjects.mock, true)] = createMockData();
 var specialPeople = {};
 
 var specialPeopleData = [
-  {id: "dbpedia:Robert_Boyd_Harris", 
-   name: "Robert Harris", 
+  {id: "dbpedia:Robert_Boyd_Harris",
+   name: "Robert Harris",
    thumbnail: "images/trebor3.png",
    wikiTopic: "http://www.trebor.org",
    dob: "1966-02-08",
@@ -97,8 +97,8 @@ var specialPeopleData = [
      subjects.mccloud,
    ]
   },
-  {id: "dbpedia:Stephanie_Geerlings", 
-   name: "Stephanie Geerlings", 
+  {id: "dbpedia:Stephanie_Geerlings",
+   name: "Stephanie Geerlings",
    thumbnail: "images/Stephanie_Geerlings.jpg",
    wikiTopic: "http://pinterest.com/stillsmall",
    influenced: [
@@ -137,7 +137,7 @@ createSpecialData = function (callback) {
 
     person.influencedBy.forEach(function(influencedBy) {
       var influencedById = lengthen(influencedBy, true);
-      
+
       var otherG = specialPeople[influencedById];
       if (otherG !== undefined) {
         g.addLink(otherG.getNode(influencedById), id);
@@ -202,15 +202,15 @@ var personDetailsWhere = function(target) {
     var name = detail.name;
     var predicate = predicates[name];
 
-    var optional = detail.optional 
+    var optional = detail.optional
       ? "OPTIONAL "
       : "";
 
-    var filter = detail.language 
+    var filter = detail.language
       ? "FILTER (" + " LANG(?" + name + ") = \"" + LANGUAGE + "\") "
       : "";
 
-    result += optional + 
+    result += optional +
       "{" + target + " " + predicate + " ?" + name + " . " + filter + "}\n";
   });
 
@@ -289,7 +289,7 @@ function sparqlQuery(query, variables, callback) {
   });
 
   query = prefix_table_to_string(prefixies) + "\n" + query;
-  
+
   if (debugging) {
     console.log("---------------- query ----------------");
     console.log(query);
@@ -428,17 +428,17 @@ function queryForPerson(targetId, callback) {
     }
 
     // get the relationships
-    
+
     queryForInfluencedBy1(targetGraph, targetId, function() {
       queryForInfluencedBy2(targetGraph, targetId, function() {
         queryForInfluenced1(targetGraph, targetId, function() {
           queryForInfluenced2(targetGraph, targetId, function() {
             bindSpecialPeople(targetId, targetGraph);
             callback(targetGraph);
-          })
-        })
-      })
-    })
+          });
+        });
+      });
+    });
   });
 }
 
@@ -498,7 +498,7 @@ function queryForRelationship(subject, predicate, object, bind, callback) {
   var parameters = {
     subject: subject,
     predicate: predicate,
-    object: object,
+    object: object
   };
   sparqlQuery(query_relationship_details, parameters, function(data) {
     if (data !== undefined) {
@@ -511,7 +511,7 @@ function queryForRelationship(subject, predicate, object, bind, callback) {
 function applyDetails(node, binding) {
   personalDetails.forEach(function(detail) {
     node.setProperty(detail.name, binding[detail.name] !== undefined
-                     ? binding[detail.name].value 
+                     ? binding[detail.name].value
                      : undefined);
   });
 
