@@ -1,7 +1,7 @@
 var QUERY_URL = 'http://dbpedia.org/sparql?default-graph-uri=http%3A%2F%2Fdbpedia.org&format=json&query=';
 
 var LANGUAGE = 'en';
-var debugging = true;
+var debugging = false;
 
 var prefixies = [
   {prefix: 'rdf',         uri: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'},
