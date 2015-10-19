@@ -43,9 +43,23 @@ var WIKI_LOGO = 'images/Wikipedia-logo.png';
 var tsomiPast = [];
 var tsomiFuture = [];
 
-// daet formatter
+// date formatter
 
 var dateFormat = d3.time.format('%Y-%m-%d');
+
+$(".search-input").keyup(function (e) {
+  if (e.keyCode == 13) {
+    searchForPeople(e.target.value, function(results) {
+      console.log("results", results);
+    });
+  }
+});
+
+$(document).keyup(function (e) {
+    if ($(".input1").is(":focus") && (e.keyCode == 13)) {
+        // Do something
+    }
+});
 
 // create the svg instance
 
@@ -87,7 +101,7 @@ defs.append('svg:linearGradient')
       .style('stop-color', 'white')
       .style('stop-opacity', '0');
   });
- 
+
 defs.append('svg:linearGradient')
   .attr('id', 'image-gradient')
   .attr('x1', '0%')

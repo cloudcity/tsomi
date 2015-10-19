@@ -1,7 +1,7 @@
 var QUERY_URL = 'http://dbpedia.org/sparql?default-graph-uri=http%3A%2F%2Fdbpedia.org&format=json&query=';
 
 var LANGUAGE = 'en';
-var debugging = false;
+var debugging = true;
 
 var prefixies = [
   {prefix: 'rdf',         uri: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'},
@@ -246,6 +246,38 @@ WHERE\n\
 
 var query_describe = 'DESCRIBE %target%';
 
+var query_search = 'SELECT ?person ?name COUNT(?inf) as ?score \
+WHERE { \
+  ?person a foaf:Person. \
+  ?person foaf:name ?name. \
+\
+  {?inf dbpedia-owl:influenced ?person.} \
+  UNION \
+  {?person dbpedia-owl:influenced ?inf.} \
+  UNION \
+  {?inf dbpedia-owl:influencedBy ?person.} \
+  UNION \
+  {?person dbpedia-owl:influencedBy ?inf.} \
+  UNION \
+  {?inf dbprop:influenced ?person.} \
+  UNION \
+  {?person dbprop:influenced ?inf.} \
+  UNION \
+  {?inf dbprop:influences ?person.} \
+  UNION \
+  {?person dbprop:influences ?inf.} \
+\
+  filter( regex(str(?name), "%search_query%", "i")). \
+} \
+ORDER BY DESC(?score) \
+LIMIT 10';
+
+function searchForPeople(queryString, callback) {
+  sparqlQuery(query_search, {search_query: queryString.trim()}, function(data) {
+    callback(data.results ? data.results.bindings : []);
+  });
+}
+
 var display_results = function(data){
   console.log(data);
   var keys = data.head.vars;
@@ -282,31 +314,29 @@ function binding_to_string(binding) {
 function sparqlQuery(query, variables, callback) {
 
   var execute = function() {
-  // swap in variables
+    Object.keys(variables).forEach(function(variable) {
+      query = query.replace(new RegExp('%' + variable + '%', 'g'), variables[variable]);
+    });
 
-  Object.keys(variables).forEach(function(variable) {
-    query = query.replace(new RegExp('%' + variable + '%', 'g'), variables[variable]);
-  });
+    query = prefix_table_to_string(prefixies) + '\n' + query;
 
-  query = prefix_table_to_string(prefixies) + '\n' + query;
-
-  if (debugging) {
-    console.log('---------------- query ----------------');
-    console.log(query);
-    //console.log(escape(query));
-    console.log('^^^^^^^^^^^^^^^^ query ^^^^^^^^^^^^^^^^');
-  }
-
-  $.getJSON(QUERY_URL + escape(query), function(data) {
     if (debugging) {
-      console.log('---------------- results -----------------');
-      display_results(data);
-      console.log('^^^^^^^^^^^^^^^^ results ^^^^^^^^^^^^^^^^');
+      console.log('---------------- query ----------------');
+      console.log(query);
+      console.log('^^^^^^^^^^^^^^^^ query ^^^^^^^^^^^^^^^^');
     }
 
-    callback(data);
-  })
-    .error(function(error) {console.log('HTTP error'), callback(undefined)});
+    $.getJSON(QUERY_URL + escape(query), function(data) {
+      if (debugging) {
+        console.log('---------------- results -----------------');
+        display_results(data);
+        console.log('^^^^^^^^^^^^^^^^ results ^^^^^^^^^^^^^^^^');
+      }
+
+      callback(data);
+    }).error(function(error) {
+      console.log('HTTP error'), callback(undefined);
+    });
   };
 
   setTimeout(execute, 0);
