@@ -326,17 +326,18 @@ function sparqlQuery(query, variables, callback) {
       console.log('^^^^^^^^^^^^^^^^ query ^^^^^^^^^^^^^^^^');
     }
 
-    $.getJSON(QUERY_URL + escape(query), function(data) {
-      if (debugging) {
-        console.log('---------------- results -----------------');
-        display_results(data);
-        console.log('^^^^^^^^^^^^^^^^ results ^^^^^^^^^^^^^^^^');
-      }
+    $.getJSON(QUERY_URL + escape(query))
+      .then(function(data) {
+        if (debugging) {
+          console.log('---------------- results -----------------');
+          display_results(data);
+          console.log('^^^^^^^^^^^^^^^^ results ^^^^^^^^^^^^^^^^');
+        }
 
-      callback(data);
-    }).error(function(error) {
-      console.log('HTTP error'), callback(undefined);
-    });
+        callback(data);
+      }, function(error) {
+        console.log('HTTP error'), callback(undefined);
+      });
   };
 
   setTimeout(execute, 0);
