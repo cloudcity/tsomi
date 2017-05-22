@@ -1,5 +1,5 @@
 # The Sphere of My Influence
-######Concept [Stephanie Geerlings](https://twitter.com/geerlinger) Implementation [Robert Harris](https://twitter.com/trebor)
+###### Concept [Stephanie Geerlings](https://twitter.com/geerlinger) Implementation [Robert Harris](https://twitter.com/trebor)
 
 
 ### About
