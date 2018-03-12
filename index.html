@@ -4,14 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>The Sphere of My Influence</title>
-    <script src="lib/d3.min.js"></script>
-    <script src="lib/tgraph.js"></script>
-    <script src="lib/browserdetect.js"></script>
-    <script src="lib/jquery/dist/jquery.min.js"></script>
-    <script src="lib/bootstrap/dist/js/bootstrap.min.js"></script>
-
-    <link type="text/css" rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.css"/>
-    <link type="text/css" rel="stylesheet" href="tsomi.css"/>
+    <script src="static/lib/tgraph.js"></script>
+    <link rel='stylesheet' href='static/tsomi.css' />
+    <!-- <script src="static/lib/bootstrap/dist/js/bootstrap.min.js"></script> -->
+    <link type="text/css" rel="stylesheet" href="static/lib/bootstrap/dist/css/bootstrap.css"/>
   </head>
 
   <body>
@@ -27,7 +23,7 @@
         <div id="chart"> </div>
         <div id="wikiconnect">
           <img
-             src="images/Wikipedia-logo.png"
+             src="static/images/Wikipedia-logo.png"
              onClick="connectToWiki()"
              onmouseover="wcMouseEvent(true)"
              onmouseout="wcMouseEvent(false)"
@@ -40,8 +36,8 @@
         </iframe>
       </div>
     </div>
-    <script type="text/javascript" src="tsomi-rdf.js"></script>
-    <script type="text/javascript" src="tsomi.js"></script>
+    
+    <script type="text/javascript" src="dist/js/bundle.js"></script>
   </body>
 
   <!-- google analytics   -->

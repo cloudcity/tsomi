@@ -1,7 +1,10 @@
+const $ = require('jquery')
+const d3 = require('d3')
+const { createSpecialData, subjects, lengthen, getPerson } = require('./tsomi-rdf')
+
 var width = $('#chart').width();
 var height = $('#chart').height();
 
-var color = d3.scale.category20();
 var nextMidId = 0;
 
 var TIMELINE_OPACITY = 0.03;
@@ -33,10 +36,10 @@ var MAX_SCREEN_NODES = 25;
 
 // image for unknown person
 
-var BACK_BUTTON = 'images/backbutton.png';
-var FORWARD_BUTTON = 'images/forwardbutton.png';
-var UNKNOWN_PERSON = 'images/unknown.png';
-var WIKI_LOGO = 'images/Wikipedia-logo.png';
+var BACK_BUTTON = 'static/images/backbutton.png';
+var FORWARD_BUTTON = 'static/images/forwardbutton.png';
+var UNKNOWN_PERSON = 'static/images/unknown.png';
+var WIKI_LOGO = 'static/images/Wikipedia-logo.png';
 
 // the history of tsomi
 
