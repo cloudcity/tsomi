@@ -1,6 +1,6 @@
-const $ = require('jquery')
-const d3 = require('d3')
-const { createSpecialData, subjects, lengthen, getPerson } = require('./tsomi-rdf')
+import $ from 'jquery'
+import d3 from 'd3'
+import { createSpecialData, subjects, lengthen, getPerson } from './tsomi-rdf'
 
 var width = $('#chart').width();
 var height = $('#chart').height();
