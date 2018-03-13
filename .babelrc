@@ -1,6 +1,9 @@
 {
-  presets: [
-    [ 'babel-preset-env', { strict: false } ]
+  "plugins": [
+    "transform-flow-strip-types"
+  ],
+  "presets": [
+    [ "babel-preset-env", { "strict": false } ]
   ]
 }
 

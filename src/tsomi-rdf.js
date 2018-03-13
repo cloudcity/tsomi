@@ -274,7 +274,7 @@ WHERE { \
 ORDER BY DESC(?score) \
 LIMIT 10';
 
-function searchForPeople(queryString, callback) {
+export function searchForPeople(queryString, callback) {
   sparqlQuery(query_search, {search_query: queryString.trim()}, function(data) {
     callback(data.results ? data.results.bindings : []);
   });

@@ -1,6 +1,7 @@
 import $ from 'jquery'
 import d3 from 'd3'
-import { createSpecialData, subjects, lengthen, getPerson } from './tsomi-rdf'
+import { createSpecialData, subjects, lengthen, getPerson, searchForPeople } from './tsomi-rdf'
+import { convertSpaces, angleRadians, radial } from './util'
 
 var width = $('#chart').width();
 var height = $('#chart').height();
@@ -33,6 +34,11 @@ var DEFAULT_DURATION = 1000;
 var TIMELINE_MARGIN = 50;
 var TIMELINE_Y = (height - 20);
 var MAX_SCREEN_NODES = 25;
+
+var FB_BUTTON_SIZE = 34;
+var FB_BUTTON_X_OFF = (80 - FB_BUTTON_SIZE) / 2;
+var FB_BUTTON_X = width - 60;
+var FB_BUTTON_Y = 125;
 
 // image for unknown person
 
@@ -205,11 +211,6 @@ svg.append('text')
 
 // add back button
 
-var FB_BUTTON_SIZE = 34;
-var FB_BUTTON_X_OFF = (80 - FB_BUTTON_SIZE) / 2;
-var FB_BUTTON_X = width - 60;
-var FB_BUTTON_Y = 125;
-
 svg.append('g')
   .attr('transform', 'translate(' +
         (FB_BUTTON_X - FB_BUTTON_X_OFF) + ', ' +
@@ -342,11 +343,6 @@ function establishInitialSubject() {
   return subject;
 }
 
-function convertSpaces(element) {
-  element = element.replace('%20', '_');
-  element = element.replace(' ', '_');
-  return element;
-}
 
 function connectToWiki() {
   window.open(d3.select('#wikiframe').attr('src').replace(PRINTABLE_PARAM, ''),'_blank');
@@ -825,16 +821,6 @@ function arrowPath(link) {
                        [s, m, tip, left, tip, right]);
 }
 
-function angleRadians(p1, p2) {
-  return Math.atan2(p2.y - p1.y, p2.x - p1.x);
-}
-
-function radial(point, radius, radians) {
-  return {
-    x: Math.cos(radians) * radius + point.x,
-    y: Math.sin(radians) * radius + point.y
-  };
-}
 
 
 function computeNodeScale(node, isMouseOver) {
