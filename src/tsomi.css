@@ -3,9 +3,9 @@
 @font-face
 {
   font-family: capita-light-cat;
-  src: url('fonts/capita-light.svg'),
-  url('fonts/capita-light.ttf'),
-  url('fonts/capita-light.eot'); /* IE9 */
+  src: url('/static/fonts/capita-light.svg'),
+  url('/static/fonts/capita-light.ttf'),
+  url('/static/fonts/capita-light.eot');
 }
 
 /* default to zero padding and margin for all */

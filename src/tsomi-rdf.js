@@ -1,3 +1,5 @@
+const $ = require('jquery')
+
 var QUERY_URL = 'http://dbpedia.org/sparql?default-graph-uri=http%3A%2F%2Fdbpedia.org&format=json&query=';
 
 var LANGUAGE = 'en';
@@ -21,7 +23,7 @@ var prefixies = [
   {prefix: 'dcterms',     uri: 'http://purl.org/dc/terms/'},
 ];
 
-var predicates = {
+export var predicates = {
   influenced:    'dbpedia-owl:influenced',
   influencedBy: 'dbpedia-owl:influencedBy',
   depiction: 'foaf:depiction',
@@ -34,7 +36,7 @@ var predicates = {
   dod: 'dbpedia-owl:deathDate'
 };
 
-var subjects = {
+export var subjects = {
   dylan:      'dbpedia:Bob_Dylan',
   bronte:     'dbpedia:Charlotte_Brontë',
   basil:      'dbpedia:Priya_Basil',
@@ -111,7 +113,7 @@ var specialPeopleData = [
   },
 ];
 
-createSpecialData = function (callback) {
+export function createSpecialData(callback) {
 
   // all the accumulated queries
 
@@ -272,7 +274,7 @@ WHERE { \
 ORDER BY DESC(?score) \
 LIMIT 10';
 
-function searchForPeople(queryString, callback) {
+export function searchForPeople(queryString, callback) {
   sparqlQuery(query_search, {search_query: queryString.trim()}, function(data) {
     callback(data.results ? data.results.bindings : []);
   });
@@ -357,7 +359,7 @@ function prefix_uri(prefixies, uri) {
   return result;
 }
 
-function lengthen(uri, bracket) {
+export function lengthen(uri, bracket) {
   var result = uri;
   bracket = bracket || false;
 
@@ -427,7 +429,7 @@ function createMockData() {
   return  mockGraph;
 }
 
-function getPerson(id, callback) {
+export function getPerson(id, callback) {
 
   // if the person is in the cache, use that
 
@@ -567,3 +569,4 @@ function queryDetails(targetGraph, targetId, callback) {
     callback();
   });
 }
+
