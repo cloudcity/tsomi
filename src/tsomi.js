@@ -1,7 +1,7 @@
 import $ from 'jquery'
 import d3 from 'd3'
 import { createSpecialData, subjects, lengthen, getPerson, searchForPeople } from './tsomi-rdf'
-import { convertSpaces, angleRadians, radial } from './util'
+import { convertSpaces, angleRadians, radial, smallest, largest } from './util'
 
 var width = $('#chart').width();
 var height = $('#chart').height();
@@ -24,6 +24,7 @@ var LINK_RANDOM = 100;
 var LINK_MIN_OFFSET = 25;
 var RIM_SIZE = 15;
 var NODE_SIZE = 150;
+var MARGIN = NODE_SIZE / 2 / 2;
 var IMAGE_SIZE = 180;
 var BANNER_SIZE = 25;
 var BANNER_X = IMAGE_SIZE;
@@ -768,21 +769,21 @@ function updateChart(graph) {
       .attr('d', timelinePath);
 
     var nodes = nodeGroup.selectAll('g.node');
-    var margin = NODE_SIZE / 2 / 2;
-    var x1 = margin;
-    var x2 = width - margin;
-    var y1 = margin;
-    var y2 = height - margin;
-    var delta = 1;
+
+    // Make sure that all nodes remain within the top and bottom edges
+    // of the display area
+    var min_x = MARGIN;
+    var max_x = width - MARGIN;
+    var min_y = MARGIN;
+    var max_y = height - MARGIN;
+    // TODO: max_y should be adjusted to end _above_ the timeline
 
     nodes.each(function(d) {
-      if (d.x < x1) d.x += delta;
-      if (d.x > x2) d.x -= delta;
-      if (d.y < y1) d.y += delta;
-      if (d.y > y2) d.y -= delta;
-    });
+      d.x = largest(min_x, smallest(max_x, d.x))
+      d.y = largest(min_y, smallest(max_y, d.y))
+   });
 
-    // update transoform
+    // update transform
 
     nodes.attr('transform', function(d) {
       return populate_path('translate(X0, Y0)', [d]);
@@ -863,7 +864,7 @@ function onNodeMouseOver(node) {
 
   $('g.node').each(function(i, e) {
     if (e.__data__ == node) {
-      $e = $(e);
+      var $e = $(e);
       var parent = $e.parent();
       $e.remove();
       parent.append($e);

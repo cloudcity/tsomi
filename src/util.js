@@ -16,3 +16,5 @@ export const radial = (point: Point, radius: number, radians: number): Point => 
   y: Math.sin(radians) * radius + point.y
 })
 
+export const smallest = (a : number, b : number): number => a < b ? a : b
+export const largest = (a : number, b : number): number => a > b ? a : b
