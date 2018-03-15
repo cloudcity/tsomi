@@ -1,5 +1,7 @@
 const $ = require('jquery')
 const d3 = require('d3')
+const { History } = require('./components/History')
+
 const { 
   createSpecialData, 
   subjects, 
@@ -7,8 +9,16 @@ const {
   getPerson, 
   searchForPeople 
 } = require('./tsomi-rdf')
-const { convertSpaces, angleRadians, radial, largest, smallest } = require('./util')
-const { History } = require('./components/History')
+
+const {
+  angleRadians,
+  convertSpaces,
+  largest, 
+  parseDate,
+  radial,
+  smallest
+} = require('./util')
+
 const {
   ARROW_WIDTH,
   BACK_BUTTON,
@@ -48,11 +58,7 @@ const {
 
 var nextMidId = 0;
 
-
-// the history of tsomi
 const history = new History()
-
-// date formatter
 
 $(".search-input").keyup(function (e) {
   if (e.keyCode == 13) {
