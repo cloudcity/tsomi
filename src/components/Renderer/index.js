@@ -7,7 +7,7 @@ const {
   lengthen, 
   getPerson, 
   searchForPeople 
-} = require('../tsomi-rdf')
+} = require('../../tsomi-rdf')
 
 const {
   angleRadians,
@@ -20,7 +20,7 @@ const {
   populate_path,
   radial,
   smallest
-} = require('../util')
+} = require('../../util')
 
 const {
   ARROW_WIDTH,
@@ -58,7 +58,7 @@ const {
   UNKNOWN_PERSON,
   WIKI_LOGO,
   WIKI_ICON_WIDTH
-} = require('../constants')
+} = require('../../constants')
 
 // defining a buncha variables that sadly need to be in
 // global scope for now. TODO: refactor this!!
