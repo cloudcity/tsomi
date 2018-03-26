@@ -1,14 +1,3 @@
-/* specify the font face */
-
-@font-face
-{
-  font-family: capita-light-cat;
-  src: url('/static/fonts/capita-light.svg'),
-  url('/static/fonts/capita-light.ttf'),
-  url('/static/fonts/capita-light.eot');
-}
-
-
 /* default to zero padding and margin for all */
 
 * {
@@ -20,7 +9,6 @@
 html {
   position: absolute;
   font-size: 11px;
-  font-family: capita-light-cat;
   width: 100%;
   height: calc(100% - 5px);
   height: -webkit-calc(100% - 5px);
@@ -103,12 +91,6 @@ body {
   cursor: pointer;
 }
 
-#wikidiv {
-  /* position: absolute; */
-  width: 35%;
-  height: 100%;
-	float: right;
-}
 
 .wikibutton {
   visibility: visible;
@@ -215,26 +197,13 @@ path.link {
   opacity: 0.03;
 }
 
-/* .timeline.highlight { */
-/*   opacity: 0.2; */
-/* } */
-
-
 @media only screen and (min-width: 1200px) {
   #chartdiv {
     width: 70%;
   }
-
-  #wikidiv {
-    width: 30%;
-  }
 }
 
 @media only screen and (min-width: 1500px) {
-  #chartdiv {
-    width: 75%;
-  }
-
   #wikidiv {
     width: 25%;
   }
