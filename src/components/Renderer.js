@@ -1,5 +1,6 @@
 const d3 = require('d3')
 const $ = require('jquery')
+const _ = require('lodash')
 
 const { 
   createSpecialData, 
@@ -377,7 +378,7 @@ const createChart = () => {
 
     // handle window resize
     d3.select(window)
-      .on('resize', function() {
+      .on('resize', _.debounce(function() {
         const { width, height } = getViewportDimensions()
 
         d3.select('#chartSVG')
@@ -393,9 +394,10 @@ const createChart = () => {
         
         force
           .size([ width, height ])
+          .start()
 
         axiesGroup.call(timelineAxis)
-      })
+      }), 400)
 
     resolve(svg, force)
   })
@@ -727,11 +729,12 @@ const render = function(history) {
       .text('Show Wiki Text');
 
     force.on('tick', function(event) {
+      const { width, height } = getViewportDimensions()
 
       var k2 = 15 * event.alpha;
       var k = .5 * event.alpha;
-      centerPerson.x += (CHART_WIDTH / 2 - centerPerson.x) * k;
-      centerPerson.y += (CHART_HEIGHT / 2 - centerPerson.y) * k;
+      centerPerson.x += (width / 2 - centerPerson.x) * k;
+      centerPerson.y += (height / 2 - centerPerson.y) * k;
 
       d3.selectAll('path.link')
         .each(function(link) {
@@ -752,7 +755,6 @@ const render = function(history) {
 
       // Make sure that all nodes remain within the top and bottom edges
       // of the display area
-      const { width, height } = getViewportDimensions()
       var min_x = MARGIN;
       var max_x = width - MARGIN;
       var min_y = MARGIN;
