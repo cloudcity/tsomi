@@ -2,11 +2,14 @@
 
 const React = require('react')
 
-const { WikiDiv } = require('../Wikidiv')
+const { render } = require('../Renderer/')
+const { WikiDiv } = require('../Wikidiv/')
+const { History } = require('../History/')
 
 type AppProps = {}
 type AppState = {
-  showWikiDiv: boolean
+  history: History,
+  wikiDivHidden: boolean
 }
 
 class App extends React.Component<AppProps, AppState> {
@@ -16,24 +19,26 @@ class App extends React.Component<AppProps, AppState> {
     super()
 
     this.state = {
-      showWikiDiv: false
+      history: new History(),
+      wikiDivHidden: false
     }
   }
 
-  handleWikiDivClick() {
-    console.log('clicked!!')
-    this.setState({ showWikiDiv: !this.state.showWikiDiv })
+  componentDidMount() {
+    render(this.state.history)
   }
 
   render() {
+    const innerChartDiv = React.createElement('div', { id: 'chart' })
+    const chartDiv = React.createElement('div', {
+      id: 'chartdiv',
+    }, innerChartDiv)
+
     const wikiDiv = React.createElement(WikiDiv, { 
-      shown: this.state.showWikiDiv,
-      onClick: () => this.handleWikiDivClick()
+      hidden: this.state.wikiDivHidden,
     })
 
-    return (
-      wikiDiv
-    )
+    return React.createElement(React.Fragment, {}, chartDiv, wikiDiv)
   }
 }
 
