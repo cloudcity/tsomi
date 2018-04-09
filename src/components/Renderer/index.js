@@ -120,7 +120,6 @@ function setWikiPage(node) {
     page += PRINTABLE_PARAM;
 
   var wiki = d3.select('#wikiframe')
-    .attr('onload', 'setWikiConnectButtonVisibility(true)')
     .attr('src', page);
 }
 
@@ -301,7 +300,7 @@ const createChart = () => {
     // add back button
     svg.append('g')
       .attr('transform', 'translate(' +
-            (FB_BUTTON_X - FB_BUTTON_X_OFF) + ', ' +
+            (FB_BUTTON_X() - FB_BUTTON_X_OFF) + ', ' +
             (FB_BUTTON_Y) + ')')
       .append('image')
       .classed('backbutton', true)
@@ -317,7 +316,7 @@ const createChart = () => {
 
     svg.append('g')
       .attr('transform', 'translate(' +
-            (FB_BUTTON_X + FB_BUTTON_X_OFF) + ', ' +
+            (FB_BUTTON_X() + FB_BUTTON_X_OFF) + ', ' +
             (FB_BUTTON_Y) + ')')
       .append('image')
       .classed('forwardbutton', true)
@@ -342,7 +341,7 @@ const createChart = () => {
       
     axiesGroup = svg
       .append('g')
-      .attr('transform', 'translate(0, ' + TIMELINE_Y + ')')
+      .attr('transform', 'translate(0, ' + TIMELINE_Y() + ')')
       .classed('axies', true)
       .attr('class', 'axis');
 
@@ -404,33 +403,31 @@ const createChart = () => {
 }
 
 const render = function(history) {
-  $(document).ready(function() {
-    createChart().then((svg) => {
-      createSpecialData(function() {
-        var subject = establishInitialSubject();
-        querySubject(lengthen(subject, true), true, false, function () {
-          svg.selectAll('text.static-text')
-            .transition()
-            .duration(2000)
-            .style('fill', '#bbb');
+  createChart().then((svg) => {
+    createSpecialData(function() {
+      var subject = establishInitialSubject();
+      querySubject(lengthen(subject, true), true, false, function () {
+        svg.selectAll('text.static-text')
+          .transition()
+          .duration(2000)
+          .style('fill', '#bbb');
 
-          svg.selectAll('text.loading')
-            .transition()
-            .style('fill', 'white')
-            .remove();
-        });
+        svg.selectAll('text.loading')
+          .transition()
+          .style('fill', 'white')
+          .remove();
+      });
 
-        $(document).keydown(function(e){
-          switch (e.keyCode) {
+      $(document).keydown(function(e){
+        switch (e.keyCode) {
           case 37:
             goBack();
             break;
           case 39:
             goForward();
             break;
-          }
-        });
-      })
+        }
+      });
     })
   })
 
@@ -746,7 +743,7 @@ const render = function(history) {
           }
         })
         .attr('d', arrowPath);
-
+      
       timelinesGroup.selectAll('.timeline')
         .classed('highlight', function(d) {return d.getId() == centerPerson.getId();})
         .attr('d', timelinePath);
@@ -777,12 +774,12 @@ const render = function(history) {
   function timelinePath(node) {
     var TIMELINE_UPSET = 50;
 
-    var birth = {x: timelineScale(node.getProperty('birthDate')), y: TIMELINE_Y};
-    var bc1 = {x: node.x, y: TIMELINE_Y - TIMELINE_UPSET};
-    var bc2 = {x: birth.x, y: TIMELINE_Y - TIMELINE_UPSET};
-    var death = {x: timelineScale(node.getProperty('deathDate')), y: TIMELINE_Y};
-    var dc1 = {x: death.x, y: TIMELINE_Y - TIMELINE_UPSET};
-    var dc2 = {x: node.x, y: TIMELINE_Y - TIMELINE_UPSET};
+    var birth = {x: timelineScale(node.getProperty('birthDate')), y: TIMELINE_Y()};
+    var bc1 = {x: node.x, y: TIMELINE_Y() - TIMELINE_UPSET};
+    var bc2 = {x: birth.x, y: TIMELINE_Y() - TIMELINE_UPSET};
+    var death = {x: timelineScale(node.getProperty('deathDate')), y: TIMELINE_Y()};
+    var dc1 = {x: death.x, y: TIMELINE_Y() - TIMELINE_UPSET};
+    var dc2 = {x: node.x, y: TIMELINE_Y() - TIMELINE_UPSET};
 
     return populate_path(
       'M X0 Y0 C X1 Y1 X2 Y2 X3 Y3 L X4 Y4 C X5 Y5 X6 Y6 X7 Y7', [node, bc1, bc2, birth, death, dc1, dc2, node]);

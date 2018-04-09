@@ -1,4 +1,5 @@
 const $ = require('jquery')
+const { getViewportDimensions } = require('./util')
 
 const ARROW_WIDTH = 6
 const BACK_BUTTON = 'static/images/backbutton.png'
@@ -13,7 +14,7 @@ const CHARGE_RANDOM = 0
 const DEFAULT_DURATION = 1000
 const FB_BUTTON_SIZE = 34
 const FB_BUTTON_X_OFF = (80 - FB_BUTTON_SIZE) / 2
-const FB_BUTTON_X = CHART_WIDTH - 60
+const FB_BUTTON_X = () => getViewportDimensions().width - 60
 const FB_BUTTON_Y = 125
 const FORWARD_BUTTON = 'static/images/forwardbutton.png'
 const GRAVITY = 0
@@ -101,7 +102,7 @@ const subjects = {
 const TIMELINE_OPACITY = 0.03
 const TIMELINE_HIGHLIGHT_OPACITY = 0.4
 const TIMELINE_MARGIN = 50
-const TIMELINE_Y = (CHART_HEIGHT - 20)
+const TIMELINE_Y = () => getViewportDimensions().height - 20
 const UNKNOWN_PERSON = 'static/images/unknown.png'
 const WIKI_LOGO = 'static/images/Wikipedia-logo.png'
 const WIKI_ICON_WIDTH = 30
