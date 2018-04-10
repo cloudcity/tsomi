@@ -384,7 +384,11 @@ const createChart = () => {
           .attr('height', height)
           .attr('width', width)
         
-        timelineScale.range([ 0, width - 1])
+        nodeGroup
+          .attr('height', height)
+          .attr('width', width)
+       
+        timelineScale.range([ 0, width - 1 ])
 
         timelineAxis = d3.svg.axis()
           .scale(timelineScale)
@@ -395,7 +399,9 @@ const createChart = () => {
           .size([ width, height ])
           .start()
 
-        axiesGroup.call(timelineAxis)
+        axiesGroup
+          .attr('transform', 'translate(0, ' + TIMELINE_Y() + ')')
+          .call(timelineAxis)
       }), 400)
 
     resolve(svg, force)
