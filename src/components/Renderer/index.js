@@ -117,7 +117,10 @@ function setWikiPage(node) {
   var page = node.getProperty('wikiTopic');
 
   if (PRINTABLE && page.indexOf('wikipedia.org') >= 0)
-    page += PRINTABLE_PARAM;
+    page = (page + PRINTABLE_PARAM).replace(
+      /en./,
+      'en.m.'
+    );
 
   var wiki = d3.select('#wikiframe')
     .attr('src', page);
