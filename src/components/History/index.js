@@ -1,6 +1,6 @@
 // @flow
 
-const { last } = require('../util')
+const { last } = require('../../util')
 
 class History {
   past: Array<string>

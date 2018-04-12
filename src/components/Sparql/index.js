@@ -2,7 +2,7 @@
 
 const $ = require('jquery')
 
-const { prefixies, QUERY_URL } = require('../constants')
+const { prefixies, QUERY_URL } = require('../../constants')
 
 type QueryVariables = {
   subject?: string,
