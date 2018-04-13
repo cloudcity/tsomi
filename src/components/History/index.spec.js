@@ -1,4 +1,4 @@
-const { History } = require('./History')
+const { History } = require('./index')
 
 describe('History', () => {
   let h
