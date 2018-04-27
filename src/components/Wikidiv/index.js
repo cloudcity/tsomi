@@ -3,11 +3,19 @@
 const React = require('react')
 require('./main.css')
 
-const WikiDiv = () => {
+type WikiDivProps = {
+  hidden: boolean,
+  onLoad: Function,
+  subject: string,
+  url: string
+}
+
+const WikiDiv = ({ url, onLoad }: WikiDivProps) => {
   const iframe = React.createElement('iframe', { 
-    name: 'wiki', 
+    name: 'wiki',
     id: 'wikiframe', 
-    src: ''
+    onLoad,
+    src: url,
   })
 
   return React.createElement('div', {
