@@ -1,0 +1,38 @@
+nav {
+  font-family: sans-serif;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: left;
+  background-color: rgb(47, 59, 78);
+  padding: 0 30px;
+  box-sizing: border-box;
+  color: white;
+}
+
+nav > * { flex: 1; }
+nav > div { display: flex; align-items: center; }
+
+nav img {
+  height: 40px;
+  width: 40px;
+  border-radius: 50%;
+  margin: 0 20px 0 0;
+}
+
+nav h1 {
+  color: white;
+}
+
+nav a {
+  color: rgba(180, 200, 255, 0.7);
+  font-size: 1.4em;
+  cursor: pointer;
+}
+
+nav div.right { display: flex; justify-content: flex-end; }
+
