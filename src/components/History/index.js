@@ -40,9 +40,7 @@ class History {
     if(!this.hasPast())
       return false
     
-    console.log(JSON.stringify(this.past))
     const p = this.past.pop()
-    console.log(JSON.stringify(this.past))
 
     this.future.push(p)
     return p
