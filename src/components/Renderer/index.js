@@ -77,22 +77,11 @@ let CHART_WIDTH
 let CHART_HEIGHT
 
 // utility functions
-function establishInitialSubject() {
-  var subject = subjects.oats;
-  var urlSubject = getURLParameter('subject');
-
-  if (urlSubject != 'null') {
-    subject = 'dbpedia:' + convertSpaces(urlSubject);
-  }
-  
-  else {
-    urlSubject = getURLParameter('subject_raw');
-    if (urlSubject != 'null') {
-      subject = 'dbpedia:' + urlSubject;
-    }
-  }
-
-  return subject;
+const establishInitialSubject = () => {
+  const urlSubject = getURLParameter('subject')
+  return urlSubject
+    ? `dbpedia:${urlSubject}`
+    : subjects.oats
 }
 
 function limitScreenNodes(graph) {
@@ -110,20 +99,6 @@ function limitScreenNodes(graph) {
       }
     });
   }
-}
-
-function setWikiPage(node) {
-  setWikiConnectButtonVisibility(false);
-  var page = node.getProperty('wikiTopic');
-
-  if (PRINTABLE && page.indexOf('wikipedia.org') >= 0)
-    page = (page + PRINTABLE_PARAM).replace(
-      /en./,
-      'en.m.'
-    );
-
-  var wiki = d3.select('#wikiframe')
-    .attr('src', page);
 }
 
 function scaleElement(element, scale, duration, ease) {
@@ -407,6 +382,11 @@ const createChart = () => {
           .call(timelineAxis)
       }), 400)
 
+      d3.select(window).on('popstate', () => {
+        if(window.goBack)
+          window.goBack()
+      })
+
     resolve(svg, force)
   })
 }
@@ -425,17 +405,6 @@ const render = function(history) {
           .transition()
           .style('fill', 'white')
           .remove();
-      });
-
-      $(document).keydown(function(e){
-        switch (e.keyCode) {
-          case 37:
-            goBack();
-            break;
-          case 39:
-            goForward();
-            break;
-        }
       });
     })
   })

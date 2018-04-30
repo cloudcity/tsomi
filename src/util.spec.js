@@ -41,11 +41,11 @@ describe('getURLParameter', () => {
   it('should correctly give back the url parameter', () => {
     const answers = [
       [ '?hello=goodbye', 'hello', decodeURI('goodbye') ],
-      [ '?hello=goodbye', 'goodbye', 'null' ]
+      [ '?hello=goodbye', 'goodbye', undefined ]
     ]
 
     answers.forEach(([ params, name, expected ]) => 
-      expect(getURLParameter(params, name)).toEqual(expected))
+      expect(getURLParameter(name, params)).toEqual(expected))
   })
 })
 describe('smallest', () => {

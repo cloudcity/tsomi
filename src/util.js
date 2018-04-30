@@ -15,6 +15,7 @@ type Viewport = {
 }
 
 const getViewportDimensions = (): Viewport => ({
+  // the navbar is 60px tall, so we subtract 60 from the height we report here.
   height: $('#chart').height(),
   width:  $('#chart').width()
 })
@@ -47,8 +48,8 @@ const queryParamsToHash = (str: string) =>
     return acc
   }, {})
 
-const getURLParameter = (params: string, name: string) =>
-  queryParamsToHash(params)[name] || 'null'
+const getURLParameter = (name: string, params: string = window.location.search) =>
+  queryParamsToHash(params)[name]
 
 const getURLElement = (name: string) => 
   /\/tsomi\/(.*)/.test(name)
@@ -64,6 +65,9 @@ const populate_path = (path: string, points: Array<Point>) => {
   })
   return path
 }
+
+const isAboutPage = (href: string = window.location.href) => 
+  last(href.split('/')) === 'about'
   
 module.exports = {
   angleRadians,
@@ -71,6 +75,7 @@ module.exports = {
   getURLElement,
   getURLParameter,
   getViewportDimensions,
+  isAboutPage,
   largest,
   last,
   parseDate,
