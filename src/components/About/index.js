@@ -5,6 +5,9 @@ type AboutProps = {
   goBack: Function
 }
 
+const linkTo = (name: string): string =>
+  `${window.location.origin}/?subject=${name}`
+
 const About = ({ goBack }: AboutProps) => {
   const heading = React.createElement('h1', {}, 'The Sphere of My Influence')
   const logo = React.createElement('img', {
@@ -16,12 +19,12 @@ const About = ({ goBack }: AboutProps) => {
     'the flow of influences between people of note.'
   )
 
-  const steph = React.createElement('a', { href: '' }, 'Stephanie Geerlings')
-  const trebor = React.createElement('a', { href: '' }, 'Robert Harris')
-  const ccd = React.createElement('a', { href: '' }, 'Cloud City')
-  const d3 = React.createElement('a', { href: '' }, 'd3.js')
-  const sparql = React.createElement('a', { href: '' }, 'sparql')
-  const dbpedia = React.createElement('a', { href: '' }, 'dbpedia')
+  const steph = React.createElement('a', { href: 'https://www.linkedin.com/in/stephaniegeerlings' }, 'Stephanie Geerlings')
+  const trebor = React.createElement('a', { href: 'http://trebor.org/fdl/home' }, 'Robert Harris')
+  const ccd = React.createElement('a', { href: 'https://www.cloudcity.io/' }, 'Cloud City')
+  const d3 = React.createElement('a', { href: 'https://d3js.org/' }, 'd3.js')
+  const sparql = React.createElement('a', { href: 'https://www.w3.org/TR/rdf-sparql-query/' }, 'sparql')
+  const dbpedia = React.createElement('a', { href: 'http://wiki.dbpedia.org/' }, 'dbpedia')
 
   const explain = React.createElement('p', {}, 
     'Created by ', steph, ', ', trebor, ' and ', ccd, ', TSOMI was hand-crafted ' +
@@ -29,10 +32,10 @@ const About = ({ goBack }: AboutProps) => {
     'between persons who appear in Wikipedia.'
   )
 
-  const debeauvoir = React.createElement('a', { href: '' }, 'Simone de Beauvoir')
-  const dylan = React.createElement('a', { href: '' }, 'Bob Dylan')
-  const kahlo = React.createElement('a', { href: '' }, 'Frida Kahlo')
-  const einstein = React.createElement('a', { href: '' }, 'Albert Einstein')
+  const debeauvoir = React.createElement('a', { href: linkTo('Simone_de_Beauvoir') }, 'Simone de Beauvoir')
+  const dylan = React.createElement('a', { href: linkTo('Bob_Dylan') }, 'Bob Dylan')
+  const kahlo = React.createElement('a', { href: linkTo('Frida_Kahlo') }, 'Frida Kahlo')
+  const einstein = React.createElement('a', { href: linkTo('Albert_Einstein') }, 'Albert Einstein')
 
   const wrapInLi = el => 
     React.createElement('li', {}, el)
