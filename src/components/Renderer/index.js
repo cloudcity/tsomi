@@ -421,7 +421,7 @@ const render = function(history) {
         centerPerson = graph.getNode(subjectId)
         limitScreenNodes(graph)
         updateChart(graph, force)
-        setWikiPage(centerPerson)
+        window.mediator.getEntry('react', 'setWikiPage')(centerPerson)
       }
 
       callback && callback()
@@ -940,8 +940,9 @@ const render = function(history) {
       .attr('transform', 'scale(1)');
 
     var event = d3.event;
-    setWikiPage(node);
     event.stopPropagation();
+
+    window.mediator.getEntry('react', 'setWikiPage')(node);
   }
 
   function showBackButton() {
