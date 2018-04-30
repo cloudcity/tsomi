@@ -1,4 +1,4 @@
-const { History } = require('./index')
+const { History } = require('./')
 
 describe('History', () => {
   let h
@@ -23,8 +23,8 @@ describe('History', () => {
     h.goTo('chaucer')
     h.goTo('longfellow')
 
-    h.goBack()
-    expect(h.current()).toEqual('chaucer')
+    const chaucer = h.goBack()
+    expect(chaucer).toEqual('chaucer')
   })
   
   it('should be able to go forward in time', () => {

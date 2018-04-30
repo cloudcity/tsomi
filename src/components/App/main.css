@@ -1,0 +1,11 @@
+@import url('https://fonts.googleapis.com/css?family=Montserrat');
+
+div.container-wrapper {
+  font-family: 'Montserrat', sans-serif;
+  position: absolute;
+  top: 60px;
+  left: 0;
+  height: calc(100vh - 60px);
+  width: 100vw;
+}
+

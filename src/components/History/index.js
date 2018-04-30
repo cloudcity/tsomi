@@ -28,7 +28,8 @@ class History {
   }
 
   goTo(str: string) {
-    this.past.push(str)
+    if(last(this.past) !== str)
+      this.past.push(str)
   }
 
   addToFuture(str: string) {
@@ -38,8 +39,9 @@ class History {
   goBack() {
     if(!this.hasPast())
       return false
-
+    
     const p = this.past.pop()
+
     this.future.push(p)
     return this.current()
   }
