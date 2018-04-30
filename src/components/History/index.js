@@ -43,7 +43,7 @@ class History {
     const p = this.past.pop()
 
     this.future.push(p)
-    return p
+    return this.current()
   }
 
   goForward() {
