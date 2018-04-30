@@ -8,7 +8,7 @@ type AboutProps = {
 const About = ({ goBack }: AboutProps) => {
   const heading = React.createElement('h1', {}, 'The Sphere of My Influence')
   const logo = React.createElement('img', {
-    src: 'http://via.placeholder.com/200x200'
+    src: 'static/images/logo.svg'
   })
 
   const tagline = React.createElement('p', {}, 

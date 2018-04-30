@@ -1,5 +1,5 @@
 nav {
-  font-family: sans-serif;
+  font-family: 'Montserrat', sans-serif;
   position: absolute;
   top: 0;
   left: 0;
@@ -26,6 +26,7 @@ nav img {
 
 nav h1 {
   color: white;
+  font-size: 1.4em;
 }
 
 nav a {
