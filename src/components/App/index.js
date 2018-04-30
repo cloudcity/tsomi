@@ -2,6 +2,7 @@
 
 const React = require('react')
 
+const mediator = require('../Mediator/')
 const { render } = require('../Renderer/')
 const { WikiDiv } = require('../Wikidiv/')
 const { Navbar } = require('../Navbar/')
@@ -50,11 +51,12 @@ class App extends React.Component<AppProps, AppState> {
       wikiDivHidden: false,
       url: getUrlFromSubject(),
     }
+    
+    window.mediator = mediator
+    mediator.addEntry('react', 'setWikiPage', this.setWikiPage.bind(this))
   }
 
   componentDidMount() {
-    window.setWikiPage = this.setWikiPage.bind(this) // good god i'm so sorry
-
     if (!this.state.showAboutPage)
       render(this.state.history)
   }
