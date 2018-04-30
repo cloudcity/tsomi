@@ -6,7 +6,7 @@ type NavbarProps = {
 }
 
 const Navbar = ({ toggleAbout }: NavbarProps) => {
-  const logo = React.createElement('img', { src: 'http://via.placeholder.com/50x50' })
+  const logo = React.createElement('img', { src: 'static/images/logo.svg' })
   const title = React.createElement('h1', {}, 'THE SPHERE OF MY INFLUENCE')
   const about = React.createElement('a', { onClick: toggleAbout }, 'About')
 
