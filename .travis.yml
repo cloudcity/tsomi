@@ -6,10 +6,6 @@ node_js:
 script:
   npm run build
 
-branches:
-  only:
-    - gh-pages
-
 deploy:
   provider: pages
   skip-cleanup: true
