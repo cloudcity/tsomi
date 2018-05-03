@@ -10731,7 +10731,6 @@ var predicates = {
   dob: 'dbpedia-owl:birthDate',
   dod: 'dbpedia-owl:deathDate'
 };
-var prefixies = [{ prefix: 'rdf', uri: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#' }, { prefix: 'fn', uri: 'http://www.w3.org/2005/xpath-functions#' }, { prefix: 'dbcat', uri: 'http://dbpedia.org/resource/Category/' }, { prefix: 'rdfs', uri: 'http://www.w3.org/2000/01/rdf-schema#' }, { prefix: 'skos', uri: 'http://www.w3.org/2004/02/skos/core/' }, { prefix: 'xsd', uri: 'http://www.w3.org/2001/XMLSchema#' }, { prefix: 'dc', uri: 'http://purl.org/dc/elements/1.1/' }, { prefix: 'owl', uri: 'http://www.w3.org/2002/07/owl#' }, { prefix: 'wiki', uri: 'http://en.wikipedia.org/wiki/' }, { prefix: 'dbpedia-owl', uri: 'http://dbpedia.org/ontology/' }, { prefix: 'dbprop', uri: 'http://dbpedia.org/property/' }, { prefix: 'dbpedia', uri: 'http://dbpedia.org/resource/' }, { prefix: 'prov', uri: 'http://www.w3.org/ns/prov#' }, { prefix: 'foaf', uri: 'http://xmlns.com/foaf/0.1/' }, { prefix: 'dcterms', uri: 'http://purl.org/dc/terms/' }];
 var PRINTABLE = true;
 var PRINTABLE_PARAM = '?printable=yes';
 var QUERY_URL = 'http://dbpedia.org/sparql?default-graph-uri=http%3A%2F%2Fdbpedia.org&format=json&query=';
@@ -10806,7 +10805,6 @@ module.exports = {
   NODE_SIZE: NODE_SIZE,
   personalDetails: personalDetails,
   predicates: predicates,
-  prefixies: prefixies,
   PRINTABLE: PRINTABLE,
   PRINTABLE_PARAM: PRINTABLE_PARAM,
   QUERY_URL: QUERY_URL,
@@ -57011,10 +57009,10 @@ var $ = __webpack_require__(3);
 var _require = __webpack_require__(4),
     personalDetails = _require.personalDetails,
     predicates = _require.predicates,
-    prefixies = _require.prefixies,
     subjects = _require.subjects;
 
 var _require2 = __webpack_require__(40),
+    rdfPrefixies = _require2.rdfPrefixies,
     Sparql = _require2.Sparql;
 
 var sparql = new Sparql();
@@ -57164,38 +57162,6 @@ WHERE\n\
 
 var query_describe = 'DESCRIBE %target%';
 
-var query_search = 'SELECT ?person ?name COUNT(?inf) as ?score \
-WHERE { \
-  ?person a foaf:Person. \
-  ?person foaf:name ?name. \
-\
-  {?inf dbpedia-owl:influenced ?person.} \
-  UNION \
-  {?person dbpedia-owl:influenced ?inf.} \
-  UNION \
-  {?inf dbpedia-owl:influencedBy ?person.} \
-  UNION \
-  {?person dbpedia-owl:influencedBy ?inf.} \
-  UNION \
-  {?inf dbprop:influenced ?person.} \
-  UNION \
-  {?person dbprop:influenced ?inf.} \
-  UNION \
-  {?inf dbprop:influences ?person.} \
-  UNION \
-  {?person dbprop:influences ?inf.} \
-\
-  filter( regex(str(?name), "%search_query%", "i")). \
-} \
-ORDER BY DESC(?score) \
-LIMIT 10';
-
-function searchForPeople(queryString, callback) {
-  sparql.query(query_search, { search_query: queryString.trim() }, function (data) {
-    callback(data.results ? data.results.bindings : []);
-  });
-}
-
 var display_results = function display_results(data) {
   console.log(data);
   var keys = data.head.vars;
@@ -57216,7 +57182,7 @@ function binding_to_string(binding) {
     switch (binding.type) {
       case 'uri':
         //result = binding.value;
-        result = prefix_uri(prefixies, binding.value);
+        result = prefix_uri(rdfPrefixies, binding.value);
         break;
       case 'literal':
         result = '[' + binding.value.substring(0, 30) + ']';
@@ -57253,7 +57219,7 @@ function lengthen(uri, bracket) {
   var prefixName = symbols[0];
   var id = symbols[1];
 
-  prefixies.some(function (prefix) {
+  rdfPrefixies.some(function (prefix) {
     if (prefix.prefix == prefixName) {
       result = prefix.uri + id;
       if (bracket) result = '<' + encodeURI(result) + '>';
@@ -57267,7 +57233,7 @@ function lengthen(uri, bracket) {
 function shorten(uri) {
   var len = uri.length;
   if (uri[0] == '<' && uri[len - 1] == '>') uri = uri.substring(1, len - 1);
-  return prefix_uri(prefixies, uri);
+  return prefix_uri(rdfPrefixies, uri);
 }
 
 // convert prefix table to string
@@ -57438,8 +57404,7 @@ module.exports = {
   createSpecialData: createSpecialData,
   subjects: subjects,
   lengthen: lengthen,
-  getPerson: getPerson,
-  searchForPeople: searchForPeople
+  getPerson: getPerson
 };
 
 /***/ }),
@@ -57448,20 +57413,51 @@ module.exports = {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var $ = __webpack_require__(3);
+var _require = __webpack_require__(202),
+    encodeFormBody = _require.encodeFormBody,
+    httpErrorPromise = _require.httpErrorPromise;
 
-var _require = __webpack_require__(4),
-    prefixies = _require.prefixies,
-    QUERY_URL = _require.QUERY_URL;
+var DBPEDIA_URL = 'http://dbpedia.org/sparql';
 
-var prefix_table_to_string = function prefix_table_to_string(prefixies) {
-  return prefixies.reduce(function (acc, _ref) {
-    var prefix = _ref.prefix,
-        uri = _ref.uri;
-    return acc + ('PREFIX ' + prefix + ': <' + uri + '>\n');
-  }, '');
+/* eslint no-multi-spaces: off */
+var rdfPrefixies = [{ prefix: 'rdf', uri: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#' }, { prefix: 'fn', uri: 'http://www.w3.org/2005/xpath-functions#' }, { prefix: 'dbcat', uri: 'http://dbpedia.org/resource/Category/' }, { prefix: 'rdfs', uri: 'http://www.w3.org/2000/01/rdf-schema#' }, { prefix: 'skos', uri: 'http://www.w3.org/2004/02/skos/core/' }, { prefix: 'xsd', uri: 'http://www.w3.org/2001/XMLSchema#' }, { prefix: 'dc', uri: 'http://purl.org/dc/elements/1.1/' }, { prefix: 'owl', uri: 'http://www.w3.org/2002/07/owl#' }, { prefix: 'wiki', uri: 'http://en.wikipedia.org/wiki/' }, { prefix: 'dbpedia-owl', uri: 'http://dbpedia.org/ontology/' }, { prefix: 'dbprop', uri: 'http://dbpedia.org/property/' }, { prefix: 'dbpedia', uri: 'http://dbpedia.org/resource/' }, { prefix: 'prov', uri: 'http://www.w3.org/ns/prov#' }, { prefix: 'foaf', uri: 'http://xmlns.com/foaf/0.1/' }, { prefix: 'dcterms', uri: 'http://purl.org/dc/terms/' }];
+
+var rdfPrefixStr = rdfPrefixies.reduce(function (acc, _ref) {
+  var prefix = _ref.prefix,
+      uri = _ref.uri;
+  return acc + ' PREFIX ' + prefix + ': <' + uri + '>\n';
+}, '');
+
+var applyQueryTemplate = function applyQueryTemplate(template, variables) {
+  var query = Object.entries(variables).reduce(function (q, _ref2) {
+    var _ref3 = _slicedToArray(_ref2, 2),
+        name = _ref3[0],
+        value = _ref3[1];
+
+    return q.replace(new RegExp('%' + name + '%', 'g'), value);
+  }, template);
+  return rdfPrefixStr + '\n' + query;
+};
+
+var runSparqlQuery = function runSparqlQuery(template, variables) {
+  var queryString = applyQueryTemplate(template, variables);
+
+  var params = {
+    'default-graph-uri': 'http://dbpedia.org',
+    format: 'json',
+    query: queryString
+  };
+
+  var uri = DBPEDIA_URL + '?' + encodeFormBody(params);
+
+  return fetch(uri, { method: 'GET' }).then(function (resp) {
+    if (!resp.ok) return httpErrorPromise(resp);
+    return resp.json();
+  });
 };
 
 var Sparql = function () {
@@ -57471,17 +57467,15 @@ var Sparql = function () {
 
   _createClass(Sparql, [{
     key: 'query',
+
+    /* eslint class-methods-use-this: "off" */
+    /* eslint no-console: "off" */
     value: function query(_query, variables, callback) {
-      Object.keys(variables).forEach(function (variable) {
-        _query = _query.replace(new RegExp('%' + variable + '%', 'g'), variables[variable]);
-      });
-
-      _query = prefix_table_to_string(prefixies) + '\n' + _query;
-
-      $.getJSON(QUERY_URL + escape(_query)).then(function (data) {
-        callback(data);
-      }, function (error) {
-        console.log('HTTP error'), callback(undefined);
+      runSparqlQuery(_query, variables).then(function (data) {
+        return callback(data);
+      }).catch(function (exc) {
+        console.log(exc);
+        callback(undefined);
       });
     }
   }]);
@@ -57489,7 +57483,7 @@ var Sparql = function () {
   return Sparql;
 }();
 
-module.exports = { Sparql: Sparql };
+module.exports = { Sparql: Sparql, runSparqlQuery: runSparqlQuery, rdfPrefixies: rdfPrefixies };
 
 /***/ }),
 /* 41 */
@@ -57797,7 +57791,7 @@ exports = module.exports = __webpack_require__(8)(false);
 
 
 // module
-exports.push([module.i, "nav {\n  font-family: 'Montserrat', sans-serif;\n  position: absolute;\n  top: 0;\n  left: 0;\n  width: 100vw;\n  height: 60px;\n  display: flex;\n  align-items: center;\n  justify-content: left;\n  background-color: rgb(47, 59, 78);\n  padding: 0 30px;\n  box-sizing: border-box;\n  color: white;\n}\n\nnav > * { flex: 1; }\nnav > div { display: flex; align-items: center; }\n\nnav img {\n  height: 40px;\n  width: 40px;\n  border-radius: 50%;\n  margin: 0 20px 0 0;\n}\n\nnav h1 {\n  color: white;\n  font-size: 1.4em;\n}\n\nnav a {\n  color: rgba(180, 200, 255, 0.7);\n  font-size: 1.4em;\n  cursor: pointer;\n}\n\nnav div.right { display: flex; justify-content: flex-end; }\n\n", ""]);
+exports.push([module.i, "nav {\n  font-family: 'Montserrat', sans-serif;\n  position: absolute;\n  top: 0;\n  left: 0;\n  width: 100vw;\n  height: 60px;\n  display: flex;\n  align-items: center;\n  justify-content: left;\n  background-color: rgb(47, 59, 78);\n  padding: 0 30px;\n  box-sizing: border-box;\n  color: white;\n}\n\nnav > * { flex: 1; }\nnav > div { display: flex; align-items: center; }\nnav > div h1 { cursor: pointer; }\n\nnav img {\n  height: 40px;\n  width: 40px;\n  border-radius: 50%;\n  margin: 0 20px 0 0;\n}\n\nnav h1 {\n  color: white;\n  font-size: 1.4em;\n}\n\nnav a {\n  color: rgba(180, 200, 255, 0.7);\n  font-size: 1.4em;\n  cursor: pointer;\n}\n\nnav div.right { display: flex; justify-content: flex-end; }\n\n", ""]);
 
 // exports
 
@@ -67541,6 +67535,46 @@ var inputElement = function inputElement(e) {
 };
 
 module.exports = { inputElement: inputElement };
+
+/***/ }),
+/* 202 */
+/***/ (function(module, exports) {
+
+
+
+var HttpError = function HttpError(statusCode, message) {
+  return {
+    type: 'HttpError',
+    statusCode: statusCode,
+    message: message
+  };
+};
+
+var httpErrorPromise = function httpErrorPromise(response) {
+  if (response.headers.get('Content-Type').startsWith('application/json')) {
+    return response.json().then(function (js) {
+      throw HttpError(response.status, js.errorMessages);
+    });
+  }
+  return response.text().then(function (text) {
+    throw HttpError(response.status, text);
+  });
+};
+
+/* pulled this directly from https://stackoverflow.com/questions/35325370/how-to-post-a-x-www-form-urlencoded-request-from-react-native */
+var encodeFormBody = function encodeFormBody(params
+/* TODO: can this be more easily expressed with lodash/fp? */
+) {
+  return Object.keys(params).map(function (key) {
+    return encodeURIComponent(key) + '=' + encodeURIComponent(params[key]);
+  }).join('&');
+};
+
+module.exports = {
+  HttpError: HttpError,
+  encodeFormBody: encodeFormBody,
+  httpErrorPromise: httpErrorPromise
+};
 
 /***/ })
 /******/ ]);
