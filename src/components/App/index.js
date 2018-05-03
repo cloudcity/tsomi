@@ -87,9 +87,14 @@ class App extends React.Component<AppProps, AppState> {
     this.setState({ showAboutPage: !this.state.showAboutPage })
   }
 
+  goHome() {
+    this.setState({ showAboutPage: false })
+  }
+
   render() {
     const navbar = React.createElement(Navbar, {
       key: 'navbar', 
+      goHome: () => this.goHome(),
       toggleAbout: () => this.toggleAboutPage()
     })
     

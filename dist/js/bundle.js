@@ -39006,12 +39006,20 @@ var App = function (_React$Component) {
       this.setState({ showAboutPage: !this.state.showAboutPage });
     }
   }, {
+    key: 'goHome',
+    value: function goHome() {
+      this.setState({ showAboutPage: false });
+    }
+  }, {
     key: 'render',
     value: function render() {
       var _this2 = this;
 
       var navbar = React.createElement(Navbar, {
         key: 'navbar',
+        goHome: function goHome() {
+          return _this2.goHome();
+        },
         toggleAbout: function toggleAbout() {
           return _this2.toggleAboutPage();
         }
