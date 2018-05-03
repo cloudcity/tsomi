@@ -57662,12 +57662,11 @@ var Navbar = function Navbar(_ref) {
   var toggleAbout = _ref.toggleAbout,
       goHome = _ref.goHome;
 
-  var logo = React.createElement('a', { onClick: goHome }, React.createElement('img', { src: 'static/images/logo.svg' }));
+  var logo = React.createElement('div', { onClick: goHome }, React.createElement('img', { src: 'static/images/logo.svg' }), React.createElement('h1', {}, 'THE SPHERE OF MY INFLUENCE'));
 
-  var title = React.createElement('h1', {}, 'THE SPHERE OF MY INFLUENCE');
   var about = React.createElement('a', { onClick: toggleAbout }, 'About');
 
-  return React.createElement('nav', {}, React.createElement('div', {}, logo, title), React.createElement('div', { className: 'right' }, about));
+  return React.createElement('nav', {}, logo, React.createElement('div', { className: 'right' }, about));
 };
 
 module.exports = { Navbar: Navbar };
@@ -57731,7 +57730,7 @@ exports = module.exports = __webpack_require__(8)(false);
 
 
 // module
-exports.push([module.i, "nav {\n  font-family: 'Montserrat', sans-serif;\n  position: absolute;\n  top: 0;\n  left: 0;\n  width: 100vw;\n  height: 60px;\n  display: flex;\n  align-items: center;\n  justify-content: left;\n  background-color: rgb(47, 59, 78);\n  padding: 0 30px;\n  box-sizing: border-box;\n  color: white;\n}\n\nnav > * { flex: 1; }\nnav > div { display: flex; align-items: center; }\n\nnav img {\n  height: 40px;\n  width: 40px;\n  border-radius: 50%;\n  margin: 0 20px 0 0;\n}\n\nnav h1 {\n  color: white;\n  font-size: 1.4em;\n}\n\nnav a {\n  color: rgba(180, 200, 255, 0.7);\n  font-size: 1.4em;\n  cursor: pointer;\n}\n\nnav div.right { display: flex; justify-content: flex-end; }\n\n", ""]);
+exports.push([module.i, "nav {\n  font-family: 'Montserrat', sans-serif;\n  position: absolute;\n  top: 0;\n  left: 0;\n  width: 100vw;\n  height: 60px;\n  display: flex;\n  align-items: center;\n  justify-content: left;\n  background-color: rgb(47, 59, 78);\n  padding: 0 30px;\n  box-sizing: border-box;\n  color: white;\n}\n\nnav > * { flex: 1; }\nnav > div { display: flex; align-items: center; }\nnav > div h1 { cursor: pointer; }\n\nnav img {\n  height: 40px;\n  width: 40px;\n  border-radius: 50%;\n  margin: 0 20px 0 0;\n}\n\nnav h1 {\n  color: white;\n  font-size: 1.4em;\n}\n\nnav a {\n  color: rgba(180, 200, 255, 0.7);\n  font-size: 1.4em;\n  cursor: pointer;\n}\n\nnav div.right { display: flex; justify-content: flex-end; }\n\n", ""]);
 
 // exports
 
