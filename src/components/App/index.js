@@ -15,6 +15,8 @@ require('./main.css')
 type AppProps = {}
 type AppState = {
   history: History,
+  influencers: number,
+  influenced: number,
   showAboutPage: boolean,
   subject: string,
   wikiDivHidden: boolean,
@@ -46,6 +48,8 @@ class App extends React.Component<AppProps, AppState> {
       
     this.state = {
       history: new History(),
+      influencers: 10,
+      influenced: 20,
       showAboutPage: false,
       subject: subjects.oates,
       wikiDivHidden: false,
@@ -91,11 +95,19 @@ class App extends React.Component<AppProps, AppState> {
     this.setState({ showAboutPage: false })
   }
 
+  updateInfluencers(val: number) { this.setState({ influencers: val }) }
+  updateInfluences(val: number) { this.setState({ influenced: val }) }
+
   render() {
+    const { influencers, influenced } = this.state
     const navbar = React.createElement(Navbar, {
       key: 'navbar', 
       goHome: () => this.goHome(),
-      toggleAbout: () => this.toggleAboutPage()
+      influencers,
+      influenced,
+      toggleAbout: () => this.toggleAboutPage(),
+      updateInfluences: val => this.updateInfluences(val),
+      updateInfluencers: val => this.updateInfluencers(val),
     })
     
     const about = React.createElement(About, {
