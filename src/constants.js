@@ -25,7 +25,7 @@ const LINK_MIN_OFFSET = 25
 const LINK_RANDOM = 100
 const LINK_STRENGHT = 0.3
 const MAX_SCREEN_NODES = 25
-const MARGIN = 37
+const MARGIN = 100
 const NODE_SIZE = 150
 const personalDetails = [
   {name: 'name',       optional: false, language: true,  type: 'literal'},
