@@ -3,9 +3,9 @@
 div.container-wrapper {
   font-family: 'Montserrat', sans-serif;
   position: absolute;
-  top: 60px;
+  top: 140px;
   left: 0;
-  height: calc(100vh - 60px);
+  height: calc(100vh - 140px);
   width: 100vw;
 }
 
