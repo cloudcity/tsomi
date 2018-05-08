@@ -18,6 +18,7 @@ type SearchProps = {
   influenced: number,
   updateInfluencers: Function,
   updateInfluences: Function,
+  submitSearch: Function,
 }
 
 class Search extends React.Component<SearchProps, SearchState> {
@@ -25,12 +26,12 @@ class Search extends React.Component<SearchProps, SearchState> {
     super(props)
     this.props = props
     this.state = {
-      name: ''
+      name: '',
     }
   }
 
   submit() {
-    console.log(this.state.name)
+    this.props.submitSearch(this.state.name)
   }
 
   keyUp(e: KeyboardEvent) {
@@ -46,12 +47,12 @@ class Search extends React.Component<SearchProps, SearchState> {
     const slider = createSliderWithTooltip(Slider) //React.createElement(Slider, {})
     const input = React.createElement('input', {
       onKeyUp: e => this.keyUp(e),
-      placeholder: 'Search...', 
-      type: 'text', 
+      placeholder: 'Search...',
+      type: 'text',
     })
 
     const submit = React.createElement('button', { onClick: () => this.submit() }, 'GO')
-   
+
     const sliderGroup = React.createElement('div', { className: 'slider-group' }, 
       React.createElement('div', { id: 'influencers-slider' },
         React.createElement('span', {}, 'Influencers'),

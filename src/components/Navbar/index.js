@@ -15,6 +15,7 @@ type NavbarProps = {
   toggleAbout: Function,
   updateInfluencers: Function,
   updateInfluences: Function,
+  submitSearch: Function
 }
 
 class Navbar extends React.Component<NavbarProps, NavbarState> {
@@ -31,6 +32,7 @@ class Navbar extends React.Component<NavbarProps, NavbarState> {
       goHome,
       updateInfluences,
       updateInfluencers,
+      submitSearch,
     } = this.props
 
     const about = React.createElement('a', { onClick: toggleAbout }, 'About')
@@ -47,6 +49,7 @@ class Navbar extends React.Component<NavbarProps, NavbarState> {
       influenced,
       updateInfluencers,
       updateInfluences,
+      submitSearch,
     })
 
     return React.createElement(React.Fragment, {}, 

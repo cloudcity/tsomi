@@ -10,6 +10,7 @@ const { History } = require('../History/')
 const { subjects } = require('../../constants')
 const { About } = require('../About/')
 const { getURLParameter } = require('../../util')
+const { searchForPeople } = require('../../tsomi-rdf')
 require('./main.css')
 
 type AppProps = {}
@@ -98,37 +99,42 @@ class App extends React.Component<AppProps, AppState> {
   updateInfluencers(val: number) { this.setState({ influencers: val }) }
   updateInfluences(val: number) { this.setState({ influenced: val }) }
 
+  submitSearch(name: string) {
+    searchForPeople(name).then(people => console.log('[searchForPeople results]', people))
+  }
+
   render() {
     const { influencers, influenced } = this.state
     const navbar = React.createElement(Navbar, {
-      key: 'navbar', 
+      key: 'navbar',
       goHome: () => this.goHome(),
       influencers,
       influenced,
       toggleAbout: () => this.toggleAboutPage(),
       updateInfluences: val => this.updateInfluences(val),
       updateInfluencers: val => this.updateInfluencers(val),
+      submitSearch: name => this.submitSearch(name),
     })
-    
+
     const about = React.createElement(About, {
-      key: 'about', 
+      key: 'about',
       goBack: () => this.toggleAboutPage()
     })
-    
+
     const innerChartDiv = React.createElement('div', { id: 'chart' })
     const chartDiv = React.createElement('div', {
-      key: 'chartdiv', 
+      key: 'chartdiv',
       id: 'chartdiv',
     }, innerChartDiv)
 
-    const wikiDiv = React.createElement(WikiDiv, { 
+    const wikiDiv = React.createElement(WikiDiv, {
       hidden: this.state.wikiDivHidden,
       key: 'wikidiv',
       onLoad: () => this.wikiFrameLoad(),
       subject: this.state.subject,
       url: this.state.url
     })
-    
+
     if (this.state.showAboutPage) {
       return React.createElement(React.Fragment, {}, 
         navbar,
