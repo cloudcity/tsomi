@@ -1,6 +1,6 @@
-const { searchForPeople } = require('./')
+const { getPerson, searchForPeople } = require('./')
 
-describe('DBpedia library', () => {
+describe('searching dbpedia', () => {
   it('retrieves an individual result', (done) => {
     searchForPeople('Joyce Carol Oates').then(lst => {
       expect(lst.length).toEqual(2)
@@ -19,7 +19,7 @@ describe('DBpedia library', () => {
     })
   })
 
-  /*TODO: I can't seem to get the searches for Charlotte and Emily correct.
+  /* TODO: I can't seem to get the searches for Charlotte and Emily correct.
   it('retrieves the correct result if a diacritic was missed', (done) => {
     searchForPeople('Charlotte Brontë').then(lst => {
       console.log(lst)
@@ -38,5 +38,27 @@ describe('DBpedia library', () => {
     })
   })
   */
+})
+
+
+describe('precise dbpedia gets', () => {
+  it('retrieves Joyce Carol Oates with all influencers', (done) => {
+    getPerson('Joyce_Carol_Oates'.trim()).then(person => {
+      console.log(person)
+
+      expect(person.uri).toEqual('http://dbpedia.org/resource/Joyce_Carol_Oates')
+      expect(person.name).toEqual('Joyce Carol Oates')
+      expect(person.birthPlace).toEqual('http://dbpedia.org/resource/Lockport_(city),_New_York')
+      expect(person.birthDate).toEqual('1938-06-16')
+      expect(person.deathDate).toEqual(undefined)
+      console.log(person.influencedBy)
+      console.log(person.influenced)
+      done()
+    }).catch(err => {
+      console.log('exception:', err)
+      expect(false).toEqual(true)
+      done()
+    })
+  })
 })
 
