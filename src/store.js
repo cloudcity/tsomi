@@ -1,50 +1,62 @@
 // @flow
 
-import type { PersonAbstract, Uri } from './types'
+import type { PersonAbstract, PersonDetail, SubjectId, Uri } from './types'
 
-type Store = {
+export type Store = {
   influencers: number,
   influenced: number,
   showAboutPage: bool,
   subjectId: string,
   wikiDivHidden: bool,
-  cache: { [string]: PersonAbstract },
+  people: { [SubjectId]: PersonAbstract | PersonDetail },
   currentWikiPageUri: Uri,
 }
 
-const initialState = (): Store => ({
+export const initialState = (): Store => ({
   influencers: 10,
   influenced: 20,
   showAboutPage: false,
   subjectId: 'Joyce_Carol_Oates',
   wikiDivHidden: false,
-  cache: {},
+  people: {},
   currentWikiPageUri: '',
 })
 
-type Action = {
+export type Action = {
   type: string,
   [string]: any
 }
 
-const setAboutPage = (state: bool): Action =>
+export const cachePerson = (s: SubjectId, p: PersonAbstract | PersonDetail): Action =>
+  ({ type: 'CACHE_PERSON', subjectId: s, person: p })
+export const setAboutPage = (state: bool): Action =>
   ({ type: 'SET_ABOUT_PAGE', state })
-const setWikiUri = (uri: Uri): Action =>
+export const setWikiUri = (uri: Uri): Action =>
   ({ type: 'SET_WIKI_URI', uri })
-const toggleAboutPage = (): Action =>
+export const toggleAboutPage = (): Action =>
   ({ type: 'TOGGLE_ABOUT_PAGE' })
-const updateInfluencerCount = (i: number): Action =>
+export const updateInfluencerCount = (i: number): Action =>
   ({ type: 'UPDATE_INFLUENCER_COUNT', cnt: i })
-const updateInfluencedCount = (i: number): Action =>
+export const updateInfluencedCount = (i: number): Action =>
   ({ type: 'UPDATE_INFLUENCED_COUNT', cnt: i })
 
-const influencers = (store: Store): number => store.influencers
-const influenced = (store: Store): number => store.influenced
-const showAboutPage = (store: Store): bool => store.showAboutPage
-const wikiUri = (store: Store): Uri => store.currentWikiPageUri
+export const influencers = (store: Store): number => store.influencers
+export const influenced = (store: Store): number => store.influenced
+export const lookupPerson = (s: SubjectId) =>
+  (store: Store): PersonAbstract | PersonDetail | void => store.people[s]
+export const showAboutPage = (store: Store): bool => store.showAboutPage
+export const wikiUri = (store: Store): Uri => store.currentWikiPageUri
 
-const runState = (state?: Store = initialState(), action: any): Store => {
+export const runState = (state?: Store = initialState(), action: any): Store => {
   switch (action.type) {
+    case 'CACHE_PERSON':
+      return {
+        ...state,
+        people: {
+          ...state.people,
+          [action.subjectId]: action.person,
+        },
+      }
     case 'SET_ABOUT_PAGE':
       return {
         ...state,
@@ -78,21 +90,5 @@ const runState = (state?: Store = initialState(), action: any): Store => {
     default:
       return state
   }
-}
-
-
-module.exports = {
-  runState,
-
-  setWikiUri,
-  showAboutPage,
-  updateInfluencerCount,
-  updateInfluencedCount,
-
-  influencers,
-  influenced,
-  setAboutPage,
-  toggleAboutPage,
-  wikiUri,
 }
 
