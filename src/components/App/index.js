@@ -6,7 +6,7 @@ const React = require('react')
 const { connect } = require('react-redux')
 
 const mediator = require('../Mediator/')
-const { render } = require('../Renderer/')
+const { InfluenceChart } = require('../InfluenceChart/')
 const { WikiDiv } = require('../Wikidiv/')
 const { Navbar } = require('../Navbar/')
 const { History } = require('../History/')
@@ -76,7 +76,7 @@ class App_ extends React.Component<AppProps, AppState> {
     if (!this.state.showAboutPage)
       render(this.state.history)
       */
-    render()
+    InfluenceChart()
   }
 
   wikiFrameLoad() {

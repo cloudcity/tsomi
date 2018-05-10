@@ -353,7 +353,7 @@ const createChart = () => {
   })
 }
 
-const render = function() {
+const InfluenceChart = function() {
   createChart().then((svg) => {
     createSpecialData(function() {
       var subject = establishInitialSubject();
@@ -876,4 +876,4 @@ const render = function() {
 
 }
 
-module.exports = { render }
+module.exports = { InfluenceChart }
