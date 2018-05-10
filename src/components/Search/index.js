@@ -74,7 +74,7 @@ class Search extends React.Component<SearchProps, SearchState> {
           defaultValue: influenced,
           min: 0,
           max: 25,
-          onChange: this.props.updateInfluences
+          onChange: evt => this.props.updateInfluences(evt),
         }),
 
         React.createElement('span', {}, influenced.toString())
