@@ -6,7 +6,7 @@ import { logger } from 'redux-logger'
 
 import { App } from './components/App/'
 import { PRINTABLE_PARAM } from './constants'
-import { runState } from './store')
+import { runState } from './store'
 
 const connectToWiki = () =>
   window.open(d3.select('#wikiframe').attr('src').replace(PRINTABLE_PARAM, ''), '_blank')

@@ -8,6 +8,7 @@ export const mkSubjectFromDBpediaUri = (url: Uri): SubjectId => url.trim().split
 export const dbpediaSubjectId = (s: SubjectId): string => `dbpedia:${s}`
 
 export type PersonAbstract = {
+  type: 'PersonAbstract',
   uri: Uri,
   name: string,
   abstract?: string,
@@ -20,6 +21,7 @@ export type PersonAbstract = {
 }
 
 export type PersonDetail = {
+  type: 'PersonDetail',
   uri: Uri,
   name: string,
   abstract?: string,

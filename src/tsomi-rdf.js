@@ -375,6 +375,7 @@ function queryForInfluenced2(targetGraph, targetId, callback) {
   });
 }
 
+/* query that the subject was influenced by the target */
 function queryForInfluencedBy1(targetGraph, targetId, callback) {
   queryForRelationship('?subject', predicates.influencedBy, targetId, function (binding) {
     var subjectId = '<' + binding.subject.value + '>';
@@ -385,6 +386,7 @@ function queryForInfluencedBy1(targetGraph, targetId, callback) {
   });
 }
 
+/* query that the subject influenced the target */
 function queryForInfluencedBy2(targetGraph, targetId, callback) {
   queryForRelationship(targetId, predicates.influencedBy, '?subject', function (binding) {
     var subjectId = '<' + binding.subject.value + '>';

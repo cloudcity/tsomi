@@ -79,6 +79,7 @@ const personAbstractFromJS = (js: PersonJSON): PersonAbstract => {
 
 
   return {
+    type: 'PersonAbstract',
     uri: js.person.value,
     name: js.name.value,
     abstract: js.abstract.value,
@@ -139,6 +140,7 @@ const getPerson = (s: SubjectId): Promise<?PersonDetail> =>
       }
 
       return {
+        type: 'PersonDetail',
         uri: base.person.value,
         name: base.name.value,
         abstract: base.abstract.value,

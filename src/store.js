@@ -6,7 +6,7 @@ export type Store = {
   influencers: number,
   influenced: number,
   showAboutPage: bool,
-  subjectId: string,
+  focusedSubject: string,
   wikiDivHidden: bool,
   people: { [SubjectId]: PersonAbstract | PersonDetail },
   currentWikiPageUri: Uri,
@@ -16,7 +16,7 @@ export const initialState = (): Store => ({
   influencers: 10,
   influenced: 20,
   showAboutPage: false,
-  subjectId: 'Joyce_Carol_Oates',
+  focusedSubject: 'Joyce_Carol_Oates',
   wikiDivHidden: false,
   people: {},
   currentWikiPageUri: '',
@@ -28,7 +28,7 @@ export type Action = {
 }
 
 export const cachePerson = (s: SubjectId, p: PersonAbstract | PersonDetail): Action =>
-  ({ type: 'CACHE_PERSON', subjectId: s, person: p })
+  ({ type: 'CACHE_PERSON', focusedSubject: s, person: p })
 export const setAboutPage = (state: bool): Action =>
   ({ type: 'SET_ABOUT_PAGE', state })
 export const setWikiUri = (uri: Uri): Action =>
@@ -42,6 +42,7 @@ export const updateInfluencedCount = (i: number): Action =>
 
 export const influencers = (store: Store): number => store.influencers
 export const influenced = (store: Store): number => store.influenced
+export const people = (store: Store) => store.people
 export const lookupPerson = (s: SubjectId) =>
   (store: Store): PersonAbstract | PersonDetail | void => store.people[s]
 export const showAboutPage = (store: Store): bool => store.showAboutPage
@@ -54,7 +55,7 @@ export const runState = (state?: Store = initialState(), action: any): Store => 
         ...state,
         people: {
           ...state.people,
-          [action.subjectId]: action.person,
+          [action.focusedSubject]: action.person,
         },
       }
     case 'SET_ABOUT_PAGE':
