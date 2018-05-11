@@ -27,8 +27,10 @@ export type Action = {
   [string]: any
 }
 
-export const cachePerson = (s: SubjectId, p: PersonAbstract | PersonDetail): Action =>
-  ({ type: 'CACHE_PERSON', focusedSubject: s, person: p })
+export const cachePerson = (subjectId: SubjectId, person: PersonAbstract | PersonDetail): Action =>
+  ({ type: 'CACHE_PERSON', subjectId, person })
+export const focusOnPerson = (subjectId: SubjectId): Action =>
+  ({ type: 'FOCUS_ON_PERSON', subjectId })
 export const setAboutPage = (state: bool): Action =>
   ({ type: 'SET_ABOUT_PAGE', state })
 export const setWikiUri = (uri: Uri): Action =>
@@ -40,6 +42,7 @@ export const updateInfluencerCount = (i: number): Action =>
 export const updateInfluencedCount = (i: number): Action =>
   ({ type: 'UPDATE_INFLUENCED_COUNT', cnt: i })
 
+export const focusedSubject = (store: Store): SubjectId => store.focusedSubject
 export const influencers = (store: Store): number => store.influencers
 export const influenced = (store: Store): number => store.influenced
 export const people = (store: Store) => store.people
@@ -57,6 +60,11 @@ export const runState = (state?: Store = initialState(), action: any): Store => 
           ...state.people,
           [action.focusedSubject]: action.person,
         },
+      }
+    case 'FOCUS_ON_PERSON':
+      return {
+        ...state,
+        focusedSubject: state.people[action.subjectId] ? action.subjectId : state.focusedSubject,
       }
     case 'SET_ABOUT_PAGE':
       return {

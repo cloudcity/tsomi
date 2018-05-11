@@ -1,4 +1,4 @@
-var TNode = function(id, properties) {
+export var TNode = function(id, properties) {
   this.id = id;
   this.properties = properties || {};
 }
@@ -38,7 +38,7 @@ TNode.instanceOf = function(thing) {
   return TNode.prototype.isPrototypeOf(thing);
 }
 
-var TLink = function(source, target, properties) {
+export var TLink = function(source, target, properties) {
   this.source = source;
   this.target = target;
   this.properties = properties || {};
@@ -76,7 +76,7 @@ TLink.instanceOf = function(thing) {
   return TLink.prototype.isPrototypeOf(thing);
 }
 
-var TGraph = function() {
+export var TGraph = function() {
   this.nodesById = {};
   this.nodes = [];
   this.links = [];
@@ -136,6 +136,7 @@ TGraph.prototype = {
 
     // add new node to graph
 
+    console.log('[establishNode]', node)
     this.nodes.push(node);
     this.nodesById[node.getId()] = node;
     return node;
@@ -337,7 +338,9 @@ TGraph.instanceOf = function(thing) {
   return TGraph.prototype.isPrototypeOf(thing);
 }
 
+/*
 var exports = exports || {};
 exports.TGraph = TGraph;
 exports.TNode = TNode;
 exports.TLink = TLink;
+*/
