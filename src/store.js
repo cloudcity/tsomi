@@ -58,7 +58,7 @@ export const runState = (state?: Store = initialState(), action: any): Store => 
         ...state,
         people: {
           ...state.people,
-          [action.focusedSubject]: action.person,
+          [action.subjectId]: action.person,
         },
       }
     case 'FOCUS_ON_PERSON':

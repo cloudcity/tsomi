@@ -136,7 +136,6 @@ TGraph.prototype = {
 
     // add new node to graph
 
-    console.log('[establishNode]', node)
     this.nodes.push(node);
     this.nodesById[node.getId()] = node;
     return node;
