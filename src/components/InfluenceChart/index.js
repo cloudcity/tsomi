@@ -1,8 +1,9 @@
 // @flow
 
 import React from 'react'
-import { type SubjectId, type PersonAbstract, type PersonDetail } from '../../types'
 import { connect } from 'react-redux'
+import { type SubjectId, type PersonAbstract, type PersonDetail } from '../../types'
+import { type PeopleCache } from '../../store'
 
 const { TGraph, TLink, TNode } = require('../../tgraph')
 
@@ -25,7 +26,6 @@ const {
   convertSpaces,
   getURLParameter,
   getURLElement,
-  getViewportDimensions,
   largest, 
   parseDate,
   populate_path,
@@ -139,16 +139,13 @@ function wcMouseEvent(over) {
   scaleElement(wc, over ? 1.2 : 1, DEFAULT_DURATION, STOCK_EASE);
 }
 
-const renderChart = (svg: HTMLElement, d3elem: any, centerNode: TNode, graph: TGraph) => {
-  const dimensions = svg.getBoundingClientRect()
-
-  //svg = d3.select('#chart')
-    //.append('svg:svg')
-    //.attr('id', 'chartSVG')
-    //.attr('height', dimensions.height)
-    //.attr('width', dimensions.width)
-
-  // create a definitions section
+const renderChart = (svg: HTMLElement, d3elem: any, dimensions: { width: number, height: number }, centerNode: TNode, graph: TGraph) => {
+  console.log('[renderChart svg]', svg)
+  console.log('[renderChart d3elem]', d3elem)
+  console.log('[renderChart centerNode]', JSON.stringify(centerNode))
+  console.log('[renderChart centerNode]', centerNode)
+  console.log('[renderChart graph]', graph)
+  console.log('[renderChart dimensions]', dimensions)
   const defs = d3elem.append('defs')
 
   // create clip path for image
@@ -287,7 +284,7 @@ const renderChart = (svg: HTMLElement, d3elem: any, centerNode: TNode, graph: TG
     
   const axiesGroup = d3elem
     .append('g')
-    .attr('transform', 'translate(0, ' + TIMELINE_Y() + ')')
+    .attr('transform', 'translate(0, ' + TIMELINE_Y(dimensions.height) + ')')
     .classed('axies', true)
     .attr('class', 'axis');
 
@@ -321,6 +318,7 @@ const renderChart = (svg: HTMLElement, d3elem: any, centerNode: TNode, graph: TG
       return Math.random() * LINK_RANDOM + base;})
     .size([dimensions.width, dimensions.height]);
 
+  /* TODO: hopefully remove, trying to see if this can be handled at the react level
   // handle window resize
   d3.select(window)
     .on('resize', _.debounce(function() {
@@ -348,23 +346,29 @@ const renderChart = (svg: HTMLElement, d3elem: any, centerNode: TNode, graph: TG
         .attr('transform', 'translate(0, ' + TIMELINE_Y() + ')')
         .call(timelineAxis)
     }), 400)
+    */
 
   return [force, timelineScale, timelineAxis, linkGroup, timelinesGroup, nodeGroup]
 }
 
-const drawInfluence = (svg: HTMLElement, d3elem: any, centerNode: TNode, graph: TGraph, people: { [SubjectId]: PersonAbstract | PersonDetail }) => {
+const drawInfluence = (svg: HTMLElement, d3elem: any, dimensions: { width: number, height: number }, centerNode: TNode, graph: TGraph, people: PeopleCache) => {
   console.log('[drawInfluence]')
+  
+  d3elem.attr('height', dimensions.height)
+      .attr('width', dimensions.width)
   const [force, timelineScale, timelineAxis, linkGroup, timelinesGroup, nodeGroup] =
-    renderChart(svg, d3elem, centerNode, graph)
+    renderChart(svg, d3elem, dimensions, centerNode, graph)
   d3elem.selectAll('text.static-text').transition().duration(2000).style('fill', '#bbb')
   d3elem.selectAll('text.loading').transition().style('fill', 'white').remove()
 
-  updateChart(graph, centerNode)
+  // updateChart(dimensions, graph, centerNode)
 
-  function updateChart(graph: TGraph, centerNode: TNode) {
+  function updateChart(dimensions: { width: number, height: number }, graph: TGraph, centerNode: TNode) {
     var physicalNodes = []
     var minDate = null
     var maxDate = null
+
+    console.log('[updateChart]')
 
     var sampleDate = function(date) {
       if (minDate == null || date < minDate)
@@ -444,6 +448,8 @@ const drawInfluence = (svg: HTMLElement, d3elem: any, centerNode: TNode, graph: 
       var src = link.getSource();
       var mid = new TNode('mid' + nextMidId++, {isMiddel: true, hidden: true});
       var trg = link.getTarget();
+
+      debugger
 
       // place the virtual node right between the source and the the target
 
@@ -641,7 +647,7 @@ const drawInfluence = (svg: HTMLElement, d3elem: any, centerNode: TNode, graph: 
       .text('Show Wiki Text');
 
     force.on('tick', function(event) {
-      const { width, height } = getViewportDimensions()
+      const { width, height } = dimensions
 
       var k2 = 15 * event.alpha;
       var k = .5 * event.alpha;
@@ -680,9 +686,11 @@ const drawInfluence = (svg: HTMLElement, d3elem: any, centerNode: TNode, graph: 
 
       // update transform
 
+      /*
       nodes.attr('transform', function(d) {
         return populate_path('translate(X0, Y0)', [d]);
       });
+      */
     });
   }
 
@@ -712,7 +720,6 @@ const drawInfluence = (svg: HTMLElement, d3elem: any, centerNode: TNode, graph: 
     var left = radial(tip, 20, angle + HEAD_ANGLE);
     var right = radial(tip, 20, angle - HEAD_ANGLE);
 
-    //return populate_path('M X0 Y0 L X1 Y1 L X2 Y2 M X3 Y3 L X4 Y4 L X5 Y5',
     return populate_path('M X0 Y0 Q X1 Y1 X2 Y2 M X3 Y3 L X4 Y4 L X5 Y5',
                          [s, m, tip, left, tip, right]);
   }
@@ -866,7 +873,6 @@ const createInfluenceGraph = (
   const graph = new TGraph()
   const subjectNode = graph.addNode(subjectId)
 
-
   if (person == null) {
     console.log('cannot handle a null person')
   } else if (person.type === 'PersonAbstract') {
@@ -884,6 +890,7 @@ const createInfluenceGraph = (
 class InfluenceChartCanvas {
   svg: HTMLElement
   d3elem: any
+  dimensions: { width: number, height: number }
   centerNode: TNode
   graph: TGraph
   people: { [SubjectId]: PersonAbstract | PersonDetail }
@@ -891,12 +898,14 @@ class InfluenceChartCanvas {
   constructor(
     svg: HTMLElement,
     d3elem: Array<HTMLElement>,
+    dimensions: { width: number, height: number },
     centerNode: TNode,
     graph: TGraph,
     people: { [SubjectId]: PersonAbstract | PersonDetail },
   ) {
     this.svg = svg
     this.d3elem = d3elem
+    this.dimensions = dimensions
     this.centerNode = centerNode
     this.graph = graph
     this.people = people
@@ -904,7 +913,7 @@ class InfluenceChartCanvas {
 
   render() {
     console.log('[InfluenceChartCanvas]', this.svg, this.d3elem, this.centerNode, this.graph)
-    drawInfluence(this.svg, this.d3elem, this.centerNode, this.graph, this.people)
+    drawInfluence(this.svg, this.d3elem, this.dimensions, this.centerNode, this.graph, this.people)
   }
 }
 
@@ -915,7 +924,9 @@ type InfluenceChartProps = {
 }
 
 type InfluenceChartState = {
-  elem: null | HTMLElement,
+  elem: ?HTMLElement,
+  centerNode: TNode,
+  graph: TGraph,
   dimensions: {
     width: number,
     height: number,
@@ -926,8 +937,15 @@ class InfluenceChart extends React.Component<InfluenceChartProps, InfluenceChart
   constructor(props: InfluenceChartProps) {
     super(props)
 
+    const [centerNode, graph] = createInfluenceGraph(
+      this.props.subjectId,
+      this.props.people[this.props.subjectId],
+    )
+
     this.state = {
       elem: null,
+      centerNode: centerNode,
+      graph: graph,
       dimensions: {
         width: -1,
         height: -1,
@@ -940,29 +958,33 @@ class InfluenceChart extends React.Component<InfluenceChartProps, InfluenceChart
     if (this.state.elem != null) {
       this.state.dimensions = this.state.elem.getBoundingClientRect()
     }
+    this.updateChart()
     window.addEventListener('resize', () => {
-      this.updateDimensions()
+      this.updateChart()
     })
   }
 
+  /*
   updateDimensions() {
     if (this.state.elem != null) {
       this.setState({ dimensions: this.state.elem.getBoundingClientRect() })
     }
   }
+  */
 
-  render() {
-    const [centerNode, graph] = createInfluenceGraph(
-      this.props.subjectId,
-      this.props.people[this.props.subjectId],
-    )
+  updateChart() {
     if (this.state.elem != null) {
       const { elem } = this.state
       const d3elem = d3.select(`#${this.props.label}`)
-      new InfluenceChartCanvas(elem, d3elem, centerNode, graph, this.props.people).render()
+      const dimensions = elem.getBoundingClientRect()
+      new InfluenceChartCanvas(elem, d3elem, dimensions, this.state.centerNode, this.state.graph, this.props.people).render()
     }
-    return React.createElement('svg', { }, [])
+  }
+
+  render() {
+    return React.createElement('svg', { id: this.props.label }, [])
   }
 }
 
 export default InfluenceChart
+

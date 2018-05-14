@@ -2,13 +2,15 @@
 
 import type { PersonAbstract, PersonDetail, SubjectId, Uri } from './types'
 
+export type PeopleCache = { [SubjectId]: PersonAbstract | PersonDetail }
+
 export type Store = {
   influencers: number,
   influenced: number,
   showAboutPage: bool,
   focusedSubject: string,
   wikiDivHidden: bool,
-  people: { [SubjectId]: PersonAbstract | PersonDetail },
+  people: PeopleCache,
   currentWikiPageUri: Uri,
 }
 

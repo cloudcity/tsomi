@@ -140,7 +140,7 @@ class App_ extends React.Component<AppProps, AppState> {
     })
 
     const influenceChart = React.createElement(InfluenceChart, {
-      label: 'chartdiv',
+      label: 'chartsvg',
       subjectId: this.props.focusedSubject,
       people: this.props.people,
     })

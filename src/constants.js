@@ -85,7 +85,7 @@ const subjects = {
 const TIMELINE_OPACITY = 0.03
 const TIMELINE_HIGHLIGHT_OPACITY = 0.4
 const TIMELINE_MARGIN = 50
-const TIMELINE_Y = () => getViewportDimensions().height - 20
+const TIMELINE_Y = (height) => height - 20
 const UNKNOWN_PERSON = 'static/images/unknown.png'
 const WIKI_LOGO = 'static/images/Wikipedia-logo.png'
 const WIKI_ICON_WIDTH = 30
