@@ -101,47 +101,36 @@ const establishInitialSubject = () => {
 type Dimensions = { width: number, height: number }
 
 
-/* A timeline class represents the time-based axis that appears somewhere towards the bottom of the page.
- *
- * At this time, I don't know whether the proper thing to do with D3 is to replace the timeline or to update an existing one and pass that into the transition. I am trying to replace it, making the entire timeline immutable. However, I'm having troubles with duplicate overalpping timelines appearing no matter whether I update or replace. :|
+/* A timeline class represents the time-based axis that appears somewhere
+ * towards the bottom of the page.
  */
-class Timeline {
-  width: number
-  startDate: Date
-  endDate: Date
-  scale: any
-  axis: any
+type Timeline = { scale: any, axis: any }
 
-  constructor(width: number, startDate: Date, endDate: Date) {
-    this.width = width
-    this.startDate = startDate
-    this.endDate = endDate
+const createTimeline = (width: number, startDate: Date, endDate: Date): Timeline => {
+  const scale = d3.scaleTime()
+    .range([0, width - 1])
+    .domain([startDate, endDate])
 
-    this.scale = d3.scaleTime()
-      .range([0, width - 1])
-      .domain([this.startDate, this.endDate])
+  const axis = d3.axisBottom(scale)
+    .ticks(10)
 
-    this.axis = d3.axisBottom(this.scale)
-      .ticks(10)
+  return { scale, axis }
+}
 
-    /*
-    this.scale = d3.time.scale()
-      .range([0, width - 1])
-      .domain([this.startDate, this.endDate]);
 
-    this.axis = d3.svg.axis()
-      .scale(this.scale).tickSize(-20, -10, 0)
-      .tickSubdivide(true);
-      */
-  }
+type PersonIcon = { circle: any }
 
-  update(width, startDate, endDate) {
-    this.scale.domain([startDate, endDate])
-    this.scale.domain([
-      this.scale.invert(this.scale.range()[0] - TIMELINE_MARGIN),
-      this.scale.invert(this.scale.range()[1] + TIMELINE_MARGIN),
-    ])
-  }
+const createPersonIcon = (container: any, person: string): PersonIcon => {
+  const circle = container
+    .append('svg:circle')
+    .attr('r', IMAGE_SIZE / 2 + 10)
+    .append('svg:clipPath')
+    .append('svg:circle')
+    .attr('cx', 0)
+    .attr('cy', 0)
+    .attr('r', IMAGE_SIZE / 2)
+
+  return { circle }
 }
 
 
@@ -216,13 +205,6 @@ const renderChart = (svg: HTMLElement, d3elem: any, dimensions: { width: number,
   console.log('[renderChart dimensions]', dimensions)
   const defs = d3elem.append('defs')
 
-  // create clip path for image
-  defs.append('svg:clipPath')
-    .attr('id', 'image-clip')
-    .append('svg:circle')
-    .attr('cx', 0)
-    .attr('cy', 0)
-    .attr('r', IMAGE_SIZE / 2);
 
   defs.append('svg:linearGradient')
     .attr('id', 'loading-gradient')
@@ -357,7 +339,7 @@ const renderChart = (svg: HTMLElement, d3elem: any, dimensions: { width: number,
     .attr('class', 'axis');
 
   // setup the axes
-  const timeline = new Timeline(dimensions.width,
+  const timeline = createTimeline(dimensions.width,
     new Date(1900, 12, 15),
     new Date())
 
@@ -504,7 +486,7 @@ const drawInfluence = (svg: HTMLElement, d3elem: any, dimensions: { width: numbe
       maxDate = tmp
     }
     // timeline.update(dimensions.width, minDate, maxDate)
-    const timeline_ = new Timeline(dimensions.width, minDate, maxDate)
+    const timeline_ = createTimeline(dimensions.width, minDate, maxDate)
     d3elem.transition()
       .duration(2000)
       .select('.axis')
@@ -958,60 +940,40 @@ const createInfluenceGraph = (
 }
 
 
-/*
-class InfluenceChartCanvas {
-  svg: HTMLElement
-  d3elem: any
-  dimensions: { width: number, height: number }
-  centerNode: TNode
-  graph: TGraph
-  people: { [SubjectId]: PersonAbstract | PersonDetail }
-
-  constructor(
-    svg: HTMLElement,
-    d3elem: Array<HTMLElement>,
-    dimensions: { width: number, height: number },
-    centerNode: TNode,
-    graph: TGraph,
-    people: { [SubjectId]: PersonAbstract | PersonDetail },
-  ) {
-    this.svg = svg
-    this.d3elem = d3elem
-    this.dimensions = dimensions
-    this.centerNode = centerNode
-    this.graph = graph
-    this.people = people
-  }
-
-  render() {
-    console.log('[InfluenceChartCanvas]', this.svg, this.d3elem, this.centerNode, this.graph)
-    drawInfluence(this.svg, this.d3elem, this.dimensions, this.centerNode, this.graph, this.people)
-  }
-}
-*/
-
-
 class InfluenceCanvas {
   topElem: any
   timelineAxis: any
   initialRenderComplete: bool
+  centerPerson: string
+  center: any
 
-  constructor(topElem) {
+  constructor(topElem, centerPerson: string) {
     this.topElem = topElem
+    this.centerPerson = centerPerson
 
     this.timelineAxis = topElem
       .append('g')
       .classed('axies', true)
       .attr('class', 'axis')
 
+    // create clip path for image
+    this.topElem.append('svg:clipPath')
+      .attr('id', 'image-clip')
+      .append('svg:circle')
+      .attr('cx', 0)
+      .attr('cy', 0)
+      .attr('r', IMAGE_SIZE / 2);
+
     this.initialRenderComplete = false
   }
 
   initialRender(dimensions: Dimensions) {
-    const timeline = new Timeline(dimensions.width, new Date(1900, 1, 1), new Date(2000, 1, 1))
+    const timeline = createTimeline(dimensions.width, new Date(1900, 1, 1), new Date(2000, 1, 1))
     this.timelineAxis
       .attr('transform', `translate(0, ${TIMELINE_Y(dimensions.height)})`)
       .call(timeline.axis)
+
+    this.center = createPersonIcon(this.topElem, this.centerPerson)
 
     this.initialRenderComplete = true
   }
@@ -1020,7 +982,7 @@ class InfluenceCanvas {
     if (!this.initialRenderComplete) {
       this.initialRender(dimensions)
     } else {
-      const timeline = new Timeline(dimensions.width, new Date(1900, 1, 1), new Date(2000, 1, 1))
+      const timeline = createTimeline(dimensions.width, new Date(1900, 1, 1), new Date(2000, 1, 1))
       this.timelineAxis.transition()
         .duration(DEFAULT_ANIMATION_DURATION)
         .attr('transform', `translate(0, ${TIMELINE_Y(dimensions.height)})`)
@@ -1068,7 +1030,7 @@ class InfluenceChart extends React.Component<InfluenceChartProps, InfluenceChart
 
     if (this.state.domElem != null) {
       const dimensions = this.state.domElem.getBoundingClientRect()
-      this.state.canvas = new InfluenceCanvas(this.state.d3Elem)
+      this.state.canvas = new InfluenceCanvas(this.state.d3Elem, 'Joyce_Carol_Oates')
       this.state.canvas.render(dimensions)
     } // TODO: what should I do if the nodes aren't found?
 
@@ -1082,7 +1044,7 @@ class InfluenceChart extends React.Component<InfluenceChartProps, InfluenceChart
   }
 
   render() {
-    return React.createElement('svg', { id: `${this.props.label}`, style: { backgroundColor: 'lightblue', height: '100%', width: '100%' } }, [])
+    return React.createElement('svg', { id: `${this.props.label}`, style: { height: '100%', width: '100%' } }, [])
   }
 }
 
