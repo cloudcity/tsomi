@@ -140,13 +140,14 @@ class App_ extends React.Component<AppProps, AppState> {
     })
 
     const influenceChart = React.createElement(InfluenceChart, {
-      label: 'chartsvg',
+      label: 'influencechart',
       subjectId: this.props.focusedSubject,
       people: this.props.people,
     })
     const chartDiv = React.createElement('div', {
       key: 'chartdiv',
       id: 'chartdiv',
+      style: { 'background-color': 'lightgreen' },
     }, influenceChart)
 
     const wikiDiv = React.createElement(WikiDiv, {

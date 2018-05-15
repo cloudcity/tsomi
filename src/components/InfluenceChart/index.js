@@ -95,6 +95,45 @@ const establishInitialSubject = () => {
 }
 */
 
+
+type Dimensions = { width: number, height: number }
+
+
+/* A timeline class represents the time-based axis that appears somewhere towards the bottom of the page.
+ *
+ * At this time, I don't know whether the proper thing to do with D3 is to replace the timeline or to update an existing one and pass that into the transition. I am trying to replace it, making the entire timeline immutable. However, I'm having troubles with duplicate overalpping timelines appearing no matter whether I update or replace. :|
+ */
+class Timeline {
+  width: number
+  startDate: Date
+  endDate: Date
+  scale: any
+  axis: any
+
+  constructor(width: number, startDate: Date, endDate: Date) {
+    this.width = width
+    this.startDate = startDate
+    this.endDate = endDate
+
+    this.scale = d3.time.scale()
+      .range([0, width - 1])
+      .domain([this.startDate, this.endDate]);
+
+    this.axis = d3.svg.axis()
+      .scale(this.scale).tickSize(-20, -10, 0)
+      .tickSubdivide(true);
+  }
+
+  update(width, startDate, endDate) {
+    this.scale.domain([startDate, endDate])
+    this.scale.domain([
+      this.scale.invert(this.scale.range()[0] - TIMELINE_MARGIN),
+      this.scale.invert(this.scale.range()[1] + TIMELINE_MARGIN),
+    ])
+  }
+}
+
+
 function limitScreenNodes(graph, centerPerson) {
   var nodes = graph.getNodes();
   if (nodes.length > MAX_SCREEN_NODES) {
@@ -138,6 +177,24 @@ function wcMouseEvent(over) {
   var wc = d3.select('#wikiconnect');
   scaleElement(wc, over ? 1.2 : 1, DEFAULT_DURATION, STOCK_EASE);
 }
+
+
+/*
+function updateTimeline(timelineScale: any, timelineAxis: any, width: number, startDate: Date, endDate: Date) {
+  timelineScale.domain([minDate, maxDate]);
+  timelineScale.domain([
+    timelineScale.invert(timelineScale.range()[0] - TIMELINE_MARGIN),
+    timelineScale.invert(timelineScale.range()[1] + TIMELINE_MARGIN)
+  ]);
+
+  // transition in the new scale
+
+  d3elem.transition()
+    .duration(2000)
+    .select('.axis')
+    .call(timelineAxis);
+}
+*/
 
 const renderChart = (svg: HTMLElement, d3elem: any, dimensions: { width: number, height: number }, centerNode: TNode, graph: TGraph) => {
   console.log('[renderChart svg]', svg)
@@ -289,15 +346,11 @@ const renderChart = (svg: HTMLElement, d3elem: any, dimensions: { width: number,
     .attr('class', 'axis');
 
   // setup the axes
-  const timelineScale = d3.time.scale()
-    .range([0, dimensions.width - 1])
-    .domain([new Date(1900, 12, 15), new Date()]);
+  const timeline = new Timeline(dimensions.width,
+    new Date(1900, 12, 15),
+    new Date())
 
-  let timelineAxis = d3.svg.axis()
-    .scale(timelineScale).tickSize(-20, -10, 0)
-    .tickSubdivide(true);
-
-  axiesGroup.call(timelineAxis);
+  axiesGroup.call(timeline.axis);
 
   // create the fdl instance
   const force = d3.layout.force()
@@ -348,7 +401,7 @@ const renderChart = (svg: HTMLElement, d3elem: any, dimensions: { width: number,
     }), 400)
     */
 
-  return [force, timelineScale, timelineAxis, linkGroup, timelinesGroup, nodeGroup]
+  return [force, timeline, linkGroup, timelinesGroup, nodeGroup]
 }
 
 const drawInfluence = (svg: HTMLElement, d3elem: any, dimensions: { width: number, height: number }, centerNode: TNode, graph: TGraph, people: PeopleCache) => {
@@ -356,12 +409,12 @@ const drawInfluence = (svg: HTMLElement, d3elem: any, dimensions: { width: numbe
   
   d3elem.attr('height', dimensions.height)
       .attr('width', dimensions.width)
-  const [force, timelineScale, timelineAxis, linkGroup, timelinesGroup, nodeGroup] =
+  const [force, timeline, linkGroup, timelinesGroup, nodeGroup] =
     renderChart(svg, d3elem, dimensions, centerNode, graph)
   d3elem.selectAll('text.static-text').transition().duration(2000).style('fill', '#bbb')
   d3elem.selectAll('text.loading').transition().style('fill', 'white').remove()
 
-  // updateChart(dimensions, graph, centerNode)
+   updateChart(dimensions, graph, centerNode)
 
   function updateChart(dimensions: { width: number, height: number }, graph: TGraph, centerNode: TNode) {
     var physicalNodes = []
@@ -426,19 +479,25 @@ const drawInfluence = (svg: HTMLElement, d3elem: any, dimensions: { width: numbe
 
     // adjust scale
 
-    timelineScale.domain([minDate, maxDate]);
-    timelineScale.domain([
-      timelineScale.invert(timelineScale.range()[0] - TIMELINE_MARGIN),
-      timelineScale.invert(timelineScale.range()[1] + TIMELINE_MARGIN)
-    ]);
-
-    // transition in the new scale
-
+    if (minDate == null || minDate == undefined) {
+      minDate = new Date(1900, 12, 15)
+    }
+    if (maxDate == null || maxDate == undefined) {
+      maxDate = new Date()
+    }
+    if (minDate > maxDate) {
+      const tmp = minDate
+      minDate = maxDate
+      maxDate = tmp
+    }
+    // timeline.update(dimensions.width, minDate, maxDate)
+    const timeline_ = new Timeline(dimensions.width, minDate, maxDate)
     d3elem.transition()
       .duration(2000)
       .select('.axis')
-      .call(timelineAxis);
+      .call(timeline.axis)
 
+    /*
     var physicalLinks = [];
     var renderedLinks = [];
 
@@ -686,23 +745,22 @@ const drawInfluence = (svg: HTMLElement, d3elem: any, dimensions: { width: numbe
 
       // update transform
 
-      /*
       nodes.attr('transform', function(d) {
         return populate_path('translate(X0, Y0)', [d]);
       });
-      */
     });
+    */
   }
 
   function timelinePath(node) {
     var TIMELINE_UPSET = 50;
 
-    var birth = {x: timelineScale(node.getProperty('birthDate')), y: TIMELINE_Y()};
-    var bc1 = {x: node.x, y: TIMELINE_Y() - TIMELINE_UPSET};
-    var bc2 = {x: birth.x, y: TIMELINE_Y() - TIMELINE_UPSET};
-    var death = {x: timelineScale(node.getProperty('deathDate')), y: TIMELINE_Y()};
-    var dc1 = {x: death.x, y: TIMELINE_Y() - TIMELINE_UPSET};
-    var dc2 = {x: node.x, y: TIMELINE_Y() - TIMELINE_UPSET};
+    var birth = {x: timeline.scale(node.getProperty('birthDate')), y: TIMELINE_Y(dimensions.height)};
+    var bc1 = {x: node.x, y: TIMELINE_Y(dimensions.height) - TIMELINE_UPSET};
+    var bc2 = {x: birth.x, y: TIMELINE_Y(dimensions.height) - TIMELINE_UPSET};
+    var death = {x: timeline.scale(node.getProperty('deathDate')), y: TIMELINE_Y(dimensions.height)};
+    var dc1 = {x: death.x, y: TIMELINE_Y(dimensions.height) - TIMELINE_UPSET};
+    var dc2 = {x: node.x, y: TIMELINE_Y(dimensions.height) - TIMELINE_UPSET};
 
     return populate_path(
       'M X0 Y0 C X1 Y1 X2 Y2 X3 Y3 L X4 Y4 C X5 Y5 X6 Y6 X7 Y7', [node, bc1, bc2, birth, death, dc1, dc2, node]);
@@ -887,6 +945,7 @@ const createInfluenceGraph = (
 }
 
 
+/*
 class InfluenceChartCanvas {
   svg: HTMLElement
   d3elem: any
@@ -916,21 +975,47 @@ class InfluenceChartCanvas {
     drawInfluence(this.svg, this.d3elem, this.dimensions, this.centerNode, this.graph, this.people)
   }
 }
+*/
+
+
+const renderD3 = (d3elem: any, dimensions: Dimensions) => {
+  console.log('[renderD3]', d3elem, dimensions)
+
+  const circles = d3elem.selectAll('circle')
+  console.log(circles)
+
+  circles.data([
+    dimensions.width / 4,
+    dimensions.width / 2,
+    dimensions.width * (3 / 4),
+  ]).attr('cx', d => d)
+  /*
+  const c1 = d3elem.select('#circle-1')
+  const c2 = d3elem.select('#circle-2')
+  const c3 = d3elem.select('#circle-3')
+
+  console.log(c1, c2, c3)
+
+  c1.attr('cx', dimensions.width / 3)
+  c2.attr('cx', dimensions.width / 2)
+  c3.attr('cx', dimensions.width * 2 / 3)
+
+  console.log(c1, c2, c3)
+  */
+}
+
 
 type InfluenceChartProps = {
   label: string,
   subjectId: SubjectId,
-  people: { [SubjectId]: PersonAbstract | PersonDetail }
+  people: PeopleCache
 }
 
 type InfluenceChartState = {
-  elem: ?HTMLElement,
+  domElem: ?HTMLElement,
+  d3Elem: any,
   centerNode: TNode,
   graph: TGraph,
-  dimensions: {
-    width: number,
-    height: number,
-  }
 }
 
 class InfluenceChart extends React.Component<InfluenceChartProps, InfluenceChartState> {
@@ -943,46 +1028,37 @@ class InfluenceChart extends React.Component<InfluenceChartProps, InfluenceChart
     )
 
     this.state = {
-      elem: null,
+      domElem: null,
+      d3Elem: null,
       centerNode: centerNode,
       graph: graph,
-      dimensions: {
-        width: -1,
-        height: -1,
-      },
     }
   }
 
   componentDidMount() {
-    this.state.elem = document.getElementById(this.props.label)
-    if (this.state.elem != null) {
-      this.state.dimensions = this.state.elem.getBoundingClientRect()
-    }
+    this.state.domElem = document.getElementById(this.props.label)
+    this.state.d3Elem = d3.select(`#${this.props.label}`)
+
     this.updateChart()
     window.addEventListener('resize', () => {
       this.updateChart()
     })
   }
 
-  /*
-  updateDimensions() {
-    if (this.state.elem != null) {
-      this.setState({ dimensions: this.state.elem.getBoundingClientRect() })
-    }
-  }
-  */
-
   updateChart() {
-    if (this.state.elem != null) {
-      const { elem } = this.state
-      const d3elem = d3.select(`#${this.props.label}`)
-      const dimensions = elem.getBoundingClientRect()
-      new InfluenceChartCanvas(elem, d3elem, dimensions, this.state.centerNode, this.state.graph, this.props.people).render()
+    if (this.state.domElem != null && this.state.d3Elem != null) {
+      const dimensions = this.state.domElem.getBoundingClientRect()
+      renderD3(this.state.d3Elem, dimensions)
     }
   }
 
   render() {
-    return React.createElement('svg', { id: this.props.label }, [])
+    const circles = [
+      React.createElement('circle', { id: "circle-1", cx: 40, cy: 60, r: 20 }, []),
+      React.createElement('circle', { id: "circle-2", cx: 80, cy: 60, r: 20 }, []),
+      React.createElement('circle', { id: "circle-3", cx: 120, cy: 60, r: 20 }, []),
+    ]
+    return React.createElement('svg', { id: `${this.props.label}`, style: { backgroundColor: 'lightblue', height: '100%', width: '100%' } }, circles)
   }
 }
 
