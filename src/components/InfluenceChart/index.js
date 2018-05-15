@@ -27,7 +27,7 @@ const {
   getURLParameter,
   getURLElement,
   largest, 
-  parseDate,
+  //parseDate,
   populate_path,
   radial,
   smallest
@@ -70,6 +70,8 @@ const {
   WIKI_LOGO,
   WIKI_ICON_WIDTH
 } = require('../../constants')
+
+const DEFAULT_ANIMATION_DURATION = 2000
 
 // defining a buncha variables that sadly need to be in
 // global scope for now. TODO: refactor this!!
@@ -115,6 +117,14 @@ class Timeline {
     this.startDate = startDate
     this.endDate = endDate
 
+    this.scale = d3.scaleTime()
+      .range([0, width - 1])
+      .domain([this.startDate, this.endDate])
+
+    this.axis = d3.axisBottom(this.scale)
+      .ticks(10)
+
+    /*
     this.scale = d3.time.scale()
       .range([0, width - 1])
       .domain([this.startDate, this.endDate]);
@@ -122,6 +132,7 @@ class Timeline {
     this.axis = d3.svg.axis()
       .scale(this.scale).tickSize(-20, -10, 0)
       .tickSubdivide(true);
+      */
   }
 
   update(width, startDate, endDate) {
@@ -430,6 +441,7 @@ const drawInfluence = (svg: HTMLElement, d3elem: any, dimensions: { width: numbe
         maxDate = date;
     };
 
+    /*
     graph.getNodes().forEach(function(physicalNode) {
       physicalNodes.push(physicalNode);
       const person = people[physicalNode.getId()]
@@ -476,6 +488,7 @@ const drawInfluence = (svg: HTMLElement, d3elem: any, dimensions: { width: numbe
         }
       })
     })
+    */
 
     // adjust scale
 
@@ -978,30 +991,42 @@ class InfluenceChartCanvas {
 */
 
 
-const renderD3 = (d3elem: any, dimensions: Dimensions) => {
-  console.log('[renderD3]', d3elem, dimensions)
+class InfluenceCanvas {
+  topElem: any
+  timelineAxis: any
+  initialRenderComplete: bool
 
-  const circles = d3elem.selectAll('circle')
-  console.log(circles)
+  constructor(topElem) {
+    this.topElem = topElem
 
-  circles.data([
-    dimensions.width / 4,
-    dimensions.width / 2,
-    dimensions.width * (3 / 4),
-  ]).attr('cx', d => d)
-  /*
-  const c1 = d3elem.select('#circle-1')
-  const c2 = d3elem.select('#circle-2')
-  const c3 = d3elem.select('#circle-3')
+    this.timelineAxis = topElem
+      .append('g')
+      .classed('axies', true)
+      .attr('class', 'axis')
 
-  console.log(c1, c2, c3)
+    this.initialRenderComplete = false
+  }
 
-  c1.attr('cx', dimensions.width / 3)
-  c2.attr('cx', dimensions.width / 2)
-  c3.attr('cx', dimensions.width * 2 / 3)
+  initialRender(dimensions: Dimensions) {
+    const timeline = new Timeline(dimensions.width, new Date(1900, 1, 1), new Date(2000, 1, 1))
+    this.timelineAxis
+      .attr('transform', `translate(0, ${TIMELINE_Y(dimensions.height)})`)
+      .call(timeline.axis)
 
-  console.log(c1, c2, c3)
-  */
+    this.initialRenderComplete = true
+  }
+
+  render(dimensions: Dimensions) {
+    if (!this.initialRenderComplete) {
+      this.initialRender(dimensions)
+    } else {
+      const timeline = new Timeline(dimensions.width, new Date(1900, 1, 1), new Date(2000, 1, 1))
+      this.timelineAxis.transition()
+        .duration(DEFAULT_ANIMATION_DURATION)
+        .attr('transform', `translate(0, ${TIMELINE_Y(dimensions.height)})`)
+        .call(timeline.axis)
+    }
+  }
 }
 
 
@@ -1014,6 +1039,7 @@ type InfluenceChartProps = {
 type InfluenceChartState = {
   domElem: ?HTMLElement,
   d3Elem: any,
+  canvas: ?InfluenceCanvas,
   centerNode: TNode,
   graph: TGraph,
 }
@@ -1030,6 +1056,7 @@ class InfluenceChart extends React.Component<InfluenceChartProps, InfluenceChart
     this.state = {
       domElem: null,
       d3Elem: null,
+      canvas: null,
       centerNode: centerNode,
       graph: graph,
     }
@@ -1039,26 +1066,23 @@ class InfluenceChart extends React.Component<InfluenceChartProps, InfluenceChart
     this.state.domElem = document.getElementById(this.props.label)
     this.state.d3Elem = d3.select(`#${this.props.label}`)
 
-    this.updateChart()
+    if (this.state.domElem != null) {
+      const dimensions = this.state.domElem.getBoundingClientRect()
+      this.state.canvas = new InfluenceCanvas(this.state.d3Elem)
+      this.state.canvas.render(dimensions)
+    } // TODO: what should I do if the nodes aren't found?
+
     window.addEventListener('resize', () => {
-      this.updateChart()
+      if (this.state.domElem != null && this.state.canvas != null) {
+        const canvas = this.state.canvas
+        const dimensions_ = this.state.domElem.getBoundingClientRect()
+        canvas.render(dimensions_)
+      }
     })
   }
 
-  updateChart() {
-    if (this.state.domElem != null && this.state.d3Elem != null) {
-      const dimensions = this.state.domElem.getBoundingClientRect()
-      renderD3(this.state.d3Elem, dimensions)
-    }
-  }
-
   render() {
-    const circles = [
-      React.createElement('circle', { id: "circle-1", cx: 40, cy: 60, r: 20 }, []),
-      React.createElement('circle', { id: "circle-2", cx: 80, cy: 60, r: 20 }, []),
-      React.createElement('circle', { id: "circle-3", cx: 120, cy: 60, r: 20 }, []),
-    ]
-    return React.createElement('svg', { id: `${this.props.label}`, style: { backgroundColor: 'lightblue', height: '100%', width: '100%' } }, circles)
+    return React.createElement('svg', { id: `${this.props.label}`, style: { backgroundColor: 'lightblue', height: '100%', width: '100%' } }, [])
   }
 }
 

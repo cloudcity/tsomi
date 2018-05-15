@@ -2,7 +2,7 @@
 
 const d3 = require('d3')
 const $ = require('jquery')
-const dateFormat = d3.time.format('%Y-%m-%d')
+//const dateFormat = d3.time.format('%Y-%m-%d')
 
 type Point = {
   x: number,
@@ -20,8 +20,10 @@ const getViewportDimensions = (): Viewport => ({
   width:  $('#chart').width()
 })
 
+/*
 const parseDate = (dateString: string) =>
   dateFormat.parse(dateString.substr(0, 10))
+  */
 
 const convertSpaces = (element: string): string =>
   element.replace(/(%20| )/g, '_')
@@ -78,7 +80,7 @@ module.exports = {
   isAboutPage,
   largest,
   last,
-  parseDate,
+  //parseDate,
   populate_path,
   smallest,
   radial,

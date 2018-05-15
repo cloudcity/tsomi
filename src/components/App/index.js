@@ -147,7 +147,6 @@ class App_ extends React.Component<AppProps, AppState> {
     const chartDiv = React.createElement('div', {
       key: 'chartdiv',
       id: 'chartdiv',
-      style: { 'background-color': 'lightgreen' },
     }, influenceChart)
 
     const wikiDiv = React.createElement(WikiDiv, {
