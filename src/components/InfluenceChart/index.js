@@ -120,15 +120,34 @@ const createTimeline = (width: number, startDate: Date, endDate: Date): Timeline
 
 type PersonIcon = { circle: any }
 
-const createPersonIcon = (container: any, person: string): PersonIcon => {
-  const circle = container
-    .append('svg:circle')
-    .attr('r', IMAGE_SIZE / 2 + 10)
-    .append('svg:clipPath')
-    .append('svg:circle')
-    .attr('cx', 0)
-    .attr('cy', 0)
-    .attr('r', IMAGE_SIZE / 2)
+const createPersonIcon = (container: any, person: PersonDetail): PersonIcon => {
+  console.log('[createPersonIcon]', person)
+  const circle = container.append('g')
+    .attr('clip-path', 'url(#image-clip)')
+
+  circle.append('image')
+    .attr('href', 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Butler_signing.jpg/225px-Butler_signing.jpg')
+    .attr('preserveAspectRatio', 'xMidYMin slice')
+    .attr('height', IMAGE_SIZE)
+    .attr('width', IMAGE_SIZE)
+    .attr('x', -IMAGE_SIZE / 2)
+    .attr('y', -IMAGE_SIZE / 2)
+
+  circle.append('path')
+    .attr('class', 'banner')
+    .attr('style', 'stroke-width: 25;')
+    .attr('d', populate_path(
+      'M X0 Y0 L X1 Y1',
+      [{ x: -BANNER_X, y: BANNER_Y },
+        { x: +BANNER_X, y: BANNER_Y }],
+    ))
+
+  circle.append('text')
+    .attr('class', 'name')
+    .attr('text-anchor', 'middle')
+    .attr('y', BANNER_Y)
+    .attr('dy', '0.3em')
+    .text(person.name)
 
   return { circle }
 }
