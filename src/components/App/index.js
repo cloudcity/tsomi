@@ -141,8 +141,6 @@ class App_ extends React.Component<AppProps, AppState> {
 
     const influenceChart = React.createElement(InfluenceChart, {
       label: 'influencechart',
-      subjectId: this.props.focusedSubject,
-      people: this.props.people,
     })
     const chartDiv = React.createElement('div', {
       key: 'chartdiv',

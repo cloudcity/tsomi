@@ -6,6 +6,7 @@ import { type SubjectId, type PersonAbstract, type PersonDetail } from '../../ty
 import { type PeopleCache } from '../../store'
 
 const { TGraph, TLink, TNode } = require('../../tgraph')
+const store = require('../../store')
 
 const d3 = require('d3')
 const $ = require('jquery')
@@ -940,20 +941,14 @@ const drawInfluence = (svg: HTMLElement, d3elem: any, dimensions: { width: numbe
 
 const createInfluenceGraph = (
   subjectId: SubjectId,
-  person: PersonAbstract | PersonDetail
+  person: PersonDetail,
 ): [TNode, TGraph] => {
   const graph = new TGraph()
   const subjectNode = graph.addNode(subjectId)
 
-  if (person == null) {
-    console.log('cannot handle a null person')
-  } else if (person.type === 'PersonAbstract') {
-    console.log('cannot generate a graph for an abstract person: ', person)
-  } else {
-    for (let i = 0; i < person.influencedBy.length; i++) {
-      let targetNode = graph.addNode(person.influencedBy[i])
-      graph.addLink(targetNode, subjectNode)
-    }
+  for (let i = 0; i < person.influencedBy.length; i += 1) {
+    const targetNode = graph.addNode(person.influencedBy[i])
+    graph.addLink(targetNode, subjectNode)
   }
   return [subjectNode, graph]
 }
@@ -963,12 +958,10 @@ class InfluenceCanvas {
   topElem: any
   timelineAxis: any
   initialRenderComplete: bool
-  centerPerson: string
   center: any
 
-  constructor(topElem, centerPerson: string) {
+  constructor(topElem) {
     this.topElem = topElem
-    this.centerPerson = centerPerson
 
     this.timelineAxis = topElem
       .append('g')
@@ -981,25 +974,28 @@ class InfluenceCanvas {
       .append('svg:circle')
       .attr('cx', 0)
       .attr('cy', 0)
-      .attr('r', IMAGE_SIZE / 2);
+      .attr('r', IMAGE_SIZE / 2)
 
     this.initialRenderComplete = false
   }
 
-  initialRender(dimensions: Dimensions) {
+  initialRender(dimensions: Dimensions, center: PersonDetail, people: PeopleCache, graph: TGraph) {
     const timeline = createTimeline(dimensions.width, new Date(1900, 1, 1), new Date(2000, 1, 1))
     this.timelineAxis
       .attr('transform', `translate(0, ${TIMELINE_Y(dimensions.height)})`)
       .call(timeline.axis)
 
-    this.center = createPersonIcon(this.topElem, this.centerPerson)
+    this.center = createPersonIcon(this.topElem, center)
+
+    this.center.circle.attr('transform', `translate(${dimensions.width / 2}, ${dimensions.height / 2})`)
 
     this.initialRenderComplete = true
   }
 
-  render(dimensions: Dimensions) {
+  render(dimensions: Dimensions, center: PersonDetail, people: PeopleCache, graph: TGraph) {
+    console.log('[InfluenceCanvas.render]', center)
     if (!this.initialRenderComplete) {
-      this.initialRender(dimensions)
+      this.initialRender(dimensions, center, people, graph)
     } else {
       const timeline = createTimeline(dimensions.width, new Date(1900, 1, 1), new Date(2000, 1, 1))
       this.timelineAxis.transition()
@@ -1013,59 +1009,89 @@ class InfluenceCanvas {
 
 type InfluenceChartProps = {
   label: string,
-  subjectId: SubjectId,
-  people: PeopleCache
+  focusedId: SubjectId,
+  focusedPerson: PersonAbstract | PersonDetail,
+  people: PeopleCache,
 }
 
 type InfluenceChartState = {
   domElem: ?HTMLElement,
   d3Elem: any,
   canvas: ?InfluenceCanvas,
-  centerNode: TNode,
-  graph: TGraph,
+  centerNode: ?TNode,
+  graph: ?TGraph,
+  updateNeeded: bool,
 }
 
-class InfluenceChart extends React.Component<InfluenceChartProps, InfluenceChartState> {
+class InfluenceChart_ extends React.Component<InfluenceChartProps, InfluenceChartState> {
   constructor(props: InfluenceChartProps) {
     super(props)
 
-    const [centerNode, graph] = createInfluenceGraph(
-      this.props.subjectId,
-      this.props.people[this.props.subjectId],
-    )
-
-    this.state = {
+    this.state = InfluenceChart_.getDerivedStateFromProps(props, {
       domElem: null,
       d3Elem: null,
       canvas: null,
-      centerNode: centerNode,
-      graph: graph,
-    }
+      centerNode: null,
+      graph: null,
+      updateNeeded: false,
+    })
   }
 
   componentDidMount() {
     this.state.domElem = document.getElementById(this.props.label)
     this.state.d3Elem = d3.select(`#${this.props.label}`)
-
-    if (this.state.domElem != null) {
-      const dimensions = this.state.domElem.getBoundingClientRect()
-      this.state.canvas = new InfluenceCanvas(this.state.d3Elem, 'Joyce_Carol_Oates')
-      this.state.canvas.render(dimensions)
-    } // TODO: what should I do if the nodes aren't found?
+    this.state.canvas = new InfluenceCanvas(this.state.d3Elem)
 
     window.addEventListener('resize', () => {
-      if (this.state.domElem != null && this.state.canvas != null) {
-        const canvas = this.state.canvas
-        const dimensions_ = this.state.domElem.getBoundingClientRect()
-        canvas.render(dimensions_)
-      }
+      this.forceUpdate()
     })
   }
 
+  renderCanvas() {
+    if (this.state.domElem != null && this.state.d3Elem != null && this.state.canvas != null) {
+      const { domElem, d3Elem, canvas } = this.state
+      console.log('[InfluenceChart_.renderCanvas] rendering')
+
+      const dimensions = domElem.getBoundingClientRect()
+      const person = this.props.people[this.props.focusedId]
+      if (person != null && person.type === 'PersonDetail') {
+        canvas.render(dimensions, person, this.props.people, this.state.graph)
+      }
+    } // TODO: what should I do if the nodes aren't found?
+  }
+
+  static getDerivedStateFromProps(
+    newProps: InfluenceChartProps,
+    prevState: InfluenceChartState,
+  ): InfluenceChartState {
+    const focusedPerson = newProps.focusedPerson
+    if (focusedPerson != null && focusedPerson.type === 'PersonDetail') {
+      const [centerNode, graph] = createInfluenceGraph(
+        newProps.focusedId,
+        focusedPerson,
+      )
+
+      return { ...prevState, centerNode, graph }
+    }
+    console.log('Cannot generate a full chart without a PersonDetail')
+    return prevState
+  }
+
   render() {
+    this.renderCanvas()
     return React.createElement('svg', { id: `${this.props.label}`, style: { height: '100%', width: '100%' } }, [])
   }
 }
+
+const InfluenceChart = connect(
+  state => ({
+    focusedId: store.focusedSubject(state),
+    focusedPerson: store.lookupPerson(store.focusedSubject(state))(state),
+    people: store.people(state),
+  }),
+  dispatch => ({}),
+)(InfluenceChart_)
+
 
 export default InfluenceChart
 
