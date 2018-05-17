@@ -1,5 +1,7 @@
 // @flow
 
+import moment from 'moment'
+
 import { type PersonAbstract, type PersonDetail, type SubjectId, mkSubjectFromDBpediaUri } from '../../types'
 
 const { runSparqlQuery } = require('../../components/Sparql')
@@ -84,8 +86,8 @@ const personAbstractFromJS = (js: PersonJSON): PersonAbstract => {
     name: js.name.value,
     abstract: js.abstract.value,
     birthPlace: js.birthPlace ? js.birthPlace.value : undefined,
-    birthDate: js.birthDate ? js.birthDate.value : undefined,
-    deathDate: js.deathDate ? js.deathDate.value : undefined,
+    birthDate: js.birthDate ? moment(js.birthDate.value) : undefined,
+    deathDate: js.deathDate ? moment(js.deathDate.value) : undefined,
     influencedByCount: js.influencedByCount ? parseInt(js.influencedByCount.value, 10) : 0,
     influencedCount: js.influencedCount ? parseInt(js.influencedCount.value, 10) : 0,
   }
@@ -145,8 +147,8 @@ const getPerson = (s: SubjectId): Promise<?PersonDetail> =>
         name: base.name.value,
         abstract: base.abstract.value,
         birthPlace: base.birthPlace ? base.birthPlace.value : undefined,
-        birthDate: base.birthDate ? base.birthDate.value : undefined,
-        deathDate: base.deathDate ? base.deathDate.value : undefined,
+        birthDate: base.birthDate ? moment(base.birthDate.value) : undefined,
+        deathDate: base.deathDate ? moment(base.deathDate.value) : undefined,
         influencedBy: Object.keys(influencedBy),
         influenced: Object.keys(influenced),
       }
