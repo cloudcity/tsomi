@@ -1,6 +1,7 @@
 // @flow
 
 import React from 'react'
+import moment from 'moment'
 import { connect } from 'react-redux'
 import { type SubjectId, type PersonAbstract, type PersonDetail } from '../../types'
 import { type PeopleCache } from '../../store'
@@ -11,6 +12,7 @@ const store = require('../../store')
 const d3 = require('d3')
 const $ = require('jquery')
 const _ = require('lodash')
+const fp = require('lodash/fp')
 
 /*
 const { 
@@ -55,7 +57,7 @@ const {
   LINK_BASE,
   LINK_MIN_OFFSET,
   LINK_RANDOM,
-  LINK_STRENGHT,
+  LINK_STRENGTH,
   MAX_SCREEN_NODES,
   MARGIN,
   NODE_SIZE,
@@ -121,13 +123,13 @@ const createTimeline = (width: number, startDate: Date, endDate: Date): Timeline
 
 type PersonIcon = { circle: any }
 
-const createPersonIcon = (container: any, person: PersonDetail): PersonIcon => {
-  console.log('[createPersonIcon]', person)
+const renderPersonIcon = (container: any, person: PersonAbstract | PersonDetail): PersonIcon => {
+  console.log('[renderPersonIcon]', person)
   const circle = container.append('g')
     .attr('clip-path', 'url(#image-clip)')
 
   circle.append('image')
-    .attr('href', 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Butler_signing.jpg/225px-Butler_signing.jpg')
+    .attr('href', 'https://upload.wikimedia.org/wikipedia/commons/4/44/Joyce_carol_oates_2014.jpg')
     .attr('preserveAspectRatio', 'xMidYMin slice')
     .attr('height', IMAGE_SIZE)
     .attr('width', IMAGE_SIZE)
@@ -152,6 +154,79 @@ const createPersonIcon = (container: any, person: PersonDetail): PersonIcon => {
 
   return { circle }
 }
+
+
+const listOfPeopleInGraph = (
+  graph: TGraph,
+  people: PeopleCache,
+): Array<PersonAbstract | PersonDetail> => {
+  console.log('[listPeopleInGraph graph]', graph)
+  return fp.filter(p => p != null)(fp.map(node => people[node.getId()])(graph.nodes))
+}
+
+
+const calculateTimeRange = (people: Array<PersonAbstract | PersonDetail>): [moment, moment] => {
+  let minDate = null
+  let maxDate = null
+
+  people.forEach((p) => {
+    const dob = p.birthDate ? p.birthDate : null
+    if (dob != null) {
+      if (minDate === null || dob < minDate) {
+        minDate = dob
+      }
+      if (maxDate === null || dob > maxDate) {
+        maxDate = dob
+      }
+    }
+
+    const dod = p.deathDate ? p.deathDate : null
+    if (dod != null) {
+      if (minDate === null || dod < minDate) {
+        minDate = dod
+      }
+      if (maxDate === null || dod > maxDate) {
+        maxDate = dod
+      }
+    }
+  })
+
+  if (minDate != null && maxDate != null) {
+    return [minDate, maxDate]
+  } else if (minDate === null && maxDate != null) {
+    minDate = moment.clone(maxDate).year(maxDate.year() - 100)
+    return [minDate, maxDate]
+  } else if (minDate != null && maxDate === null) {
+    maxDate = moment.clone(minDate).year(minDate.year() + 100)
+    return [minDate, maxDate]
+  }
+
+  minDate = moment('1900-01-01')
+  maxDate = moment()
+  return [minDate, maxDate]
+}
+
+
+/*
+const timelinePath = (
+  dimensions: Dimensions,
+  timeline: Timeline,
+  person: PersonDetail,
+  node: { x: number, y: number },
+) => {
+  const TIMELINE_UPSET = 50
+
+  const birth = { x: timeline.scale(person.birthDate), y: TIMELINE_Y(dimensions.height) }
+  const bc1 = { x: node.x, y: TIMELINE_Y(dimensions.height) - TIMELINE_UPSET }
+  const bc2 = { x: birth.x, y: TIMELINE_Y(dimensions.height) - TIMELINE_UPSET }
+  const death = { x: timeline.scale(person.deathDate), y: TIMELINE_Y(dimensions.height) }
+  const dc1 = { x: death.x, y: TIMELINE_Y(dimensions.height) - TIMELINE_UPSET }
+  const dc2 = { x: node.x, y: TIMELINE_Y(dimensions.height) - TIMELINE_UPSET }
+
+  return populate_path(
+    'M X0 Y0 C X1 Y1 X2 Y2 X3 Y3 L X4 Y4 C X5 Y5 X6 Y6 X7 Y7', [node, bc1, bc2, birth, death, dc1, dc2, node])
+}
+*/
 
 
 function limitScreenNodes(graph, centerPerson) {
@@ -368,7 +443,7 @@ const renderChart = (svg: HTMLElement, d3elem: any, dimensions: { width: number,
   // create the fdl instance
   const force = d3.layout.force()
     .gravity(GRAVITY)
-    .linkStrength(LINK_STRENGHT)
+    .linkStrength(LINK_STRENGTH)
     .charge(function(d) {
       return d.getProperty('hidden')
         ? -CHARGE_HIDDEN
@@ -765,20 +840,6 @@ const drawInfluence = (svg: HTMLElement, d3elem: any, dimensions: { width: numbe
       });
     });
     */
-  }
-
-  function timelinePath(node) {
-    var TIMELINE_UPSET = 50;
-
-    var birth = {x: timeline.scale(node.getProperty('birthDate')), y: TIMELINE_Y(dimensions.height)};
-    var bc1 = {x: node.x, y: TIMELINE_Y(dimensions.height) - TIMELINE_UPSET};
-    var bc2 = {x: birth.x, y: TIMELINE_Y(dimensions.height) - TIMELINE_UPSET};
-    var death = {x: timeline.scale(node.getProperty('deathDate')), y: TIMELINE_Y(dimensions.height)};
-    var dc1 = {x: death.x, y: TIMELINE_Y(dimensions.height) - TIMELINE_UPSET};
-    var dc2 = {x: node.x, y: TIMELINE_Y(dimensions.height) - TIMELINE_UPSET};
-
-    return populate_path(
-      'M X0 Y0 C X1 Y1 X2 Y2 X3 Y3 L X4 Y4 C X5 Y5 X6 Y6 X7 Y7', [node, bc1, bc2, birth, death, dc1, dc2, node]);
   }
 
   function arrowPath(link: TLink, centerNode: TNode) {

@@ -23,7 +23,7 @@ const IMAGE_SIZE = 180
 const LINK_BASE = 40
 const LINK_MIN_OFFSET = 25
 const LINK_RANDOM = 100
-const LINK_STRENGHT = 0.3
+const LINK_STRENGTH = 0.3
 const MAX_SCREEN_NODES = 25
 const MARGIN = 100
 const NODE_SIZE = 150
@@ -85,7 +85,7 @@ const subjects = {
 const TIMELINE_OPACITY = 0.03
 const TIMELINE_HIGHLIGHT_OPACITY = 0.4
 const TIMELINE_MARGIN = 50
-const TIMELINE_Y = (height) => height - 20
+const TIMELINE_Y = (height) => height - 30
 const UNKNOWN_PERSON = 'static/images/unknown.png'
 const WIKI_LOGO = 'static/images/Wikipedia-logo.png'
 const WIKI_ICON_WIDTH = 30
@@ -113,7 +113,7 @@ module.exports = {
   LINK_BASE,
   LINK_MIN_OFFSET,
   LINK_RANDOM,
-  LINK_STRENGHT,
+  LINK_STRENGTH,
   MAX_SCREEN_NODES,
   MARGIN,
   NODE_SIZE,
