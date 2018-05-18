@@ -16,11 +16,6 @@ describe('searching dbpedia', () => {
     searchForPeople('Joyce Carol Oates').then(lst => {
       expect(lst.length).toEqual(2)
 
-      console.log('[Joyce Carol Oates]')
-      console.log(lst[0].birthDate)
-      console.log(moment('1938-6-16'))
-      console.log(lst[0].birthDate.isSame(moment('1938-6-16')))
-
       expect(lst[0].uri).toEqual('http://dbpedia.org/resource/Joyce_Carol_Oates')
       expect(lst[0].name).toEqual('Joyce Carol Oates')
       expect(lst[0].birthPlace).toEqual('http://dbpedia.org/resource/Lockport_(city),_New_York')
