@@ -68,10 +68,35 @@ class App_ extends React.Component<AppProps, AppState> {
   }
 
   componentDidMount() {
-    dbpedia.getPerson(this.props.focusedSubject).then(
-      (person: ?PersonAbstract | ?PersonDetail) => {
-        if (person) { this.props.cachePerson(this.props.focusedSubject, person) }
+    const getAndCachePerson = (n: string) => { 
+      return dbpedia.getPerson(n).then((person: ?PersonAbstract | ?PersonDetail) => {
+        console.log('[get person]', n, person)
+        return new Promise((res, rej) => {
+          if(person === null || person === undefined) {
+            rej()
+          } else {
+            this.props.cachePerson(n, person)
+            res(person)
+          }
+        })
       })
+    }
+
+    getAndCachePerson(this.props.focusedSubject).then((person: PersonAbstract | PersonDetail) => {
+      if(person.influencedBy && person.influenced) {
+        console.log('[influenced]', person.influenced)
+        return Promise.all([
+          person.influencedBy.map(getAndCachePerson),
+          person.influenced.map(getAndCachePerson)
+        ])
+      }
+    },
+    (err) => {
+      console.log('whoops!', err)
+    })
+    .then(() => {
+      console.log('[people]', this.props.people)
+    })
   }
 
   //componentDidMount() {

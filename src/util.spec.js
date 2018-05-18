@@ -4,6 +4,7 @@ const {
  getURLParameter,
  largest,
  last,
+ mapObjKeys,
  smallest,
  queryParamsToHash,
 } = require('./util')
@@ -102,6 +103,18 @@ describe('queryParamsToHash', () => {
 
     expect(queryParamsToHash(withQ)).toEqual(o)
     expect(queryParamsToHash(withoutQ)).toEqual(o)
+  })
+})
+
+describe('mapObjKeys', () => {
+  it('should map object keys correctly', () => {
+    const pairs = [
+      [ { a: 1, b: 2 }, i => i.toUpperCase(), { A: 1, B: 2 } ]
+    ]
+
+    pairs.forEach(([i, f, o]) => {
+      expect(mapObjKeys(f, i)).toEqual(o)
+    })
   })
 })
 
