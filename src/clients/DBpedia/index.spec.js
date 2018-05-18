@@ -3,6 +3,15 @@ import moment from 'moment'
 const { getPerson, searchForPeople } = require('./')
 
 describe('searching dbpedia', () => {
+  var originalTimeout;
+
+  beforeEach(() => {
+    originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000
+  });
+
+  afterEach(() => jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout)
+
   it('retrieves an individual result', (done) => {
     searchForPeople('Joyce Carol Oates').then(lst => {
       expect(lst.length).toEqual(2)
