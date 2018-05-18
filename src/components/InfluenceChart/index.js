@@ -1110,28 +1110,25 @@ const createInfluenceGraph = (
 ): { centerNode: ?TNode, graph: TGraph } => {
   const graph = new TGraph()
 
+  const createLinkedNodes = fp.compose([
+    fp.filter(p => p != null),
+    fp.map((pname: SubjectId): ?TNode => {
+      const target = people[pname]
+      if (target != null) {
+        return graph.createNode(pname, renderPersonIcon(container, target).circle)
+      }
+      return null
+    }),
+  ])
+
   const person = people[subjectId]
   if (person != null && person.type === 'PersonDetail') {
-    console.log('[createInfluenceGraph person', person)
     const subjectNode = graph.createNode(subjectId, renderPersonIcon(container, person).circle)
 
-    for (let i = 0; i < person.influencedBy.length; i += 1) {
-      const targetPerson = people[person.influencedBy[i]]
-      const targetNode = graph.createNode(person.influencedBy[i], renderPersonIcon(container, person).circle)
-      console.log('[InfluencedBy]', person.influencedBy[i], targetNode)
-      if (targetPerson != null) {
-        console.log(graph.addLink(targetNode, subjectNode))
-      }
-    }
 
-    for (let i = 0; i < person.influenced.length; i += 1) {
-      const targetPerson = people[person.influenced[i]]
-      const targetNode = graph.createNode(person.influenced[i], renderPersonIcon(container, person).circle)
-      console.log('[Influenced]', person.influenced[i], targetNode)
-      if (targetPerson != null) {
-        graph.addLink(subjectNode, targetNode)
-      }
-    }
+    createLinkedNodes(person.influencedBy).forEach(n => graph.addLink(n, subjectNode))
+    createLinkedNodes(person.influenced).forEach(n => graph.addLink(subjectNode, n))
+
     return { centerNode: subjectNode, graph }
   }
 
@@ -1220,7 +1217,6 @@ class InfluenceCanvas {
       .force('center', d3.forceCenter(this.dimensions.width / 2, this.dimensions.height / 2))
       .nodes(this.graph.getNodes())
       .on('tick', () => {
-        console.log(this.graph.getNodes())
         this.graph.getNodes().forEach((n) => {
           n.attr('transform', `translate(${n.x}, ${n.y})`)
         })
