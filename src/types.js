@@ -9,7 +9,7 @@ export const mkSubjectId = (s: string): SubjectId => s.trim()
 export const mkSubjectFromDBpediaUri = (url: Uri): SubjectId => url.trim().split('/').reverse()[0]
 export const dbpediaSubjectId = (s: SubjectId): string => `dbpedia:${s}`
 
-export type PersonAbstract = {
+export type PersonAbstract = {|
   type: 'PersonAbstract',
   uri: Uri,
   name: string,
@@ -20,17 +20,17 @@ export type PersonAbstract = {
   deathDate?: moment,
   influencedByCount: number,
   influencedCount: number,
-}
+|}
 
-export type PersonDetail = {
+export type PersonDetail = {|
   type: 'PersonDetail',
   uri: Uri,
   name: string,
   abstract?: string,
   birthPlace?: string,
-  birthDate?: moment,
-  deathDate?: moment,
+  birthDate: ?moment,
+  deathDate: ?moment,
   influencedBy: Array<SubjectId>,
   influenced: Array<SubjectId>,
-}
+|}
 

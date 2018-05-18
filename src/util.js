@@ -58,6 +58,13 @@ const getURLElement = (name: string) =>
     ? decodeURI(last(name.split('/')))
     : 'null'
 
+const mapObjKeys = (f: Function, o: Object): Object => {
+  const newObj = {}
+  Object.keys(o).forEach(k => {
+    newObj[f(k)] = o[k]
+  })
+  return newObj
+}
 
 const populate_path = (path: string, points: Array<Point>) => {
   points.forEach((point: Point, index: number) => {
@@ -80,6 +87,7 @@ module.exports = {
   isAboutPage,
   largest,
   last,
+  mapObjKeys,
   //parseDate,
   populate_path,
   smallest,
