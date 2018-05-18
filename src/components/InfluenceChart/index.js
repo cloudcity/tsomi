@@ -1141,7 +1141,6 @@ class InfluenceCanvas {
 type InfluenceChartProps = {
   label: string,
   focusedId: SubjectId,
-  focusedPerson: PersonDetail | PersonAbstract,
   people: PeopleCache,
 }
 
@@ -1234,7 +1233,6 @@ class InfluenceChart_ extends React.Component<InfluenceChartProps, InfluenceChar
 const InfluenceChart = connect(
   state => ({
     focusedId: store.focusedSubject(state),
-    focusedPerson: store.lookupPerson(store.focusedSubject(state))(state),
     people: store.people(state),
   }),
   dispatch => ({}),
