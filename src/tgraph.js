@@ -84,7 +84,7 @@ export var TGraph = function() {
 
 TGraph.prototype = {
 
-  // add a link to the graph
+  // addLink creates a link between two nodes in the graph. Both nodes will be created if they don't already exist. The 
 
   addLink: function(sourceNodeOrId, targetNodeOrId, link_properties) {
     var source = this.establishNode(sourceNodeOrId);
@@ -96,8 +96,9 @@ TGraph.prototype = {
     return getNode(nodeOrId) !== undefined;
   },
 
-  // add a node to the graph
-  
+  // addNode adds a node to the graph. `n = graph.addNode(nodeOrId)`.
+  // `nodeOrId` can, as the name implies, be either a simple ID (in which case
+  // a node will be created) or an extant node.
   addNode: function(nodeOrId) {
     return this.establishNode(nodeOrId);
   },

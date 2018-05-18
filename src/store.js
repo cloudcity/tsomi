@@ -18,6 +18,7 @@ export const initialState = (): Store => ({
   influencers: 10,
   influenced: 20,
   showAboutPage: false,
+  // focusedSubject: 'Octavia_E._Butler',
   focusedSubject: 'Joyce_Carol_Oates',
   wikiDivHidden: false,
   people: {},
