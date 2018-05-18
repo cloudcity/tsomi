@@ -165,6 +165,7 @@ const getPerson = (s: SubjectId): Promise<?PersonDetail> => {
         deathDate, 
         influencedBy,
         influenced,
+        thumbnail,
       }
 		})
 }

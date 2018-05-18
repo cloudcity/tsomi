@@ -62,7 +62,7 @@ describe('precise dbpedia gets', () => {
       expect(person.name).toEqual('Joyce Carol Oates')
       expect(person.birthPlace).toEqual('http://dbpedia.org/resource/Lockport_(city),_New_York')
       expect(person.birthDate.isSame(moment('1938-06-16'))).toBe(true)
-      expect(person.deathDate).toEqual(undefined)
+      expect(person.deathDate).toBeFalsy()
       console.log(person.influencedBy)
       console.log(person.influenced)
       done()

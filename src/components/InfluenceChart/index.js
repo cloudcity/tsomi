@@ -221,13 +221,24 @@ const renderPersonIcon = (container: any, person: PersonAbstract | PersonDetail)
   const circle = container.append('g')
     .attr('clip-path', 'url(#image-clip)')
 
-  circle.append('image')
-    .attr('href', 'https://upload.wikimedia.org/wikipedia/commons/4/44/Joyce_carol_oates_2014.jpg')
-    .attr('preserveAspectRatio', 'xMidYMin slice')
-    .attr('height', IMAGE_SIZE)
-    .attr('width', IMAGE_SIZE)
-    .attr('x', -IMAGE_SIZE / 2)
-    .attr('y', -IMAGE_SIZE / 2)
+  if (person.type === 'PersonDetail') {
+    circle.append('image')
+      // .attr('href', 'https://upload.wikimedia.org/wikipedia/commons/4/44/Joyce_carol_oates_2014.jpg')
+      .attr('href', person.thumbnail)
+      .attr('preserveAspectRatio', 'xMidYMin slice')
+      .attr('height', IMAGE_SIZE)
+      .attr('width', IMAGE_SIZE)
+      .attr('x', -IMAGE_SIZE / 2)
+      .attr('y', -IMAGE_SIZE / 2)
+  } else {
+    circle.append('image')
+      .attr('href', '')
+      .attr('preserveAspectRatio', 'xMidYMin slice')
+      .attr('height', IMAGE_SIZE)
+      .attr('width', IMAGE_SIZE)
+      .attr('x', -IMAGE_SIZE / 2)
+      .attr('y', -IMAGE_SIZE / 2)
+  }
 
   circle.append('path')
     .attr('class', 'banner')
@@ -1124,7 +1135,6 @@ const createInfluenceGraph = (
   const person = people[subjectId]
   if (person != null && person.type === 'PersonDetail') {
     const subjectNode = graph.createNode(subjectId, renderPersonIcon(container, person).circle)
-
 
     createLinkedNodes(person.influencedBy).forEach(n => graph.addLink(n, subjectNode))
     createLinkedNodes(person.influenced).forEach(n => graph.addLink(subjectNode, n))
