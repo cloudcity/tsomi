@@ -84,9 +84,10 @@ class App_ extends React.Component<AppProps, AppState> {
 
     getAndCachePerson(this.props.focusedSubject).then((person: PersonAbstract | PersonDetail) => {
       if(person.influencedBy && person.influenced) {
+        console.log('[influenced]', person.influenced)
         return Promise.all([
           person.influencedBy.map(getAndCachePerson),
-          //person.influenced.map(getAndCachePerson)
+          person.influenced.map(getAndCachePerson)
         ])
       }
     },

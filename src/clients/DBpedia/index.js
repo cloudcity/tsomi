@@ -153,7 +153,7 @@ const getPerson = (s: SubjectId): Promise<?PersonDetail> => {
       
       return {
         type:'PersonDetail',
-        uri: dataUrl,
+        uri: `http://dbpedia.org/resource/${ s }`,
         name: person.name[0].value,
         abstract: person.abstract.filter(i => i.lang === 'en')[0].value,
         birthPlace: person.birthPlace[0].value,

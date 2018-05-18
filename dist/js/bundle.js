@@ -62637,9 +62637,8 @@ var App_ = function (_React$Component) {
 
       getAndCachePerson(this.props.focusedSubject).then(function (person) {
         if (person.influencedBy && person.influenced) {
-          return Promise.all([person.influencedBy.map(getAndCachePerson)]
-          //person.influenced.map(getAndCachePerson)
-          );
+          console.log('[influenced]', person.influenced);
+          return Promise.all([person.influencedBy.map(getAndCachePerson), person.influenced.map(getAndCachePerson)]);
         }
       }, function (err) {
         console.log('whoops!', err);
@@ -95697,7 +95696,7 @@ var getPerson = function getPerson(s) {
 
     return {
       type: 'PersonDetail',
-      uri: dataUrl,
+      uri: 'http://dbpedia.org/resource/' + s,
       name: person.name[0].value,
       abstract: person.abstract.filter(function (i) {
         return i.lang === 'en';
