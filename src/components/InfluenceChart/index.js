@@ -6,7 +6,7 @@ import { connect } from 'react-redux'
 import { type SubjectId, type PersonAbstract, type PersonDetail } from '../../types'
 import { type PeopleCache } from '../../store'
 
-const { TGraph, TLink, TNode } = require('../../tgraph')
+//const { TGraph, TLink, TNode } = require('../../tgraph')
 const store = require('../../store')
 
 const d3 = require('d3')
@@ -82,7 +82,7 @@ const DEFAULT_ANIMATION_DURATION = 2000
 //let force
 //let timelineScale
 //let timelineAxis
-let nextMidId = 0
+//let nextMidId = 0
 //let linkGroup
 //let timelinesGroup
 //let nodeGroup
@@ -99,6 +99,100 @@ const establishInitialSubject = () => {
     : subjects.oats
 }
 */
+
+
+/*
+class TNode {
+  x: number
+  y: number
+  vx: number
+  vy: number
+
+  id: string
+  contents: any
+
+  constructor(id: string, contents: any, x: number = 0, y: number = 0, vx: number = 0, vy: number = 0) {
+    this.id = id
+    this.contents = contents
+    this.x = x
+    this.y = y
+    this.vx = vx
+    this.vy = vy
+  }
+
+  getId(): string {
+    return this.id
+  }
+}
+*/
+
+
+type TNode = {
+  x: number,
+  y: number,
+  vx: number,
+  vy: number,
+  transform: string,
+
+  attr: Function,
+  getId: Function,
+}
+
+const mkTNode = (id: string, contents: any): TNode => {
+  contents.attr('id', id)
+    .attr('x', 0)
+    .attr('y', 0)
+    .attr('vx', 0)
+    .attr('vy', 0)
+
+  contents.getId = () => id
+  return contents
+}
+
+
+class TLink {
+  source: TNode
+  target: TNode
+
+  constructor(source: TNode, target: TNode) {
+    this.source = source
+    this.target = target
+  }
+}
+
+
+class TGraph {
+  nodes: { [string]: TNode }
+  links: Array<TLink>
+
+  constructor() {
+    this.nodes = {}
+    this.links = []
+  }
+
+  getNodes(): Array<TNode> {
+    return (((Object.values(this.nodes)): any): Array<TNode>)
+  }
+
+  getLinks(): Array<TLink> {
+    return this.links
+  }
+
+  addNode(node: TNode): TNode {
+    this.nodes[node.getId()] = node
+    return node
+  }
+
+  createNode(id: string, contents: any): TNode {
+    return this.addNode(mkTNode(id, contents))
+  }
+
+  addLink(source: TNode, target: TNode) {
+    this.addNode(source)
+    this.addNode(target)
+    this.links.push(new TLink(source, target))
+  }
+}
 
 
 type Dimensions = { width: number, height: number }
@@ -124,7 +218,6 @@ const createTimeline = (width: number, startDate: Date, endDate: Date): Timeline
 type PersonIcon = { circle: any }
 
 const renderPersonIcon = (container: any, person: PersonAbstract | PersonDetail): PersonIcon => {
-  console.log('[renderPersonIcon]', person)
   const circle = container.append('g')
     .attr('clip-path', 'url(#image-clip)')
 
@@ -292,12 +385,12 @@ function updateTimeline(timelineScale: any, timelineAxis: any, width: number, st
 */
 
 const renderChart = (svg: HTMLElement, d3elem: any, dimensions: { width: number, height: number }, centerNode: TNode, graph: TGraph) => {
-  console.log('[renderChart svg]', svg)
-  console.log('[renderChart d3elem]', d3elem)
-  console.log('[renderChart centerNode]', JSON.stringify(centerNode))
-  console.log('[renderChart centerNode]', centerNode)
-  console.log('[renderChart graph]', graph)
-  console.log('[renderChart dimensions]', dimensions)
+  //console.log('[renderChart svg]', svg)
+  //console.log('[renderChart d3elem]', d3elem)
+  //console.log('[renderChart centerNode]', JSON.stringify(centerNode))
+  //console.log('[renderChart centerNode]', centerNode)
+  //console.log('[renderChart graph]', graph)
+  //console.log('[renderChart dimensions]', dimensions)
   const defs = d3elem.append('defs')
 
 
@@ -842,6 +935,7 @@ const drawInfluence = (svg: HTMLElement, d3elem: any, dimensions: { width: numbe
     */
   }
 
+  /*
   function arrowPath(link: TLink, centerNode: TNode) {
     var s = link.source;
     var m = link.mid;
@@ -857,7 +951,9 @@ const drawInfluence = (svg: HTMLElement, d3elem: any, dimensions: { width: numbe
     return populate_path('M X0 Y0 Q X1 Y1 X2 Y2 M X3 Y3 L X4 Y4 L X5 Y5',
                          [s, m, tip, left, tip, right]);
   }
+  */
 
+  /*
   function computeNodeScale(node: TNode, centerNode: TNode, isMouseOver: bool) {
     isMouseOver = isMouseOver || false;
     var scale = 1;
@@ -869,11 +965,15 @@ const drawInfluence = (svg: HTMLElement, d3elem: any, dimensions: { width: numbe
 
     return scale * (isMouseOver ? 2 : 1);
   }
+  */
 
+  /*
   function scaleNode(node: TNode, centerNode: TNode, isMouseOver: bool) {
     scaleNodeThing(node, 'g.scale', computeNodeScale(node, centerNode, isMouseOver));
   }
+  */
 
+  /*
   function onNodeMouseOut(node, centerNode) {
     if (d3.event.target.tagName != 'image')
       scaleNodeThing(node, '.wikibutton', 0);
@@ -889,7 +989,9 @@ const drawInfluence = (svg: HTMLElement, d3elem: any, dimensions: { width: numbe
       .ease(STOCK_EASE)
       .style('opacity', TIMELINE_OPACITY);
   }
+  */
 
+  /*
   function onNodeMouseOver(node: TNode, centerNode: TNode) {
     if (d3.event.target.tagName != 'image')
       scaleNodeThing(node, '.wikibutton', 1);
@@ -917,6 +1019,7 @@ const drawInfluence = (svg: HTMLElement, d3elem: any, dimensions: { width: numbe
       .ease(STOCK_EASE)
       .style('opacity', TIMELINE_HIGHLIGHT_OPACITY);
   }
+  */
 
   function onImageClick(node) {
     node.open = !node.open || false;
@@ -1009,18 +1112,24 @@ const createInfluenceGraph = (
 
   const person = people[subjectId]
   if (person != null && person.type === 'PersonDetail') {
-    const subjectNode = graph.addNode(renderPersonIcon(container, person).circle)
+    console.log('[createInfluenceGraph person', person)
+    const subjectNode = graph.createNode(subjectId, renderPersonIcon(container, person).circle)
+
     for (let i = 0; i < person.influencedBy.length; i += 1) {
       const targetPerson = people[person.influencedBy[i]]
+      const targetNode = graph.createNode(person.influencedBy[i], renderPersonIcon(container, person).circle)
+      console.log('[InfluencedBy]', person.influencedBy[i], targetNode)
       if (targetPerson != null) {
-        graph.addLink(renderPersonIcon(container, targetPerson).circle, subjectNode)
+        console.log(graph.addLink(targetNode, subjectNode))
       }
     }
 
     for (let i = 0; i < person.influenced.length; i += 1) {
       const targetPerson = people[person.influenced[i]]
+      const targetNode = graph.createNode(person.influenced[i], renderPersonIcon(container, person).circle)
+      console.log('[Influenced]', person.influenced[i], targetNode)
       if (targetPerson != null) {
-        graph.addLink(subjectNode, renderPersonIcon(container, targetPerson).circle)
+        graph.addLink(subjectNode, targetNode)
       }
     }
     return { centerNode: subjectNode, graph }
@@ -1038,7 +1147,7 @@ class InfluenceCanvas {
   people: PeopleCache /* I am assuming that the link passed in is a live link
   back to redux and that changes in redux will be reflected here. */
 
-  center: TNode
+  center: ?TNode
   graph: TGraph
   timelineAxis: any
   fdl: any
@@ -1074,8 +1183,6 @@ class InfluenceCanvas {
       .attr('class', 'axis')
       .attr('transform', `translate(0, ${TIMELINE_Y(dimensions.height)})`)
       .call(timeline.axis)
-
-    this.fdl = d3.forceSimulation(this.graph.getNodes())
   }
 
   setDimensions(dimensions: Dimensions) {
@@ -1102,12 +1209,22 @@ class InfluenceCanvas {
 
     const [minYear, maxYear] = calculateTimeRange(listOfPeopleInGraph(this.graph, this.people))
     const timeline = createTimeline(this.dimensions.width, minYear, maxYear)
-    this.timelineAxis = this.topElem
-      .append('g')
-      .classed('axies', true)
-      .attr('class', 'axis')
+    this.timelineAxis.transition()
+      .duration(DEFAULT_ANIMATION_DURATION)
       .attr('transform', `translate(0, ${TIMELINE_Y(this.dimensions.height)})`)
       .call(timeline.axis)
+
+    this.fdl = d3.forceSimulation()
+      .force('charge', d3.forceManyBody())
+      .force('link', d3.forceLink(this.graph.getLinks()))
+      .force('center', d3.forceCenter(this.dimensions.width / 2, this.dimensions.height / 2))
+      .nodes(this.graph.getNodes())
+      .on('tick', () => {
+        console.log(this.graph.getNodes())
+        this.graph.getNodes().forEach((n) => {
+          n.attr('transform', `translate(${n.x}, ${n.y})`)
+        })
+      })
   }
 
   /*
