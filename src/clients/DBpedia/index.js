@@ -3,7 +3,9 @@
 import moment from 'moment'
 
 import { type PersonAbstract, type PersonDetail, type SubjectId, mkSubjectFromDBpediaUri } from '../../types'
+require('isomorphic-fetch')
 
+const { last, mapObjKeys } = require('../../util')
 const { runSparqlQuery } = require('../../components/Sparql')
 
 class ParseError {
@@ -16,6 +18,7 @@ class ParseError {
   }
 }
 
+
 /* eslint no-multi-str: off */
 const queryPersonAbstract = 'SELECT ?person ?name ?birthPlace ?birthDate ?deathDate COUNT(DISTINCT ?influencedBy) as ?influencedByCount COUNT(DISTINCT ?influenced) as ?influencedCount ?abstract \
 WHERE { \
@@ -25,8 +28,8 @@ WHERE { \
   OPTIONAL { ?person dbo:birthPlace ?birthPlace. } \
   OPTIONAL { ?person dbo:birthDate ?birthDate. } \
   OPTIONAL { ?person dbo:deathDate ?deathDate. } \
-  ?person dbpedia-owl:influencedBy ?influencedBy. \
-  ?person dbpedia-owl:influenced ?influenced \
+  OPTIONAL { ?person dbpedia-owl:influencedBy ?influencedBy. } \
+  OPTIONAL { ?person dbpedia-owl:influenced ?influenced. } \
   filter( regex(str(?name), "%search_query%", "i") ) \
   filter( lang(?abstract) = "en" ). \
 }'
@@ -127,33 +130,40 @@ WHERE { \
   filter( lang(?abstract) = "en" ). \
 }'
 
-const getPerson = (s: SubjectId): Promise<?PersonDetail> =>
-  runSparqlQuery(queryPersonDetail, { search_query: s })
-    .then((js: SearchResultJSON): ?PersonDetail => {
-      const bindings = js.results.bindings
-      const base = bindings.length > 0 ? bindings[0] : undefined
-      if (!base) { return null }
+const mkDataUrl = (s: SubjectId) => 
+  `http://dbpedia.org/data/${ s }.json`
 
-      let influencedBy = {}
-      let influenced = {}
-      for (let i = 0; i < bindings.length; i++) {
-        influencedBy[mkSubjectFromDBpediaUri(bindings[i].influencedBy.value)] = 1
-        influenced[mkSubjectFromDBpediaUri(bindings[i].influenced.value)] = 1
-      }
+const getPerson = (s: SubjectId): Promise<?PersonDetail> => {
+  const dataUrl = mkDataUrl(s)
 
+	return fetch(dataUrl).then(r => r.json())
+		.then(r => {
+      const person = mapObjKeys(i => last(i.split('/')), r[`http://dbpedia.org/resource/${ s }`])
+      const influenced = person.influenced
+        ? person.influenced.map(i => mkSubjectFromDBpediaUri(i.value))
+        : []
+
+      const influencedBy = person.influencedBy
+        ? person.influencedBy.map(i => mkSubjectFromDBpediaUri(i.value))
+        : []
+
+      const deathDate = person.deathDate
+        ? moment(person.deathDate[0].value)
+        : undefined
+      
       return {
-        type: 'PersonDetail',
-        uri: base.person.value,
-        name: base.name.value,
-        abstract: base.abstract.value,
-        birthPlace: base.birthPlace ? base.birthPlace.value : undefined,
-        birthDate: base.birthDate ? moment(base.birthDate.value) : undefined,
-        deathDate: base.deathDate ? moment(base.deathDate.value) : undefined,
-        influencedBy: Object.keys(influencedBy),
-        influenced: Object.keys(influenced),
+        type:'PersonDetail',
+        uri: `http://dbpedia.org/resource/${ s }`,
+        name: person.name[0].value,
+        abstract: person.abstract.filter(i => i.lang === 'en')[0].value,
+        birthPlace: person.birthPlace[0].value,
+        birthDate: moment(person.birthDate[0].value),
+        deathDate, 
+        influencedBy,
+        influenced,
       }
-    })
-
+		})
+}
 
 module.exports = {
   getPerson,
