@@ -1001,33 +1001,58 @@ const drawInfluence = (svg: HTMLElement, d3elem: any, dimensions: { width: numbe
 }
 
 const createInfluenceGraph = (
+  container: any,
   subjectId: SubjectId,
-  person: PersonDetail,
-): [TNode, TGraph] => {
+  people: PeopleCache,
+): { centerNode: ?TNode, graph: TGraph } => {
   const graph = new TGraph()
-  const subjectNode = graph.addNode(subjectId)
 
-  for (let i = 0; i < person.influencedBy.length; i += 1) {
-    const targetNode = graph.addNode(person.influencedBy[i])
-    graph.addLink(targetNode, subjectNode)
+  const person = people[subjectId]
+  if (person != null && person.type === 'PersonDetail') {
+    const subjectNode = graph.addNode(renderPersonIcon(container, person).circle)
+    for (let i = 0; i < person.influencedBy.length; i += 1) {
+      const targetPerson = people[person.influencedBy[i]]
+      if (targetPerson != null) {
+        graph.addLink(renderPersonIcon(container, targetPerson).circle, subjectNode)
+      }
+    }
+
+    for (let i = 0; i < person.influenced.length; i += 1) {
+      const targetPerson = people[person.influenced[i]]
+      if (targetPerson != null) {
+        graph.addLink(subjectNode, renderPersonIcon(container, targetPerson).circle)
+      }
+    }
+    return { centerNode: subjectNode, graph }
   }
-  return [subjectNode, graph]
+
+  return { centerNode: null, graph }
 }
 
 
 class InfluenceCanvas {
   topElem: any
+  dimensions: Dimensions
+
+  focusedId: SubjectId
+  people: PeopleCache /* I am assuming that the link passed in is a live link
+  back to redux and that changes in redux will be reflected here. */
+
+  center: TNode
+  graph: TGraph
   timelineAxis: any
-  initialRenderComplete: bool
-  center: any
+  fdl: any
 
-  constructor(topElem) {
+  constructor(
+    topElem: any,
+    dimensions: Dimensions,
+    focusedId: SubjectId,
+    people: PeopleCache,
+  ) {
     this.topElem = topElem
-
-    this.timelineAxis = topElem
-      .append('g')
-      .classed('axies', true)
-      .attr('class', 'axis')
+    this.dimensions = dimensions
+    this.focusedId = focusedId
+    this.people = people
 
     // create clip path for image
     this.topElem.append('svg:clipPath')
@@ -1037,20 +1062,64 @@ class InfluenceCanvas {
       .attr('cy', 0)
       .attr('r', IMAGE_SIZE / 2)
 
-    this.initialRenderComplete = false
+    const graphData = createInfluenceGraph(this.topElem, this.focusedId, this.people)
+    this.center = graphData.centerNode
+    this.graph = graphData.graph
+
+    const [minYear, maxYear] = calculateTimeRange(listOfPeopleInGraph(this.graph, this.people))
+    const timeline = createTimeline(dimensions.width, minYear, maxYear)
+    this.timelineAxis = topElem
+      .append('g')
+      .classed('axies', true)
+      .attr('class', 'axis')
+      .attr('transform', `translate(0, ${TIMELINE_Y(dimensions.height)})`)
+      .call(timeline.axis)
+
+    this.fdl = d3.forceSimulation(this.graph.getNodes())
   }
 
+  setDimensions(dimensions: Dimensions) {
+    this.dimensions = dimensions
+
+    // calculateTimeRange here
+    const timeline = createTimeline(dimensions.width, new Date(1900, 1, 1), new Date())
+    this.timelineAxis.transition()
+      .duration(DEFAULT_ANIMATION_DURATION)
+      .attr('transform', `translate(0, ${TIMELINE_Y(dimensions.height)})`)
+      .call(timeline.axis)
+  }
+
+  setFocused(focusedId: SubjectId, people: PeopleCache) {
+    this.focusedId = focusedId
+    this.people = people
+
+    console.log('[InfluenceCanvas setFocused]', this.people)
+
+    /* trigger animations to update the center */
+    const graphData = createInfluenceGraph(this.topElem, this.focusedId, this.people)
+    this.center = graphData.centerNode
+    this.graph = graphData.graph
+
+    const [minYear, maxYear] = calculateTimeRange(listOfPeopleInGraph(this.graph, this.people))
+    const timeline = createTimeline(this.dimensions.width, minYear, maxYear)
+    this.timelineAxis = this.topElem
+      .append('g')
+      .classed('axies', true)
+      .attr('class', 'axis')
+      .attr('transform', `translate(0, ${TIMELINE_Y(this.dimensions.height)})`)
+      .call(timeline.axis)
+  }
+
+  /*
   initialRender(dimensions: Dimensions, center: PersonDetail, people: PeopleCache, graph: TGraph) {
     const timeline = createTimeline(dimensions.width, new Date(1900, 1, 1), new Date(2000, 1, 1))
     this.timelineAxis
       .attr('transform', `translate(0, ${TIMELINE_Y(dimensions.height)})`)
       .call(timeline.axis)
 
-    this.center = createPersonIcon(this.topElem, center)
+    this.center = renderPersonIcon(this.topElem, center)
 
     this.center.circle.attr('transform', `translate(${dimensions.width / 2}, ${dimensions.height / 2})`)
-
-    this.initialRenderComplete = true
   }
 
   render(dimensions: Dimensions, center: PersonDetail, people: PeopleCache, graph: TGraph) {
@@ -1065,13 +1134,14 @@ class InfluenceCanvas {
         .call(timeline.axis)
     }
   }
+  */
 }
 
 
 type InfluenceChartProps = {
   label: string,
   focusedId: SubjectId,
-  focusedPerson: PersonAbstract | PersonDetail,
+  focusedPerson: PersonDetail | PersonAbstract,
   people: PeopleCache,
 }
 
@@ -1079,35 +1149,68 @@ type InfluenceChartState = {
   domElem: ?HTMLElement,
   d3Elem: any,
   canvas: ?InfluenceCanvas,
-  centerNode: ?TNode,
-  graph: ?TGraph,
-  updateNeeded: bool,
+  focusedId: ?SubjectId,
 }
 
 class InfluenceChart_ extends React.Component<InfluenceChartProps, InfluenceChartState> {
+  static getDerivedStateFromProps(
+    newProps: InfluenceChartProps,
+    prevState: InfluenceChartState,
+  ): InfluenceChartState {
+    console.log('[getDerivedStateFromProps]', newProps, prevState)
+    const { focusedId } = newProps
+    if (focusedId != null) {
+      if (prevState.canvas != null) {
+        prevState.canvas.setFocused(focusedId, newProps.people)
+      }
+      return { ...prevState, focusedId }
+    }
+    return prevState
+  }
+
   constructor(props: InfluenceChartProps) {
     super(props)
 
+    /*
     this.state = InfluenceChart_.getDerivedStateFromProps(props, {
       domElem: null,
       d3Elem: null,
       canvas: null,
-      centerNode: null,
-      graph: null,
-      updateNeeded: false,
     })
+    */
+    this.state = {
+      domElem: null,
+      d3Elem: null,
+      canvas: null,
+      focusedId: null
+    }
   }
 
   componentDidMount() {
+    console.log('[componentDidMount]')
     this.state.domElem = document.getElementById(this.props.label)
     this.state.d3Elem = d3.select(`#${this.props.label}`)
-    this.state.canvas = new InfluenceCanvas(this.state.d3Elem)
+
+    if (this.state.domElem != null && this.state.d3Elem != null) {
+      this.state.canvas = new InfluenceCanvas(
+        this.state.d3Elem,
+        this.state.domElem.getBoundingClientRect(),
+        this.props.focusedId,
+        this.props.people,
+      )
+    }
 
     window.addEventListener('resize', () => {
-      this.forceUpdate()
+      console.log('[componentDidMount resize listener]')
+      if (this.state.domElem != null && this.state.canvas != null) {
+        const { domElem } = this.state
+        this.state.canvas.setDimensions(domElem.getBoundingClientRect())
+        this.forceUpdate()
+      }
     })
   }
 
+  /*
   renderCanvas() {
     if (this.state.domElem != null && this.state.d3Elem != null && this.state.canvas != null) {
       const { domElem, d3Elem, canvas } = this.state
@@ -1120,26 +1223,10 @@ class InfluenceChart_ extends React.Component<InfluenceChartProps, InfluenceChar
       }
     } // TODO: what should I do if the nodes aren't found?
   }
-
-  static getDerivedStateFromProps(
-    newProps: InfluenceChartProps,
-    prevState: InfluenceChartState,
-  ): InfluenceChartState {
-    const focusedPerson = newProps.focusedPerson
-    if (focusedPerson != null && focusedPerson.type === 'PersonDetail') {
-      const [centerNode, graph] = createInfluenceGraph(
-        newProps.focusedId,
-        focusedPerson,
-      )
-
-      return { ...prevState, centerNode, graph }
-    }
-    console.log('Cannot generate a full chart without a PersonDetail')
-    return prevState
-  }
+  */
 
   render() {
-    this.renderCanvas()
+    //this.renderCanvas()
     return React.createElement('svg', { id: `${this.props.label}`, style: { height: '100%', width: '100%' } }, [])
   }
 }
