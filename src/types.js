@@ -1,6 +1,6 @@
 // @flow
 
-import moment from 'moment' 
+import moment from 'moment'
 
 export type Uri = string
 
@@ -11,11 +11,11 @@ export const dbpediaSubjectId = (s: SubjectId): string => `dbpedia:${s}`
 
 export type PersonAbstract = {|
   type: 'PersonAbstract',
+  id: SubjectId,
   uri: Uri,
   name: string,
   abstract?: string,
   birthPlace?: string,
-  /* TODO: turn both of these into moment objects and parse them properly. The database may have errors such as 1938-6-16 vs. 1938-06-16 */
   birthDate?: moment,
   deathDate?: moment,
   influencedByCount: number,
@@ -24,6 +24,7 @@ export type PersonAbstract = {|
 
 export type PersonDetail = {|
   type: 'PersonDetail',
+  id: SubjectId,
   thumbnail: ?string,
   uri: Uri,
   name: string,

@@ -85,6 +85,7 @@ const personAbstractFromJS = (js: PersonJSON): PersonAbstract => {
 
   return {
     type: 'PersonAbstract',
+    id: mkSubjectFromDBpediaUri(js.person.value),
     uri: js.person.value,
     name: js.name.value,
     abstract: js.abstract.value,
@@ -157,6 +158,7 @@ const getPerson = (s: SubjectId): Promise<?PersonDetail> => {
       
       return {
         type:'PersonDetail',
+        id: s,
         uri: `http://dbpedia.org/resource/${ s }`,
         name: person.name[0].value,
         abstract: person.abstract.filter(i => i.lang === 'en')[0].value,
