@@ -6,7 +6,6 @@ import { connect } from 'react-redux'
 import { type SubjectId, type PersonAbstract, type PersonDetail } from '../../types'
 import { type PeopleCache } from '../../store'
 
-//const { TGraph, TLink, TNode } = require('../../tgraph')
 const store = require('../../store')
 
 const d3 = require('d3')
@@ -130,8 +129,6 @@ type LinkForces = {
 }
 
 
-type Between = { previous: TNode, next: TNode }
-
 type Location = { x: number, y: number }
 
 
@@ -142,16 +139,16 @@ class TNode {
   vx: number
   vy: number
 
-  between: ?Between
+  middle: bool
   contents: ?Selection
 
-  constructor(id: string, contents: ?Selection, between: ?Between, location: ?Location) {
+  constructor(id: string, contents: ?Selection, middle: bool, location: ?Location) {
     this.id = id
     this.x = location != null ? location.x : 0
     this.y = location != null ? location.y : 0
     this.vx = 0
     this.vy = 0
-    this.between = between
+    this.middle = middle
     this.contents = contents
   }
 
@@ -160,18 +157,51 @@ class TNode {
   }
 
   isMiddle(): bool {
-    return this.between != null
+    return this.middle
+  }
+
+  attach(contents: Selection) {
+    this.contents = contents
+  }
+
+  /* If a node is being removed from the graph, it should also be removed from
+   * the DOM. This is an easy place to do it, but I am profoundly uneasy about
+   * having the visual representation manipulated directly from the abstract
+   * graph. */
+  remove() {
+    if (this.contents) {
+      this.contents.remove()
+    }
   }
 }
 
 
 class TLink {
   source: TNode
+  middle: TNode
   target: TNode
 
-  constructor(source: TNode, target: TNode) {
+  path: ?Selection
+
+  constructor(source: TNode, middle: TNode, target: TNode, path: ?Selection) {
     this.source = source
+    this.middle = middle
     this.target = target
+    this.path = path
+  }
+
+  attach(path: Selection) {
+    this.path = path
+  }
+
+  /* If a node is being removed from the graph, it should also be removed from
+   * the DOM. This is an easy place to do it, but I am profoundly uneasy about
+   * having the visual representation manipulated directly from the abstract
+   * graph. */
+  remove() {
+    if (this.path != null) {
+      this.path.remove()
+    }
   }
 }
 
@@ -200,39 +230,43 @@ class TGraph {
 
   removeNode(node: TNode): void {
     delete this.nodes[node.getId()]
+    node.remove()
     for (let i = 0; i < this.links.length; i += 1) {
       const elem = this.links[i]
-      if (elem.source === node.getId()) {
+      if (elem.source === node) {
+        this.links[i].remove()
+        elem.source.remove()
+        delete this.nodes[elem.source.getId()]
+        delete this.nodes[elem.middle.getId()]
         delete this.links[i]
-        if (node.between === null) {
-          this.removeNode(elem.target)
-        }
-      } else if (elem.target === node.getId()) {
+      } else if (elem.target === node) {
+        this.links[i].remove()
+        elem.target.remove()
+        delete this.nodes[elem.target.getId()]
+        delete this.nodes[elem.middle.getId()]
         delete this.links[i]
-        if (node.between === null) {
-          this.removeNode(elem.source)
-        }
       }
     }
   }
 
-  createNode(id: string, contents: ?Selection, between: ?Between, location: Location): TNode {
-    return this.addNode(new TNode(id, contents, between, location))
+  createNode(id: string, contents: ?Selection, middle: bool, location: Location): TNode {
+    return this.addNode(new TNode(id, contents, middle, location))
   }
 
-  createLink(source: TNode, target: TNode) {
+  createLink(source: TNode, target: TNode): TLink {
     const midNode = this.createNode(
       `${source.getId()}-${target.getId()}`,
       null,
-      { previous: source, next: target },
+      true,
       { x: (source.x + target.x) / 2, y: (source.y + target.y) / 2 },
     )
 
     this.addNode(source)
     this.addNode(midNode)
     this.addNode(target)
-    this.links.push(new TLink(source, midNode))
-    this.links.push(new TLink(midNode, target))
+    const link = new TLink(source, midNode, target)
+    this.links.push(link)
+    return link
   }
 }
 
@@ -274,6 +308,7 @@ const createTimeline = (width: number, startDate: Date, endDate: Date): Timeline
 
 
 type PersonIcon = { circle: Selection }
+
 
 const renderPersonIcon = (container: Selection, person: PersonAbstract | PersonDetail): PersonIcon => {
   const circle = container.append('g')
@@ -320,6 +355,40 @@ const renderPersonIcon = (container: Selection, person: PersonAbstract | PersonD
     .text(person.id)
 
   return { circle }
+}
+
+const calculateNodeScale = (node: TNode, centerNode: TNode, isMouseOver: bool): number =>
+  (node === centerNode || isMouseOver ? 1.0 : 0.5)
+
+const calculateLinkPath = (link: TLink, center: TNode) => {
+  const s = link.source
+  const m = link.middle
+  const t = link.target
+
+  const angle = angleRadians(t, m)
+  const nodeRadius = ((IMAGE_SIZE / 2) * calculateNodeScale(t, center, false)) + ARROW_WIDTH
+
+  const tip = radial(t, nodeRadius, angle)
+  const left = radial(tip, 20, angle + HEAD_ANGLE)
+  const right = radial(tip, 20, angle - HEAD_ANGLE)
+
+  return populate_path(
+    'M X0 Y0 Q X1 Y1 X2 Y2 M X3 Y3 L X4 Y4 L X5 Y5',
+    [s, m, tip, left, tip, right],
+  )
+}
+
+const renderLink = (container: Selection, center: TNode, link: TLink): Selection => {
+  const path = container.append('path')
+
+  path.classed('link', true)
+    .classed('from', link.source === center)
+    .classed('to', link.target === center)
+    .style('stroke-width', ARROW_WIDTH)
+    .attr('visibity', 'visibile')
+    .attr('d', calculateLinkPath(link, center))
+
+  return path
 }
 
 
@@ -1177,7 +1246,7 @@ const drawInfluence = (svg: HTMLElement, d3elem: Selection, dimensions: { width:
 }
 
 const createNodeFromPerson = (container: Selection, graph: TGraph, person: PersonAbstract | PersonDetail, location: Location): TNode =>
-  graph.createNode(person.id, renderPersonIcon(container, person).circle, null, location)
+  graph.createNode(person.id, renderPersonIcon(container, person).circle, false, location)
 
 const createNodes = (
   container: Selection,
@@ -1191,7 +1260,8 @@ const createNodes = (
 ])
 
 const createInfluenceGraph = (
-  container: Selection,
+  linksContainer: Selection,
+  nodesContainer: Selection,
   dimensions: Dimensions,
   subjectId: SubjectId,
   people: PeopleCache,
@@ -1201,20 +1271,26 @@ const createInfluenceGraph = (
 
   const person = people[subjectId]
   if (person != null && person.type === 'PersonDetail') {
-    const subjectNode = createNodeFromPerson(container, graph, person, { x: dimensions.width / 2, y: dimensions.height / 2 })
+    const subjectNode = createNodeFromPerson(nodesContainer, graph, person, { x: dimensions.width / 2, y: dimensions.height / 2 })
 
-    createNodes(container, { x: 0, y: dimensions.height / 2 }, graph, people)(person.influencedBy).forEach(n => graph.createLink(n, subjectNode))
-    createNodes(container, { x: dimensions.width, y: dimensions.height / 2 }, graph, people)(person.influenced).forEach(n => graph.createLink(subjectNode, n))
+    createNodes(nodesContainer, { x: 0, y: dimensions.height / 2 }, graph, people)(person.influencedBy).forEach(n => graph.createLink(n, subjectNode))
+    createNodes(nodesContainer, { x: dimensions.width, y: dimensions.height / 2 }, graph, people)(person.influenced).forEach(n => graph.createLink(subjectNode, n))
 
+    graph.links.forEach((l) => {
+      const path = renderLink(linksContainer, subjectNode, l)
+      l.attach(path)
+    })
     return { centerNode: subjectNode, graph }
   }
+
 
   return { centerNode: null, graph }
 }
 
 
 const updateInfluenceGraph = (
-  container: Selection,
+  linksContainer: Selection,
+  nodesContainer: Selection,
   dimensions: Dimensions,
   graph: TGraph,
   subjectId: SubjectId,
@@ -1234,7 +1310,7 @@ const updateInfluenceGraph = (
     const nodeIds = presentNodeIds.concat(necessaryNodeIds)
 
     if (!subjectNode) {
-      subjectNode = graph.createNode(subjectId, renderPersonIcon(container, subject).circle, null, { x: dimensions.width / 2, y: dimensions.height / 2 })
+      subjectNode = graph.createNode(subjectId, renderPersonIcon(nodesContainer, subject).circle, false, { x: dimensions.width / 2, y: dimensions.height / 2 })
     }
 
     nodeIds.forEach((nid) => {
@@ -1249,11 +1325,13 @@ const updateInfluenceGraph = (
           /* add the node */
           /* again, add the intermediate node */
           if (subject.influencedBy.includes(nid)) {
-            personNode = createNodeFromPerson(container, graph, person, { x: 0, y: dimensions.height / 2 })
-            graph.createLink(personNode, subjectNode)
+            personNode = createNodeFromPerson(nodesContainer, graph, person, { x: 0, y: dimensions.height / 2 })
+            const link = graph.createLink(personNode, subjectNode)
+            link.attach(renderLink(linksContainer, subjectNode, link))
           } else {
-            personNode = createNodeFromPerson(container, graph, person, { x: dimensions.width, y: dimensions.height / 2 })
-            graph.createLink(subjectNode, personNode)
+            personNode = createNodeFromPerson(nodesContainer, graph, person, { x: dimensions.width, y: dimensions.height / 2 })
+            const link = graph.createLink(subjectNode, personNode)
+            link.attach(renderLink(linksContainer, subjectNode, link))
           }
         } else if (!necessaryNodeIds.includes(nid) && personNode != null) {
           console.log('[updateInfluenceGraph] removing', nid)
@@ -1264,12 +1342,16 @@ const updateInfluenceGraph = (
       }
     })
   }
+
   return graph.nodes[subjectId]
 }
 
 
 class InfluenceCanvas {
   topElem: Selection
+  definitions: Selection
+  nodesElem: Selection
+  linksElem: Selection
   dimensions: Dimensions
 
   focusedId: SubjectId
@@ -1288,22 +1370,30 @@ class InfluenceCanvas {
     focusedId: SubjectId,
     people: PeopleCache,
   ) {
-    console.log('[InfluenceCanvas constructor]')
-
     this.topElem = topElem
     this.dimensions = dimensions
     this.focusedId = focusedId
     this.people = people
 
     // create clip path for image
-    this.topElem.append('svg:clipPath')
+    this.definitions = this.topElem.append('defs')
+    
+    this.definitions.append('svg:clipPath')
       .attr('id', 'image-clip')
       .append('svg:circle')
       .attr('cx', 0)
       .attr('cy', 0)
       .attr('r', IMAGE_SIZE / 2)
 
-    const graphData = createInfluenceGraph(this.topElem, this.dimensions, this.focusedId, this.people)
+    /* I've put these here so that I can force them to be rendered in a
+     * particular order. If all of the links appear in one container, and all
+     * of the nodes appear in another container, and the nodes container comes
+     * after the links container, this makes the nodes render atop the links.
+     */
+    this.linksElem = this.topElem.append('g').classed('links', true)
+    this.nodesElem = this.topElem.append('g').classed('nodes', true)
+
+    const graphData = createInfluenceGraph(this.linksElem, this.nodesElem, this.dimensions, this.focusedId, this.people)
     this.center = graphData.centerNode
     this.graph = graphData.graph
 
@@ -1335,24 +1425,34 @@ class InfluenceCanvas {
 
         this.graph.links.forEach((link) => {
           if (link.source === this.center) {
+            link.middle.x += (k2 / 2)
             link.target.x += k2
           } else if (link.target === this.center) {
+            link.middle.x -= (k2 / 2)
             link.source.x -= k2
           }
         })
 
         const [minX, minY] = [MARGIN, MARGIN]
-        const [maxX, maxY] = [width - MARGIN, height - MARGIN];
+        const [maxX, maxY] = [width - MARGIN, height - MARGIN]
+
+        this.graph.getNodes().forEach((n) => {
+          n.x = largest(minX, smallest(maxX, n.x))
+          n.y = largest(minY, smallest(maxY, n.y))
+        })
 
         this.graph.getNodes().forEach((n) => {
           if (n.contents != null) {
-            translateNode(n, {
-              x: largest(minX, smallest(maxX, n.x)),
-              y: largest(minY, smallest(maxY, n.y)),
-            })
+            translateNode(n, { x: n.x, y: n.y })
             if (n !== this.center) {
               scaleNode(n, 0.5)
             }
+          }
+        })
+
+        this.graph.links.forEach((l) => {
+          if (l.path != null && this.center != null) {
+            l.path.attr('d', calculateLinkPath(l, this.center))
           }
         })
       })
@@ -1365,7 +1465,7 @@ class InfluenceCanvas {
       .force('gravity', d3.forceManyBody().strength(GRAVITY))
       .force('charge', d3.forceManyBody().strength((d: TNode) => {
         //console.log('[charge]', d.getId(), d.isMiddle)
-        return d.isMiddle
+        return d.isMiddle()
           ? -CHARGE_HIDDEN
           : -((Math.random() * CHARGE_RANDOM) + CHARGE_BASE)
       }))
@@ -1393,7 +1493,7 @@ class InfluenceCanvas {
     console.log('[InfluenceCanvas setFocused]', this.people)
 
     /* trigger animations to update the center */
-    this.center = updateInfluenceGraph(this.topElem, this.dimensions, this.graph, this.focusedId, this.people)
+    this.center = updateInfluenceGraph(this.linksElem, this.nodesElem, this.dimensions, this.graph, this.focusedId, this.people)
 
     const [minYear, maxYear] = calculateTimeRange(listOfPeopleInGraph(this.graph, this.people))
     const timeline = createTimeline(this.dimensions.width, minYear, maxYear)
