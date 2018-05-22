@@ -1318,14 +1318,28 @@ class InfluenceCanvas {
 
     this.fdl = d3.forceSimulation(this.graph.getNodes())
       .on('tick', () => {
+        /*
+        if (this.fdl.alpha() < 0.001) {
+          const graph = this.graph
+          debugger
+        }
+        */
         const { width, height } = this.dimensions
         const k = 0.5 * this.fdl.alpha()
-        //const k2 = 15 * event.alpha
+        const k2 = 15 * this.fdl.alpha()
 
         if (this.center != null) {
           this.center.x += ((width / 2) - this.center.x) * k
           this.center.y += ((height / 2) - this.center.y) * k
         }
+
+        this.graph.links.forEach((link) => {
+          if (link.source === this.center) {
+            link.target.x += k2
+          } else if (link.target === this.center) {
+            link.source.x -= k2
+          }
+        })
 
         const [minX, minY] = [MARGIN, MARGIN]
         const [maxX, maxY] = [width - MARGIN, height - MARGIN];
