@@ -99,62 +99,163 @@ const establishInitialSubject = () => {
 }
 */
 
-type D3Link = {
+type LinkSegment = {
   source: any,
   target: any,
 }
 
 
 type Selection = {
-  append: string => Selection,
+  append: any => Selection,
   attr: (string, ?string | ?number | ?Function) => Selection,
-  classed: (string, bool) => Selection,
-  text: string => Selection,
   call: (Function | Selection) => Selection,
-  style: (string, string) => Selection,
-  selectAll: string => Selection,
-  transition: () => Selection,
+  classed: (string, bool) => Selection,
+  data: (Array<any>, ?(any => any)) => Selection,
   duration: number => Selection,
+  ease: number => Selection,
+  enter: () => Selection,
+  exit: () => Selection,
+  filter: Function => Selection,
   remove: () => Selection,
   select: string => Selection,
-  filter: Function => Selection,
-  ease: number => Selection,
+  selectAll: string => Selection,
+  style: (string, string) => Selection,
+  text: string => Selection,
+  transition: () => Selection,
 }
 
 type ForceSimulation = {
   alpha: (?number) => number,
   force: (string, any) => ForceSimulation,
-  nodes: Array<TNode> => ForceSimulation,
+  nodes: Array<InvisibleNode | PersonNode> => ForceSimulation,
   restart: () => void,
+  on: (string, () => void) => ForceSimulation,
 }
 
 type LinkForces = {
-  links: Array<D3Link> => LinkForces,
+  links: Array<LinkSegment> => LinkForces,
   strength: number => LinkForces,
 }
 
 
 type Location = { x: number, y: number }
 
+type TLink = {
+  source: string,
+  middle: string,
+  target: string,
+}
 
+type InvisibleNode = {
+  type: 'InvisibleNode',
+  x: number,
+  y: number,
+  vx: number,
+  vy: number,
+  getId: () => string,
+}
+
+type PersonNode = {
+  type: 'PersonNode',
+  x: number,
+  y: number,
+  vx: number,
+  vy: number,
+  person: PersonAbstract | PersonDetail,
+  getId: () => string,
+}
+
+
+class TGraph {
+  nodes: { [SubjectId]: InvisibleNode | PersonNode }
+  links: { [string]: TLink }
+  focus: PersonNode
+
+  constructor(focus: PersonDetail) {
+    this.nodes = {}
+    this.links = {}
+
+    this.setFocus(focus)
+  }
+
+  setFocus(person: PersonDetail): PersonNode {
+    const node = this.addPerson(person)
+    this.focus = node && node.type === 'PersonNode' ?  node : this.focus
+    return node
+  }
+
+  addNode(pn: PersonNode): void {
+    this.nodes[pn.getId()] = pn
+  }
+
+  addPerson(person: PersonAbstract | PersonDetail): PersonNode {
+    const node = {
+      type: 'PersonNode',
+      x: 0,
+      y: 0,
+      vx: 0,
+      vy: 0,
+      person: person,
+      getId: () => person.id
+    }
+    this.addNode(node)
+    return node
+  }
+
+  removeNode(person: SubjectId | PersonAbstract | PersonDetail | PersonNode): void {
+  }
+
+  createLink(source: PersonAbstract | PersonDetail, target: PersonAbstract | PersonDetail): TLink {
+    const sourceNode = this.addPerson(source)
+    const targetNode = this.addPerson(target)
+    const middle = {
+      type: 'InvisibleNode',
+      x: 0,
+      y: 0,
+      vx: 0,
+      vy: 0,
+      getId: () => `${source.id} - ${target.id}`
+    }
+    const link = { source: source.id, middle: middle.getId(), target: target.id }
+
+    this.nodes[middle.getId()]
+    return link
+  }
+
+  getNodes(): Array<InvisibleNode | PersonNode> {
+    return fp.values(this.nodes)
+  }
+
+  getVisibleNodes(): Array<PersonNode> {
+    return fp.filter(n => n.type === 'PersonNode')(fp.values(this.nodes))
+  }
+
+  getLinks(): Array<TLink> {
+    return []
+  }
+
+  getLinkSegments(): Array<LinkSegment> {
+    return []
+  }
+}
+
+
+/*
 class TNode {
   id: SubjectId
   x: number
   y: number
   vx: number
   vy: number
-
   middle: bool
-  contents: ?Selection
 
-  constructor(id: string, contents: ?Selection, middle: bool, location: ?Location) {
+  constructor(id: string, middle: bool, location: ?Location) {
     this.id = id
     this.x = location != null ? location.x : 0
     this.y = location != null ? location.y : 0
     this.vx = 0
     this.vy = 0
     this.middle = middle
-    this.contents = contents
   }
 
   getId(): SubjectId {
@@ -169,10 +270,6 @@ class TNode {
     this.contents = contents
   }
 
-  /* If a node is being removed from the graph, it should also be removed from
-   * the DOM. This is an easy place to do it, but I am profoundly uneasy about
-   * having the visual representation manipulated directly from the abstract
-   * graph. */
   remove() {
     if (this.contents) {
       this.contents.remove()
@@ -199,10 +296,6 @@ class TLink {
     this.path = path
   }
 
-  /* If a node is being removed from the graph, it should also be removed from
-   * the DOM. This is an easy place to do it, but I am profoundly uneasy about
-   * having the visual representation manipulated directly from the abstract
-   * graph. */
   remove() {
     if (this.path != null) {
       this.path.remove()
@@ -282,24 +375,19 @@ class TGraph {
     return link
   }
 }
+*/
 
 
 type Dimensions = { width: number, height: number }
 
 
-const translateNode = (n: TNode, destination: Location): void => {
-  if (n.contents != null) {
-    n.contents
-      .attr('transform', `translate(${destination.x}, ${destination.y})`)
-  }
+const translateSelection = (n: Selection, destination: Location): void => {
+  n.attr('transform', `translate(${destination.x}, ${destination.y})`)
 }
 
-const scaleNode = (n: TNode, scale: number): void => {
-  if (n.contents != null) {
-    n.contents
-      .select('.scale')
-      .attr('transform', `scale(${scale})`)
-  }
+const scaleSelection = (n: Selection, scale: number): void => {
+  n.select('.scale')
+    .attr('transform', `scale(${scale})`)
 }
 
 
@@ -308,7 +396,7 @@ const scaleNode = (n: TNode, scale: number): void => {
  */
 type Timeline = { scale: Selection, axis: Selection }
 
-const createTimeline = (width: number, startDate: Date, endDate: Date): Timeline => {
+const createTimeline = (width: number, startDate: moment, endDate: moment): Timeline => {
   const scale = d3.scaleTime()
     .range([0, width - 1])
     .domain([startDate, endDate])
@@ -320,12 +408,49 @@ const createTimeline = (width: number, startDate: Date, endDate: Date): Timeline
 }
 
 
-type PersonIcon = { circle: Selection }
+const renderPersonIcon = (node: PersonNode): HTMLElement => {
+  const icon = document.createElement('g')
+  const canvas = document.createElement('g')
+  const image = document.createElement('image')
+  const banner = document.createElement('path')
+  const text = document.createElement('text')
 
+  icon.appendChild(canvas)
+  canvas.appendChild(image)
+  canvas.appendChild(banner)
+  banner.appendChild(text)
 
-const renderPersonIcon = (container: Selection, person: PersonAbstract | PersonDetail): PersonIcon => {
-  const circle = container.append('g')
+  icon.setAttribute('id', node.person.id)
+  icon.setAttribute('class', 'node')
+  icon.setAttribute('width', `${IMAGE_SIZE}`)
+  icon.setAttribute('height', `${IMAGE_SIZE}`)
+  icon.setAttribute('visibility', 'visible')
 
+  canvas.setAttribute('class', 'scale')
+  canvas.setAttribute('clip-path', 'url(#image-clip)')
+
+  image.setAttribute('href', node.person.thumbnail ? node.person.thumbnail : '')
+  image.setAttribute('preserveAspectRatio', 'xMidYMin slice')
+  image.setAttribute('height', `${IMAGE_SIZE}`)
+  image.setAttribute('width', `${IMAGE_SIZE}`)
+  image.setAttribute('x', `${-IMAGE_SIZE / 2}`)
+  image.setAttribute('y', `${-IMAGE_SIZE / 2}`)
+
+  banner.setAttribute('class', 'banner')
+  banner.setAttribute('style', 'stroke-width: 25;')
+  banner.setAttribute('d', populate_path(
+      'M X0 Y0 L X1 Y1',
+      [{ x: -BANNER_X, y: BANNER_Y },
+        { x: +BANNER_X, y: BANNER_Y }],
+  ))
+
+  text.setAttribute('class', 'name')
+  text.setAttribute('text-anchor', 'middle')
+  text.setAttribute('y', BANNER_Y)
+  text.setAttribute('dy', '0.3em')
+  text.appendChild(document.createTextNode(node.person.name))
+
+  /*
   const canvas = circle.classed('translate', true)
     .attr('id', person.id)
     .append('g')
@@ -334,7 +459,6 @@ const renderPersonIcon = (container: Selection, person: PersonAbstract | PersonD
 
   if (person.type === 'PersonDetail') {
     canvas.append('image')
-      // .attr('href', 'https://upload.wikimedia.org/wikipedia/commons/4/44/Joyce_carol_oates_2014.jpg')
       .attr('href', person.thumbnail)
       .attr('preserveAspectRatio', 'xMidYMin slice')
       .attr('height', IMAGE_SIZE)
@@ -366,14 +490,16 @@ const renderPersonIcon = (container: Selection, person: PersonAbstract | PersonD
     .attr('y', BANNER_Y)
     .attr('dy', '0.3em')
     .text(person.id)
+    */
 
-  return { circle }
+  return icon
 }
 
-const calculateNodeScale = (node: TNode, centerNode: TNode, isMouseOver: bool): number =>
-  (node === centerNode || isMouseOver ? 1.0 : 0.5)
+/*
+const calculateSelectionScale = (node: Selection, centerNode: PersonNode, isMouseOver: bool): number =>
+  (node.id === centerNode.getId() || isMouseOver ? 1.0 : 0.5)
 
-const calculateLinkPath = (link: TLink, center: TNode) => {
+const calculateLinkPath = (link: TLink, center: PersonNode) => {
   const s = link.source
   const m = link.middle
   const t = link.target
@@ -390,7 +516,9 @@ const calculateLinkPath = (link: TLink, center: TNode) => {
     [s, m, tip, left, tip, right],
   )
 }
+*/
 
+/*
 const renderLink = (container: Selection, center: TNode, link: TLink): Selection => {
   const path = container.append('path')
 
@@ -405,6 +533,7 @@ const renderLink = (container: Selection, center: TNode, link: TLink): Selection
 
   return path
 }
+*/
 
 
 const listOfPeopleInGraph = (
@@ -541,714 +670,7 @@ function updateTimeline(timelineScale: any, timelineAxis: any, width: number, st
 }
 */
 
-const renderChart = (svg: HTMLElement, d3elem: Selection, dimensions: { width: number, height: number }, centerNode: TNode, graph: TGraph) => {
-  const defs = d3elem.append('defs')
-
-
-  defs.append('svg:linearGradient')
-    .attr('id', 'loading-gradient')
-    .attr('x1', '0%')
-    .attr('y1', '0%')
-    .attr('x2', '100%')
-    .attr('y2', '0%')
-    .call(function(gradient) {
-      gradient.append('svg:stop')
-        .attr('offset', '0%')
-        .style('stop-color', 'white')
-        .style('stop-opacity', '1');
-      gradient.append('svg:stop')
-        .attr('offset', '50%')
-        .style('stop-color', 'white')
-        .style('stop-opacity', '0');
-      gradient.append('svg:stop')
-        .attr('offset', '100%')
-        .style('stop-color', 'white')
-        .style('stop-opacity', '0');
-    });
-
-  defs.append('svg:linearGradient')
-    .attr('id', 'image-gradient')
-    .attr('x1', '0%')
-    .attr('y1', '0%')
-    .attr('x2', '100%')
-    .attr('y2', '0%')
-    .call(function(gradient) {
-      gradient.append('svg:stop')
-        .attr('offset', '0%')
-        .style('stop-color', 'white')
-        .style('stop-opacity', '0');
-      gradient.append('svg:stop')
-        .attr('offset', '10%')
-        .style('stop-color', 'white')
-        .style('stop-opacity', '0');
-      gradient.append('svg:stop')
-        .attr('offset', '15%')
-        .style('stop-color', 'white')
-        .style('stop-opacity', '1');
-      gradient.append('svg:stop')
-        .attr('offset', '85%')
-        .style('stop-color', 'white')
-        .style('stop-opacity', '1');
-      gradient.append('svg:stop')
-        .attr('offset', '90%')
-        .style('stop-color', 'white')
-        .style('stop-opacity', '0');
-      gradient.append('svg:stop')
-        .attr('offset', '100%')
-        .style('stop-color', 'white')
-        .style('stop-opacity', '0');
-    });
-
-  defs.append('mask')
-    .attr('id', 'image-mask')
-    .append('rect')
-    .attr('x', IMAGE_SIZE / -2)
-    .attr('y', IMAGE_SIZE / -2)
-    .attr('width', IMAGE_SIZE)
-    .attr('height', IMAGE_SIZE)
-    .style('fill', 'url(#image-gradient)');
-
-  defs.append('svg:clipPath')
-    .attr('id', 'loading-clip')
-    .append('svg:circle')
-    .attr('cx', 0)
-    .attr('cy', 0)
-    .attr('r', IMAGE_SIZE / 2 + 10);
-
-  // create path for names
-  defs.append('path')
-    .attr('id', 'namepath')
-    .attr('d', function() {
-      var r = (NODE_SIZE - BANNER_SIZE) / 2;
-      return 'M 0 ' + (-r) + ' a ' + r + ' ' + r + ' 0 1 0 0.01 0 Z';
-    });
-
-  defs.append('path')
-    .attr('id', 'bannerpath')
-    .attr('d', populate_path(
-      'M X0 Y0 L X1 Y1',
-      [{x: -BANNER_X, y: BANNER_Y},
-       {x: +BANNER_X, y: BANNER_Y}]));
-
-  // create path for titles
-  defs.append('path')
-    .attr('id', 'titlepath')
-    .attr('d', function() {
-      var inset = 60;
-      var len = 550;
-      var curve = 130;
-      return populate_path(
-        'M X0 Y0 L X1 Y1 A X2 Y2 0 0 1 X3 Y3 L X4 Y4', [
-          {x: inset, y: len},
-          {x: inset, y: inset + curve},
-          {x: curve, y: curve},
-          {x: inset + curve, y: inset},
-          {x: len, y: inset},
-        ]);
-    });
-
-  d3elem.append('text')
-    .classed('loading', true)
-    .attr('x', dimensions.width / 2)
-    .attr('y', dimensions.height / 2)
-    .attr('text-anchor', 'middle')
-    .text('Loading...');
-
-  d3elem.append('text')
-    .classed('nodata', true)
-    .attr('visibility', 'hidden')
-    .attr('x', dimensions.width / 2)
-    .attr('y', dimensions.height / 2)
-    .attr('text-anchor', 'middle')
-    .text('No Data.');
-
-  // add groups for links and nodes
-  const timelinesGroup = d3elem.append('g').classed('timelines', true);
-  const linkGroup = d3elem.append('g').classed('links', true);
-  const nodeGroup = d3elem
-    .append('g')
-    .classed('nodes', true)
-    .attr('height', dimensions.height)
-    .attr('width', dimensions.width)
-    
-  const axiesGroup = d3elem.append('g')
-    .attr('transform', 'translate(0, ' + TIMELINE_Y(dimensions.height) + ')')
-    .classed('axies', true)
-    .attr('class', 'axis');
-
-  // setup the axes
-  const timeline = createTimeline(dimensions.width,
-    new Date(1900, 12, 15),
-    new Date())
-
-  axiesGroup.call(timeline.axis);
-
-  // create the fdl instance
-  const force = d3.layout.force()
-    .gravity(GRAVITY)
-    .linkStrength(LINK_STRENGTH)
-    .charge(function(d) {
-      return d.getProperty('hidden')
-        ? -CHARGE_HIDDEN
-        : -(Math.random() * CHARGE_RANDOM + CHARGE_BASE);})
-    .linkDistance(function(link) {
-      var base = LINK_BASE;
-
-      if (link.source == centerNode || link.target == centerNode)
-        base = NODE_SIZE / 2 + LINK_MIN_OFFSET;
-      else
-        base = NODE_SIZE / 4 + LINK_MIN_OFFSET;
-
-      return Math.random() * LINK_RANDOM + base;})
-    .size([dimensions.width, dimensions.height]);
-
-  /* TODO: hopefully remove, trying to see if this can be handled at the react level
-  // handle window resize
-  d3.select(window)
-    .on('resize', _.debounce(function() {
-      const { width, height } = getViewportDimensions()
-
-      d3elem.attr('height', height)
-        .attr('width', width)
-      
-      nodeGroup
-        .attr('height', height)
-        .attr('width', width)
-     
-      timelineScale.range([ 0, width - 1 ])
-
-      timelineAxis = d3.svg.axis()
-        .scale(timelineScale)
-        .tickSize(-20, -10, 0)
-        .tickSubdivide(true)
-      
-      force
-        .size([ width, height ])
-        .start()
-
-      axiesGroup
-        .attr('transform', 'translate(0, ' + TIMELINE_Y() + ')')
-        .call(timelineAxis)
-    }), 400)
-    */
-
-  return [force, timeline, linkGroup, timelinesGroup, nodeGroup]
-}
-
-const drawInfluence = (svg: HTMLElement, d3elem: Selection, dimensions: { width: number, height: number }, centerNode: TNode, graph: TGraph, people: PeopleCache) => {
-  d3elem.attr('height', dimensions.height)
-      .attr('width', dimensions.width)
-  const [force, timeline, linkGroup, timelinesGroup, nodeGroup] =
-    renderChart(svg, d3elem, dimensions, centerNode, graph)
-  d3elem.selectAll('text.static-text').transition().duration(2000).style('fill', '#bbb')
-  d3elem.selectAll('text.loading').transition().style('fill', 'white').remove()
-
-   updateChart(dimensions, graph, centerNode)
-
-  function updateChart(dimensions: { width: number, height: number }, graph: TGraph, centerNode: TNode) {
-    var physicalNodes = []
-    var minDate = null
-    var maxDate = null
-
-    var sampleDate = function(date) {
-      if (minDate == null || date < minDate)
-        minDate = date;
-      if (maxDate == null || date > maxDate)
-        maxDate = date;
-    };
-
-    /*
-    graph.getNodes().forEach(function(physicalNode) {
-      physicalNodes.push(physicalNode);
-      const person = people[physicalNode.getId()]
-      if (person === null || person === undefined) return
-
-      // establish date of birth
-
-      const dobStr = person.birthDate
-      let dob = undefined
-      if (dobStr !== undefined) {
-        dob = parseDate(dobStr)
-        physicalNode.setProperty('birthDate', dob);
-      }
-
-      // establish date of death
-
-      const dodStr = person.deathDate
-      let dod = undefined
-      if (dodStr !== undefined) {
-        dod = parseDate(dodStr)
-        physicalNode.setProperty('deathDate', dod)
-      }
-      else if (dob != undefined) {
-        dod = new Date()
-        physicalNode.setProperty('deathDate', dod)
-      }
-
-      // establish min max dates
-
-      if (dob !== undefined && dod !== undefined) {
-        sampleDate(dod)
-        sampleDate(dob)
-      }
-
-      force.nodes().forEach(function(oldNode) {
-        if (centerNode.getId() == oldNode.getId()) {
-          centerNode.px = centerNode.x = oldNode.x
-          centerNode.py = centerNode.y = oldNode.y
-          centerNode.weight = 0;
-        }
-        if (physicalNode.getId() == oldNode.getId()) {
-          physicalNode.px = physicalNode.x = oldNode.x
-          physicalNode.py = physicalNode.y = oldNode.y
-        }
-      })
-    })
-    */
-
-    // adjust scale
-
-    if (minDate == null || minDate == undefined) {
-      minDate = new Date(1900, 12, 15)
-    }
-    if (maxDate == null || maxDate == undefined) {
-      maxDate = new Date()
-    }
-    if (minDate > maxDate) {
-      const tmp = minDate
-      minDate = maxDate
-      maxDate = tmp
-    }
-    // timeline.update(dimensions.width, minDate, maxDate)
-    const timeline_ = createTimeline(dimensions.width, minDate, maxDate)
-    d3elem.transition()
-      .duration(2000)
-      .select('.axis')
-      .call(timeline.axis)
-
-    /*
-    var physicalLinks = [];
-    var renderedLinks = [];
-
-    // creat the virtual nodes which are used to create the arrow bend
-
-    graph.getLinks().forEach(function(link) {
-      var src = link.getSource();
-      var mid = new TNode('mid' + nextMidId++, {isMiddel: true, hidden: true});
-      var trg = link.getTarget();
-
-      debugger
-
-      // place the virtual node right between the source and the the target
-
-      mid.px = mid.x = (src.x + trg.x) / 2;
-      mid.py = mid.y = (src.y + trg.y) / 2;
-
-      physicalNodes.push(mid);
-      physicalLinks.push({source: src, target: mid});
-      physicalLinks.push({source: mid, target: trg});
-      link.mid = mid;
-      renderedLinks.push(link);
-    });
-
-    // filter out hidden nodes so they are not rendered
-
-    var renderedNodes = physicalNodes.filter(function(d) {return !d.getProperty('hidden');});
-
-    // create the force directed layout
-
-    force
-      .nodes(physicalNodes)
-      .links(physicalLinks)
-      .start();
-
-    // remove all links, they will all be created from scratch
-
-    linkGroup.selectAll('.link').remove();
-
-    var allLink = linkGroup.selectAll('.link')
-      .data(renderedLinks);
-
-    var enterLinks = allLink
-      .enter();
-
-    enterLinks
-      .append('path')
-      .attr('visibility', 'hidden')
-      .classed('link', true)
-      .classed('to', function(d) {return d.target.getId() == centerNode.getId();})
-      .classed('from', function(d) {return d.source.getId() == centerNode.getId();})
-      .style('stroke-width', ARROW_WIDTH);
-      // .append('title')
-      // .text(function(d) {return d.getProperty('type')});
-
-    d3elem.selectAll('path.link')
-      .transition()
-      .duration(0)
-      .delay(DEFAULT_DURATION)
-      .attr('visibility', 'visibile');
-
-    // add timeline paths for each node
-
-    timelinesGroup.selectAll('path.timeline')
-      .remove();
-
-    timelinesGroup.selectAll('path.timeline')
-      .data(renderedNodes)
-      .enter()
-      .append('path')
-      .filter(function(d) {return d.getProperty('birthDate') !== undefined;})
-      .classed('timeline', true)
-      .style('opacity', 0)
-      .transition()
-      .duration(2000)
-      .style('opacity', function(d) {return d.getId() == centerNode.getId() ? TIMELINE_HIGHLIGHT_OPACITY : TIMELINE_OPACITY;});
-
-    //var exitLinks = allLink.exit().remove();
-
-    var allNodes = nodeGroup.selectAll('.node')
-      .data(renderedNodes, function(d) {return d.id;});
-
-    var enterNodes = allNodes.enter();
-    var exitNodes = allNodes.exit();
-
-    exitNodes
-      .selectAll('.scale')
-      .transition()
-      .duration(DEFAULT_DURATION)
-      .attr('transform', 'scale(0)');
-
-    exitNodes
-      .transition()
-      .duration(DEFAULT_DURATION)
-      .remove();
-
-    console.log('0')
-    var nodeGroups = enterNodes
-      .append('g')
-      .classed('node', true)
-      .on('click', onNodeClick)
-      .on('mouseover', onNodeMouseOver)
-      .on('mouseout', onNodeMouseOut)
-      .call(force.drag);
-    console.log('1')
-
-    allNodes
-      .selectAll('.scale')
-      .attr('transform', function(d) {return 'scale(' + computeNodeScale(d, centerNode, false) + ')';});
-
-    var scaleGroups = nodeGroups
-      .append('g')
-      .attr('clip-path', 'url(#image-clip)')
-      .attr('transform', 'scale(0)')
-      .classed('scale', true);
-
-    scaleGroups
-      .transition()
-      .duration(DEFAULT_DURATION)
-      .attr('transform', function(d) {return 'scale(' + computeNodeScale(d, centerNode, false) + ')';});
-
-    scaleGroups
-      .append('circle')
-      .classed('backdrop', true)
-      .attr('r', IMAGE_SIZE / 2);
-
-    scaleGroups
-      .append('image')
-      .attr('pointer-events', 'none')
-      .attr('xlink:href', function(d) {
-
-        // create the list of all plausible images in preference order
-
-        var thumbnail = d.getProperty('thumbnail');
-        var altThumbnail = thumbnail !== undefined
-          ? thumbnail.replace('wikipedia/commons', 'wikipedia/en')
-          : undefined;
-
-        var depiction = d.getProperty('depiction');
-        var altDepiction = depiction !== undefined
-          ? depiction.replace('wikipedia/commons', 'wikipedia/en')
-          : undefined;
-
-        d.images = [
-          thumbnail,
-          altThumbnail,
-          depiction,
-          altDepiction,
-          UNKNOWN_PERSON].filter(function(d) {return d !== undefined;});
-
-        // return first of those images
-
-        return d.images.shift();
-      })
-      .on('error', function(d) {this.setAttribute('href', d.images.shift());})
-      .attr('x', -IMAGE_SIZE / 2)
-      .attr('y', -IMAGE_SIZE / 2)
-      .attr('preserveAspectRatio', 'xMidYMin slice')
-      .attr('width', IMAGE_SIZE)
-      .attr('height', IMAGE_SIZE);
-
-    scaleGroups
-      .append('path')
-      .classed('banner', true)
-      .style('stroke-width', BANNER_SIZE)
-      .attr('d', populate_path(
-        'M X0 Y0 L X1 Y1',
-        [{x: -BANNER_X, y: BANNER_Y},
-         {x: +BANNER_X, y: BANNER_Y}]));
-
-    scaleGroups
-      .append('text')
-      .classed('name', true)
-      .attr('pointer-events', 'none')
-      .attr('text-anchor', 'middle')
-      .attr('y', BANNER_Y)
-      .attr('dy', '0.3em')
-      .text(function(d) { return d.getProperty('name');});
-
-    scaleGroups
-      .append('circle')
-      .classed('loading-ring', true)
-      .attr('fill', 'none')
-      .attr('visibility', 'hidden')
-      .attr('stroke', 'url(#loading-gradient)')
-      .attr('stroke-width', RIM_SIZE)
-      .attr('r', (IMAGE_SIZE - RIM_SIZE) / 2 - RIM_SIZE / 2);
-
-    scaleGroups
-      .append('g')
-      .attr('transform', 'translate(' +
-            (IMAGE_SIZE - 2 * WIKI_ICON_WIDTH) / 2 + ', ' +
-            WIKI_ICON_WIDTH + ')')
-      .append('image')
-      .classed('wikibutton', true)
-      .attr('xlink:href', WIKI_LOGO)
-      .attr('x', -WIKI_ICON_WIDTH / 2)
-      .attr('y', -WIKI_ICON_WIDTH / 2)
-      .attr('width', WIKI_ICON_WIDTH)
-      .attr('height', WIKI_ICON_WIDTH)
-      .attr('transform', 'scale(0)')
-      .on('mouseover', onWikipediaMouseOver)
-      .on('mouseout', onWikipediaMouseOut)
-      .on('click', onWikipediaClick)
-      .append('title')
-      .text('Show Wiki Text');
-
-    force.on('tick', function(event) {
-      const { width, height } = dimensions
-
-      var k2 = 15 * event.alpha;
-      var k = .5 * event.alpha;
-      centerNode.x += (width / 2 - centerNode.x) * k;
-      centerNode.y += (height / 2 - centerNode.y) * k;
-
-      d3.selectAll('path.link')
-        .each(function(link) {
-          if (link.source.getId() == centerNode.getId()) {
-            link.target.x += k2;
-          }
-          if (link.target.getId() == centerNode.getId()) {
-            link.source.x -= k2;
-          }
-        })
-        .attr('d', (link) => arrowPath(link, centerNode));
-      
-      timelinesGroup.selectAll('.timeline')
-        .classed('highlight', function(d) {return d.getId() == centerNode.getId();})
-        .attr('d', timelinePath);
-
-      var nodes = nodeGroup.selectAll('g.node');
-
-      // Make sure that all nodes remain within the top and bottom edges
-      // of the display area
-      var min_x = MARGIN;
-      var max_x = width - MARGIN;
-      var min_y = MARGIN;
-      var max_y = height - MARGIN;
-      // TODO: max_y should be adjusted to end _above_ the timeline
-
-      nodes.each(function(d) {
-        d.x = largest(min_x, smallest(max_x, d.x))
-        d.y = largest(min_y, smallest(max_y, d.y))
-     });
-
-      // update transform
-
-      nodes.attr('transform', function(d) {
-        return populate_path('translate(X0, Y0)', [d]);
-      });
-    });
-    */
-  }
-
-  /*
-  function arrowPath(link: TLink, centerNode: TNode) {
-    var s = link.source;
-    var m = link.mid;
-    var t = link.target;
-
-    var angle = angleRadians(t, m);
-    var nodeRadius = (IMAGE_SIZE / 2) * computeNodeScale(t, centerNode, false) + ARROW_WIDTH;
-
-    var tip = radial(t, nodeRadius, angle);
-    var left = radial(tip, 20, angle + HEAD_ANGLE);
-    var right = radial(tip, 20, angle - HEAD_ANGLE);
-
-    return populate_path('M X0 Y0 Q X1 Y1 X2 Y2 M X3 Y3 L X4 Y4 L X5 Y5',
-                         [s, m, tip, left, tip, right]);
-  }
-  */
-
-  /*
-  function computeNodeScale(node: TNode, centerNode: TNode, isMouseOver: bool) {
-    isMouseOver = isMouseOver || false;
-    var scale = 1;
-
-    if (node.getId() == centerNode.getId())
-      scale = 1.0;
-    else
-      scale = 0.5;
-
-    return scale * (isMouseOver ? 2 : 1);
-  }
-  */
-
-  /*
-  function scaleNode(node: TNode, centerNode: TNode, isMouseOver: bool) {
-    scaleNodeThing(node, 'g.scale', computeNodeScale(node, centerNode, isMouseOver));
-  }
-  */
-
-  /*
-  function onNodeMouseOut(node, centerNode) {
-    if (d3.event.target.tagName != 'image')
-      scaleNodeThing(node, '.wikibutton', 0);
-
-    scaleNode(node, centerNode, false);
-    timelinesGroup.selectAll('.timeline')
-      .filter(function(d) {
-        return d.getId() == node.getId() && d.getId() != centerNode.getId();
-      })
-      .classed('highlight', false)
-      .transition()
-      .duration(DEFAULT_DURATION)
-      .ease(STOCK_EASE)
-      .style('opacity', TIMELINE_OPACITY);
-  }
-  */
-
-  /*
-  function onNodeMouseOver(node: TNode, centerNode: TNode) {
-    if (d3.event.target.tagName != 'image')
-      scaleNodeThing(node, '.wikibutton', 1);
-
-    // move node to top of the stack
-
-    $('g.node').each(function(i, e) {
-      if (e.__data__ == node) {
-        var $e = $(e);
-        var parent = $e.parent();
-        $e.remove();
-        parent.append($e);
-      }
-    });
-
-    // scale node
-
-    scaleNode(node, centerNode, true);
-
-    timelinesGroup.selectAll('.timeline')
-      .filter(function(d) {return d.getId() == node.getId() && d.getId() != centerNode.getId();})
-      .classed('highlight', true)
-      .transition()
-      .duration(DEFAULT_DURATION)
-      .ease(STOCK_EASE)
-      .style('opacity', TIMELINE_HIGHLIGHT_OPACITY);
-  }
-  */
-
-  function onImageClick(node) {
-    node.open = !node.open || false;
-    if (node.open)
-      $('#wikidiv').animate({left: '100px'});
-    else
-      $('#wikidiv').animate({right: '100px'});
-  }
-
-  function onWikipediaMouseOver(node) {
-    scaleNodeThing(node, '.wikibutton', 1.5);
-  }
-
-  function onWikipediaMouseOut(node) {
-    scaleNodeThing(node, '.wikibutton', 1);
-  }
-
-  function scaleNodeThing(node, selector, scale) {
-    d3elem.selectAll(selector)
-      .filter(function(d) {return d.getId() == node.getId();})
-      .transition()
-      .duration(DEFAULT_DURATION)
-      .ease(STOCK_EASE)
-      .attr('transform', 'scale(' + scale + ')');
-  }
-
-  function onWikipediaClick(node) {
-    d3.select(d3.event.target)
-      .transition()
-      .duration(DEFAULT_DURATION)
-      .ease(STOCK_EASE)
-      .attr('transform', 'scale(1)');
-
-    var event = d3.event;
-    event.stopPropagation();
-
-    window.mediator.getEntry('react', 'setWikiPage')(node);
-  }
-
-  function onNodeClick(node) {
-    /* TODO: set a command up to redux to change the center */
-    /*
-    var stopSinner = startSpinner(node);
-    querySubject(node.getId(), stopSinner);
-    */
-  }
-
-  function startSpinner(node) {
-    var loadingDuration = 500;
-    var stop = false;
-
-    var ring = d3.selectAll('.loading-ring')
-      .filter(function(d) {return d.getId() == node.getId();});
-
-    ring
-      .attr('visibility', 'visibile')
-      .attr('transform', function(d) {return 'rotate(0)';})
-      .transition()
-      .duration(loadingDuration)
-      .ease('linear')
-      .attr('transform', function(d) {return 'rotate(120)';})
-      .transition()
-      .duration(loadingDuration)
-      .ease('linear')
-      .attr('transform', function(d) {return 'rotate(240)';})
-      .transition()
-      .duration(loadingDuration)
-      .ease('linear')
-      .attr('transform', function(d) {return 'rotate(360)';})
-      .each('end', function() {
-        if (ring.attr('visibility') == 'visibile')
-          startSpinner(node);
-      });
-
-    // return the function to stop the spinner
-
-    return function() {
-      ring.attr('visibility', 'hidden');
-    };
-  }
-
-}
-
+/*
 const createNodeFromPerson = (container: Selection, graph: TGraph, person: PersonAbstract | PersonDetail, location: Location): TNode =>
   graph.createNode(person.id, renderPersonIcon(container, person).circle, false, location)
 
@@ -1280,8 +702,8 @@ const createInfluenceGraph = (
     createNodes(nodesContainer, { x: dimensions.width, y: dimensions.height / 2 }, graph, people)(person.influenced).forEach(n => graph.createLink(subjectNode, n))
 
     graph.links.forEach((l) => {
-      const path = renderLink(linksContainer, subjectNode, l)
-      l.attach(path)
+      //const path = renderLink(linksContainer, subjectNode, l)
+      //l.attach(path)
     })
     return { centerNode: subjectNode, graph }
   }
@@ -1289,8 +711,41 @@ const createInfluenceGraph = (
 
   return { centerNode: null, graph }
 }
+*/
 
 
+const createInfluenceGraph = (focus: PersonDetail, people: PeopleCache): TGraph => {
+  const createNodes = (
+    graph: TGraph,
+  ): (Array<SubjectId> => Array<PersonAbstract | PersonDetail>) => fp.compose([
+    fp.filter(person => person != null),
+    fp.map(name => people[name])
+  ])
+
+  const graph = new TGraph(focus)
+  fp.map(p => graph.createLink(p, focus))(createNodes(graph)(focus.influencedBy))
+  fp.map(p => graph.createLink(focus, p))(createNodes(graph)(focus.influenced))
+  return graph
+}
+
+
+const updateInfluenceGraph = (graph: TGraph, focus: PersonDetail, people: PeopleCache) => {
+  const newPeople = new Set(
+    fp.compose(
+      fp.filter(p => p != null),
+      fp.map(id => people[id]),
+    )([focus.id].concat(focus.influencedBy, focus.influenced)))
+  const oldPeople = new Set(fp.map(n => n.person)(graph.getVisibleNodes()))
+
+  const incomingPeople = new Set(fp.filter(x => !oldPeople.has(x))(Array.from(newPeople)));
+  const outgoingPeople = new Set(fp.filter(x => !newPeople.has(x))(Array.from(oldPeople)));
+
+  graph.setFocus(focus)
+  incomingPeople.forEach(p => graph.addPerson(p))
+}
+
+
+/*
 const updateInfluenceGraph = (
   linksContainer: Selection,
   nodesContainer: Selection,
@@ -1299,11 +754,6 @@ const updateInfluenceGraph = (
   subjectId: SubjectId,
   people: PeopleCache,
 ): ?TNode => {
-  /* Updating requires first evaluating who is the center subject and
-   * retrieving that node. Then it involves calculating what nodes are present,
-   * what nodes should be present, and then set subtractions to add and remove
-   * nodes. Or, perhaps, the coolation of *all* of the nodes, and then
-   * traversal across each to decide what should be done. */
   const subject = people[subjectId]
 
   if (subject != null && subject.type === 'PersonDetail') {
@@ -1322,14 +772,10 @@ const updateInfluenceGraph = (
 
       if (person != null) {
         if (necessaryNodeIds.includes(nid) && personNode != null) {
-          /* do nothing */
         } else if (necessaryNodeIds.includes(nid) && !personNode) {
-          /* add the node */
-          /* again, add the intermediate node */
           if (subject.influencedBy.includes(nid)) {
             personNode = createNodeFromPerson(nodesContainer, graph, person, { x: 0, y: dimensions.height / 2 })
             const link = graph.createLink(personNode, subjectNode)
-            link.attach(renderLink(linksContainer, subjectNode, link))
           } else {
             personNode = createNodeFromPerson(nodesContainer, graph, person, { x: dimensions.width, y: dimensions.height / 2 })
             const link = graph.createLink(subjectNode, personNode)
@@ -1338,7 +784,6 @@ const updateInfluenceGraph = (
         } else if (!necessaryNodeIds.includes(nid) && personNode != null) {
           graph.removeNode(personNode)
         } else {
-          /* do nothing */
         }
       }
     })
@@ -1346,6 +791,7 @@ const updateInfluenceGraph = (
 
   return graph.nodes[subjectId]
 }
+*/
 
 
 class InfluenceCanvas {
@@ -1355,12 +801,11 @@ class InfluenceCanvas {
   linksElem: Selection
   dimensions: Dimensions
 
-  focusedId: SubjectId
-  people: PeopleCache /* I am assuming that the link passed in is a live link
-  back to redux and that changes in redux will be reflected here. */
+  focusedId: ?SubjectId
+  people: PeopleCache
 
-  center: ?TNode
-  graph: TGraph
+  graph: ?TGraph
+
   timelineAxis: Selection
   fdl: ForceSimulation
   fdlLinks: LinkForces
@@ -1375,6 +820,12 @@ class InfluenceCanvas {
     this.dimensions = dimensions
     this.focusedId = focusedId
     this.people = people
+
+    const focus = this.people[focusedId]
+    if (focus != null && focus.type === 'PersonDetail') {
+      this.graph = createInfluenceGraph(focus, this.people)
+      this.setup(this.graph)
+    }
 
     // create clip path for image
     this.definitions = this.topElem.append('defs')
@@ -1394,88 +845,116 @@ class InfluenceCanvas {
     this.linksElem = this.topElem.append('g').classed('links', true)
     this.nodesElem = this.topElem.append('g').classed('nodes', true)
 
-    const graphData = createInfluenceGraph(this.linksElem, this.nodesElem, this.dimensions, this.focusedId, this.people)
-    this.center = graphData.centerNode
-    this.graph = graphData.graph
+    if (! this.graph) {
+      const timeline = createTimeline(dimensions.width, moment('1900-01-01'), moment())
 
-    const [minYear, maxYear] = calculateTimeRange(listOfPeopleInGraph(this.graph, this.people))
-    const timeline = createTimeline(dimensions.width, minYear, maxYear)
-    this.timelineAxis = topElem
+      this.timelineAxis = topElem
+        .append('g')
+        .classed('axies', true)
+        .attr('class', 'axis')
+        .attr('transform', `translate(0, ${TIMELINE_Y(dimensions.height)})`)
+        .call(timeline.axis)
+    }
+  }
+
+  setup(graph: TGraph): void {
+    const [minYear, maxYear] = calculateTimeRange(listOfPeopleInGraph(graph, this.people))
+    const timeline = createTimeline(this.dimensions.width, minYear, maxYear)
+
+    this.timelineAxis = this.topElem
       .append('g')
       .classed('axies', true)
       .attr('class', 'axis')
-      .attr('transform', `translate(0, ${TIMELINE_Y(dimensions.height)})`)
+      .attr('transform', `translate(0, ${TIMELINE_Y(this.dimensions.height)})`)
       .call(timeline.axis)
 
-    this.fdl = d3.forceSimulation(this.graph.getNodes())
-      .on('tick', () => {
-        /*
-        if (this.fdl.alpha() < 0.1) {
-          const graph = this.graph
-          debugger
-        }
-        */
-        const { width, height } = this.dimensions
-        const k = 0.5 * this.fdl.alpha()
-        const k2 = 15 * this.fdl.alpha()
+    const sel = this.nodesElem.data(graph.getVisibleNodes())
+    //sel.enter(d => renderPersonIcon(this.nodesElem, d))
 
-        if (this.center != null) {
-          //this.center.x = width / 2
-          //this.center.y = height / 2
-          this.center.x += ((width / 2) - this.center.x) * k
-          this.center.y += ((height / 2) - this.center.y) * k
-        }
+    this.fdl = d3.forceSimulation(graph.getNodes())
 
-        this.graph.links.forEach((link) => {
-          if (link.source === this.center) {
-            link.target.x += k2
-          } else if (link.target === this.center) {
-            link.source.x -= k2
-          }
-        })
-
-        const [minX, minY] = [MARGIN, MARGIN]
-        const [maxX, maxY] = [width - MARGIN, height - MARGIN]
-
-        this.graph.getNodes().forEach((n) => {
-          n.x = largest(minX, smallest(maxX, n.x))
-          n.y = largest(minY, smallest(maxY, n.y))
-        })
-
-        this.graph.getNodes().forEach((n) => {
-          if (n.contents != null) {
-            translateNode(n, { x: n.x, y: n.y })
-            if (n !== this.center) {
-              scaleNode(n, 0.5)
-            }
-          }
-        })
-
-        this.graph.links.forEach((l) => {
-          if (l.path != null && this.center != null) {
-            l.path.attr('d', calculateLinkPath(l, this.center))
-            //l.path.attr('d', populate_path('M X0 Y0 L X1 Y1 L X2 Y2', [l.source, l.middle, l.target]))
-          }
-        })
-      })
-
-    this.fdlLinks = d3.forceLink(this.graph.getLinks())
+    this.fdlLinks = d3.forceLink(graph.getLinks())
       .strength(LINK_STRENGTH)
       .distance(() => (Math.random() * LINK_RANDOM) + ((NODE_SIZE / 2) + LINK_MIN_OFFSET))
 
     this.fdl.force('center', d3.forceCenter(this.dimensions.width / 2, this.dimensions.height / 2))
       .force('gravity', d3.forceManyBody().strength(GRAVITY))
-      .force('charge', d3.forceManyBody().strength((d: TNode) => {
-        return d.isMiddle()
+      .force('charge', d3.forceManyBody().strength((d: InvisibleNode | PersonNode): number => {
+        return d.type === 'InvisibleNode'
           ? -CHARGE_HIDDEN
           : -((Math.random() * CHARGE_RANDOM) + CHARGE_BASE)
       }))
       .force('links', this.fdlLinks)
+
+    this.fdl.on('tick', () => {
+        if (this.graph != null) this.animate(this.graph)
+      })
+  }
+
+  animate(graph: TGraph): void {
+    const { width, height } = this.dimensions
+    const k = 0.5 * this.fdl.alpha()
+    const k2 = 15 * this.fdl.alpha()
+
+    /*
+    if (this.center != null) {
+      this.center.x += ((width / 2) - this.center.x) * k
+      this.center.y += ((height / 2) - this.center.y) * k
+    }
+    */
+
+    /*
+    graph.getLinks().forEach((link) => {
+      if (link.source === graph.focus) {
+        link.target.x += k2
+      } else if (link.target === graph.focus) {
+        link.source.x -= k2
+      }
+    })
+    */
+
+    const [minX, minY] = [MARGIN, MARGIN]
+    const [maxX, maxY] = [width - MARGIN, height - MARGIN]
+
+    /*
+    graph.getNodes().forEach((n) => {
+      n.x = largest(minX, smallest(maxX, n.x))
+      n.y = largest(minY, smallest(maxY, n.y))
+    })
+    */
+
+    this.nodesElem
+      .selectAll('.node')
+      .attr('transform', n => {
+        n.x = largest(minX, smallest(maxX, n.x))
+        n.y = largest(minY, smallest(maxY, n.y))
+        return `translate(${n.x}, ${n.y})`
+      })
+      .selectAll('.scale')
+      .attr('transform', d => `scale(1.0)`)
+
+    /*
+    graph.getNodes().forEach((n) => {
+      if (n.contents != null) {
+        translateNode(n, { x: n.x, y: n.y })
+        if (n !== this.center) {
+          scaleNode(n, 0.5)
+        }
+      }
+    })
+
+    graph.links.forEach((l) => {
+      if (l.path != null && this.center != null) {
+        l.path.attr('d', calculateLinkPath(l, this.center))
+      }
+    })
+    */
   }
 
   setDimensions(dimensions: Dimensions) {
     this.dimensions = dimensions
 
+    /*
     // calculateTimeRange here
     const timeline = createTimeline(dimensions.width, new Date(1900, 1, 1), new Date())
     this.timelineAxis.transition()
@@ -1485,26 +964,52 @@ class InfluenceCanvas {
 
     this.fdl.alpha(2)
     this.fdl.restart()
+    */
   }
 
   setFocused(focusedId: SubjectId, people: PeopleCache) {
     this.focusedId = focusedId
     this.people = people
 
-    /* trigger animations to update the center */
-    this.center = updateInfluenceGraph(this.linksElem, this.nodesElem, this.dimensions, this.graph, this.focusedId, this.people)
+    const newFocus = people[focusedId]
 
-    const [minYear, maxYear] = calculateTimeRange(listOfPeopleInGraph(this.graph, this.people))
-    const timeline = createTimeline(this.dimensions.width, minYear, maxYear)
-    this.timelineAxis.transition()
-      .duration(DEFAULT_ANIMATION_DURATION)
-      .attr('transform', `translate(0, ${TIMELINE_Y(this.dimensions.height)})`)
-      .call(timeline.axis)
+    /* trigger animations to update the center */
+    if (newFocus != null && newFocus.type === 'PersonDetail') {
+      if (!this.graph) {
+        this.graph = createInfluenceGraph(newFocus, people)
+        this.setup(this.graph)
+      } else {
+        updateInfluenceGraph(this.graph, newFocus, people)
+      }
+    }
+
+    if (this.graph != null) {
+      const graph = this.graph
+
+      const [minYear, maxYear] = calculateTimeRange(listOfPeopleInGraph(this.graph, this.people))
+      const timeline = createTimeline(this.dimensions.width, minYear, maxYear)
+      this.timelineAxis.transition()
+        .duration(DEFAULT_ANIMATION_DURATION)
+        .attr('transform', `translate(0, ${TIMELINE_Y(this.dimensions.height)})`)
+        .call(timeline.axis)
+
+      this.fdl.nodes(graph.getNodes())
+
+      const sel = this.nodesElem
+        .selectAll('.translate')
+        .data(graph.getVisibleNodes(), n => n ? n.getId() : null)
+      sel.enter().append(d => renderPersonIcon(d))
+      sel.exit().remove()
+    }
+
+    /*
+    this.center = updateInfluenceGraph(this.linksElem, this.nodesElem, this.dimensions, this.graph, this.focusedId, this.people)
 
     //const graph = this.graph
     //debugger
     this.fdl.nodes(this.graph.getNodes())
     this.fdlLinks.links(this.graph.getLinkSegments())
+    */
   }
 }
 
