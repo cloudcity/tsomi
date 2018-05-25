@@ -99,6 +99,11 @@ const establishInitialSubject = () => {
 }
 */
 
+type D3Link = {
+  source: any,
+  target: any,
+}
+
 
 type Selection = {
   append: string => Selection,
@@ -124,7 +129,7 @@ type ForceSimulation = {
 }
 
 type LinkForces = {
-  links: Array<TLink> => LinkForces,
+  links: Array<D3Link> => LinkForces,
   strength: number => LinkForces,
 }
 
@@ -217,6 +222,14 @@ class TGraph {
 
   getNodes(): Array<TNode> {
     return (((Object.values(this.nodes)): any): Array<TNode>)
+  }
+
+  getLinkSegments(): Array<D3Link> {
+    return fp.flatten(
+      fp.map(
+        l => [{source: l.source, target: l.middle}, {source: l.middle, target: l.target}])
+      (this.links)
+    )
   }
 
   getLinks(): Array<TLink> {
@@ -387,6 +400,8 @@ const renderLink = (container: Selection, center: TNode, link: TLink): Selection
     .style('stroke-width', ARROW_WIDTH)
     .attr('visibity', 'visibile')
     .attr('d', calculateLinkPath(link, center))
+    //.attr('d', populate_path('M X0 Y0 L X1 Y1 L X2 Y2', [link.source, link.middle, link.target]))
+    .attr('id', `${link.source.id}-${link.target.id}`)
 
   return path
 }
@@ -396,7 +411,6 @@ const listOfPeopleInGraph = (
   graph: TGraph,
   people: PeopleCache,
 ): Array<PersonAbstract | PersonDetail> => {
-  console.log('[listPeopleInGraph graph]', graph)
   return fp.filter(p => p != null)(fp.map(node => people[node.getId()])(graph.nodes))
 }
 
@@ -528,12 +542,6 @@ function updateTimeline(timelineScale: any, timelineAxis: any, width: number, st
 */
 
 const renderChart = (svg: HTMLElement, d3elem: Selection, dimensions: { width: number, height: number }, centerNode: TNode, graph: TGraph) => {
-  //console.log('[renderChart svg]', svg)
-  //console.log('[renderChart d3elem]', d3elem)
-  //console.log('[renderChart centerNode]', JSON.stringify(centerNode))
-  //console.log('[renderChart centerNode]', centerNode)
-  //console.log('[renderChart graph]', graph)
-  //console.log('[renderChart dimensions]', dimensions)
   const defs = d3elem.append('defs')
 
 
@@ -728,8 +736,6 @@ const renderChart = (svg: HTMLElement, d3elem: Selection, dimensions: { width: n
 }
 
 const drawInfluence = (svg: HTMLElement, d3elem: Selection, dimensions: { width: number, height: number }, centerNode: TNode, graph: TGraph, people: PeopleCache) => {
-  console.log('[drawInfluence]')
-  
   d3elem.attr('height', dimensions.height)
       .attr('width', dimensions.width)
   const [force, timeline, linkGroup, timelinesGroup, nodeGroup] =
@@ -743,8 +749,6 @@ const drawInfluence = (svg: HTMLElement, d3elem: Selection, dimensions: { width:
     var physicalNodes = []
     var minDate = null
     var maxDate = null
-
-    console.log('[updateChart]')
 
     var sampleDate = function(date) {
       if (minDate == null || date < minDate)
@@ -1266,7 +1270,6 @@ const createInfluenceGraph = (
   subjectId: SubjectId,
   people: PeopleCache,
 ): { centerNode: ?TNode, graph: TGraph } => {
-  console.log('[createInfluenceGraph]')
   const graph = new TGraph()
 
   const person = people[subjectId]
@@ -1321,7 +1324,6 @@ const updateInfluenceGraph = (
         if (necessaryNodeIds.includes(nid) && personNode != null) {
           /* do nothing */
         } else if (necessaryNodeIds.includes(nid) && !personNode) {
-          console.log('[updateInfluenceGraph] adding', nid)
           /* add the node */
           /* again, add the intermediate node */
           if (subject.influencedBy.includes(nid)) {
@@ -1334,7 +1336,6 @@ const updateInfluenceGraph = (
             link.attach(renderLink(linksContainer, subjectNode, link))
           }
         } else if (!necessaryNodeIds.includes(nid) && personNode != null) {
-          console.log('[updateInfluenceGraph] removing', nid)
           graph.removeNode(personNode)
         } else {
           /* do nothing */
@@ -1409,7 +1410,7 @@ class InfluenceCanvas {
     this.fdl = d3.forceSimulation(this.graph.getNodes())
       .on('tick', () => {
         /*
-        if (this.fdl.alpha() < 0.001) {
+        if (this.fdl.alpha() < 0.1) {
           const graph = this.graph
           debugger
         }
@@ -1419,16 +1420,16 @@ class InfluenceCanvas {
         const k2 = 15 * this.fdl.alpha()
 
         if (this.center != null) {
+          //this.center.x = width / 2
+          //this.center.y = height / 2
           this.center.x += ((width / 2) - this.center.x) * k
           this.center.y += ((height / 2) - this.center.y) * k
         }
 
         this.graph.links.forEach((link) => {
           if (link.source === this.center) {
-            link.middle.x += (k2 / 2)
             link.target.x += k2
           } else if (link.target === this.center) {
-            link.middle.x -= (k2 / 2)
             link.source.x -= k2
           }
         })
@@ -1453,6 +1454,7 @@ class InfluenceCanvas {
         this.graph.links.forEach((l) => {
           if (l.path != null && this.center != null) {
             l.path.attr('d', calculateLinkPath(l, this.center))
+            //l.path.attr('d', populate_path('M X0 Y0 L X1 Y1 L X2 Y2', [l.source, l.middle, l.target]))
           }
         })
       })
@@ -1464,7 +1466,6 @@ class InfluenceCanvas {
     this.fdl.force('center', d3.forceCenter(this.dimensions.width / 2, this.dimensions.height / 2))
       .force('gravity', d3.forceManyBody().strength(GRAVITY))
       .force('charge', d3.forceManyBody().strength((d: TNode) => {
-        //console.log('[charge]', d.getId(), d.isMiddle)
         return d.isMiddle()
           ? -CHARGE_HIDDEN
           : -((Math.random() * CHARGE_RANDOM) + CHARGE_BASE)
@@ -1490,8 +1491,6 @@ class InfluenceCanvas {
     this.focusedId = focusedId
     this.people = people
 
-    console.log('[InfluenceCanvas setFocused]', this.people)
-
     /* trigger animations to update the center */
     this.center = updateInfluenceGraph(this.linksElem, this.nodesElem, this.dimensions, this.graph, this.focusedId, this.people)
 
@@ -1502,8 +1501,10 @@ class InfluenceCanvas {
       .attr('transform', `translate(0, ${TIMELINE_Y(this.dimensions.height)})`)
       .call(timeline.axis)
 
+    //const graph = this.graph
+    //debugger
     this.fdl.nodes(this.graph.getNodes())
-    this.fdlLinks.links(this.graph.getLinks())
+    this.fdlLinks.links(this.graph.getLinkSegments())
   }
 }
 
@@ -1526,7 +1527,6 @@ class InfluenceChart_ extends React.Component<InfluenceChartProps, InfluenceChar
     newProps: InfluenceChartProps,
     prevState: InfluenceChartState,
   ): InfluenceChartState {
-    console.log('[getDerivedStateFromProps]', newProps, prevState)
     const { focusedId } = newProps
     if (focusedId != null) {
       if (prevState.canvas != null) {
@@ -1556,7 +1556,6 @@ class InfluenceChart_ extends React.Component<InfluenceChartProps, InfluenceChar
   }
 
   componentDidMount() {
-    console.log('[componentDidMount]')
     this.state.domElem = document.getElementById(this.props.label)
     this.state.d3Elem = d3.select(`#${this.props.label}`)
 
@@ -1570,7 +1569,6 @@ class InfluenceChart_ extends React.Component<InfluenceChartProps, InfluenceChar
     }
 
     window.addEventListener('resize', () => {
-      console.log('[componentDidMount resize listener]')
       if (this.state.domElem != null && this.state.canvas != null) {
         const { domElem } = this.state
         this.state.canvas.setDimensions(domElem.getBoundingClientRect())
