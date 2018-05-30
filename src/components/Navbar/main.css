@@ -16,6 +16,7 @@ nav {
 
 nav > * { flex: 1; }
 nav > div { display: flex; align-items: center; }
+nav > div h1 { cursor: pointer; }
 
 nav img {
   height: 40px;

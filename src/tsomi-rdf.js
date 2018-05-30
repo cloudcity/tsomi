@@ -9,6 +9,8 @@ const {
 const { rdfPrefixies, Sparql } = require('./components/Sparql')
 const sparql = new Sparql()
 
+const dbpedia = require('./clients/DBpedia')
+
 var LANGUAGE = 'en';
 var debugging = false;
 var personCache = {};
@@ -293,11 +295,13 @@ function createMockData() {
 }
 
 function getPerson(id, callback) {
+  console.log('[getPerson]', id)
 
   // if the person is in the cache, use that
 
   var personGraph = personCache[id];
   if (personGraph !== undefined) {
+    console.log('[getPerson cache]', personGraph)
     callback(personGraph);
   }
 
@@ -305,6 +309,7 @@ function getPerson(id, callback) {
 
   else
     queryForPerson(id, function(personGraph) {
+      console.log('[getPerson nocache]', personGraph)
       personCache[id] = personGraph;
       callback(personGraph);
     });
@@ -433,10 +438,18 @@ function queryDetails(targetGraph, targetId, callback) {
 }
 
 
+function searchForPeople(name) {
+  const results = dbpedia.searchForPeople(name)
+  /* When the wikipedia library comes up, do something with wikipedia when the result set is empty */
+  return results
+}
+
+
 module.exports = {
   createSpecialData,
   subjects,
   lengthen,
   getPerson,
+  searchForPeople,
 }
 
