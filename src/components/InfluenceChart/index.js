@@ -120,7 +120,7 @@ type Selection = {
   select: string => Selection,
   selectAll: string => Selection,
   style: (string, string) => Selection,
-  text: string => Selection,
+  text: (string | Function) => Selection,
   transition: () => Selection,
 }
 
@@ -381,6 +381,7 @@ class TGraph {
 type Dimensions = { width: number, height: number }
 
 
+/*
 const translateSelection = (n: Selection, destination: Location): void => {
   n.attr('transform', `translate(${destination.x}, ${destination.y})`)
 }
@@ -389,6 +390,7 @@ const scaleSelection = (n: Selection, scale: number): void => {
   n.select('.scale')
     .attr('transform', `scale(${scale})`)
 }
+*/
 
 
 /* A timeline class represents the time-based axis that appears somewhere
@@ -408,72 +410,24 @@ const createTimeline = (width: number, startDate: moment, endDate: moment): Time
 }
 
 
-const renderPersonIcon = (node: PersonNode): HTMLElement => {
-  const icon = document.createElement('g')
-  const canvas = document.createElement('g')
-  const image = document.createElement('image')
-  const banner = document.createElement('path')
-  const text = document.createElement('text')
+d3.selectAll('p').attr('href', 'abcd')
 
-  icon.appendChild(canvas)
-  canvas.appendChild(image)
-  canvas.appendChild(banner)
-  banner.appendChild(text)
 
-  icon.setAttribute('id', node.person.id)
-  icon.setAttribute('class', 'node')
-  icon.setAttribute('width', `${IMAGE_SIZE}`)
-  icon.setAttribute('height', `${IMAGE_SIZE}`)
-  icon.setAttribute('visibility', 'visible')
-
-  canvas.setAttribute('class', 'scale')
-  canvas.setAttribute('clip-path', 'url(#image-clip)')
-
-  image.setAttribute('href', node.person.thumbnail ? node.person.thumbnail : '')
-  image.setAttribute('preserveAspectRatio', 'xMidYMin slice')
-  image.setAttribute('height', `${IMAGE_SIZE}`)
-  image.setAttribute('width', `${IMAGE_SIZE}`)
-  image.setAttribute('x', `${-IMAGE_SIZE / 2}`)
-  image.setAttribute('y', `${-IMAGE_SIZE / 2}`)
-
-  banner.setAttribute('class', 'banner')
-  banner.setAttribute('style', 'stroke-width: 25;')
-  banner.setAttribute('d', populate_path(
-      'M X0 Y0 L X1 Y1',
-      [{ x: -BANNER_X, y: BANNER_Y },
-        { x: +BANNER_X, y: BANNER_Y }],
-  ))
-
-  text.setAttribute('class', 'name')
-  text.setAttribute('text-anchor', 'middle')
-  text.setAttribute('y', BANNER_Y)
-  text.setAttribute('dy', '0.3em')
-  text.appendChild(document.createTextNode(node.person.name))
-
-  /*
+const renderPeople = (sel: Selection) => {
+  const circle = sel.append('g')
   const canvas = circle.classed('translate', true)
-    .attr('id', person.id)
+    .attr('id', node => node.person.id)
     .append('g')
     .classed('scale', true)
     .attr('clip-path', 'url(#image-clip)')
 
-  if (person.type === 'PersonDetail') {
-    canvas.append('image')
-      .attr('href', person.thumbnail)
-      .attr('preserveAspectRatio', 'xMidYMin slice')
-      .attr('height', IMAGE_SIZE)
-      .attr('width', IMAGE_SIZE)
-      .attr('x', -IMAGE_SIZE / 2)
-      .attr('y', -IMAGE_SIZE / 2)
-  } else {
-    canvas.append('image')
-      .attr('href', '')
-      .attr('preserveAspectRatio', 'xMidYMin slice')
-      .attr('height', IMAGE_SIZE)
-      .attr('width', IMAGE_SIZE)
-      .attr('x', -IMAGE_SIZE / 2)
-      .attr('y', -IMAGE_SIZE / 2)
-  }
+  canvas.append('image')
+    .attr('href', node => (node.person.thumbnail ? node.person.thumbnail : ''))
+    .attr('preserveAspectRatio', 'xMidYMin slice')
+    .attr('height', IMAGE_SIZE)
+    .attr('width', IMAGE_SIZE)
+    .attr('x', -IMAGE_SIZE / 2)
+    .attr('y', -IMAGE_SIZE / 2)
 
   canvas.append('path')
     .attr('class', 'banner')
@@ -489,10 +443,9 @@ const renderPersonIcon = (node: PersonNode): HTMLElement => {
     .attr('text-anchor', 'middle')
     .attr('y', BANNER_Y)
     .attr('dy', '0.3em')
-    .text(person.id)
-    */
+    .text(node => node.person.id)
 
-  return icon
+  return circle
 }
 
 /*
@@ -823,8 +776,7 @@ class InfluenceCanvas {
 
     const focus = this.people[focusedId]
     if (focus != null && focus.type === 'PersonDetail') {
-      this.graph = createInfluenceGraph(focus, this.people)
-      this.setup(this.graph)
+      this.setup(focus)
     }
 
     // create clip path for image
@@ -857,19 +809,23 @@ class InfluenceCanvas {
     }
   }
 
-  setup(graph: TGraph): void {
+  setup(focus: PersonDetail): void {
+    const graph = createInfluenceGraph(focus, this.people)
     const [minYear, maxYear] = calculateTimeRange(listOfPeopleInGraph(graph, this.people))
     const timeline = createTimeline(this.dimensions.width, minYear, maxYear)
 
-    this.timelineAxis = this.topElem
-      .append('g')
-      .classed('axies', true)
-      .attr('class', 'axis')
-      .attr('transform', `translate(0, ${TIMELINE_Y(this.dimensions.height)})`)
-      .call(timeline.axis)
+    this.graph = graph
 
-    const sel = this.nodesElem.data(graph.getVisibleNodes())
-    //sel.enter(d => renderPersonIcon(this.nodesElem, d))
+    this.timelineAxis.call(timeline.axis)
+
+    const sel = this.nodesElem.selectAll('.translate')
+      .data(graph.getVisibleNodes(), n => (n ? n.getId() : null))
+    renderPeople(sel.enter())
+    sel.exit().remove()
+
+    this.nodesElem
+      .selectAll('.scale')
+      .attr('transform', d => (d.getId() === graph.focus.getId() ? 'scale(1.0)' : 'scale(0.5)'))
 
     this.fdl = d3.forceSimulation(graph.getNodes())
 
@@ -896,12 +852,10 @@ class InfluenceCanvas {
     const k = 0.5 * this.fdl.alpha()
     const k2 = 15 * this.fdl.alpha()
 
-    /*
-    if (this.center != null) {
-      this.center.x += ((width / 2) - this.center.x) * k
-      this.center.y += ((height / 2) - this.center.y) * k
+    if (this.graph != null) {
+      this.graph.focus.x += ((width / 2) - this.graph.focus.x) * k
+      this.graph.focus.y += ((height / 2) - this.graph.focus.y) * k
     }
-    */
 
     /*
     graph.getLinks().forEach((link) => {
@@ -924,14 +878,12 @@ class InfluenceCanvas {
     */
 
     this.nodesElem
-      .selectAll('.node')
+      .selectAll('.translate')
       .attr('transform', n => {
         n.x = largest(minX, smallest(maxX, n.x))
         n.y = largest(minY, smallest(maxY, n.y))
         return `translate(${n.x}, ${n.y})`
       })
-      .selectAll('.scale')
-      .attr('transform', d => `scale(1.0)`)
 
     /*
     graph.getNodes().forEach((n) => {
@@ -954,7 +906,6 @@ class InfluenceCanvas {
   setDimensions(dimensions: Dimensions) {
     this.dimensions = dimensions
 
-    /*
     // calculateTimeRange here
     const timeline = createTimeline(dimensions.width, new Date(1900, 1, 1), new Date())
     this.timelineAxis.transition()
@@ -964,7 +915,6 @@ class InfluenceCanvas {
 
     this.fdl.alpha(2)
     this.fdl.restart()
-    */
   }
 
   setFocused(focusedId: SubjectId, people: PeopleCache) {
@@ -976,15 +926,14 @@ class InfluenceCanvas {
     /* trigger animations to update the center */
     if (newFocus != null && newFocus.type === 'PersonDetail') {
       if (!this.graph) {
-        this.graph = createInfluenceGraph(newFocus, people)
-        this.setup(this.graph)
+        this.setup(newFocus)
       } else {
         updateInfluenceGraph(this.graph, newFocus, people)
       }
     }
 
-    if (this.graph != null) {
-      const graph = this.graph
+    if (this.graph != null && this.fdl != null) {
+      const { graph } = this
 
       const [minYear, maxYear] = calculateTimeRange(listOfPeopleInGraph(this.graph, this.people))
       const timeline = createTimeline(this.dimensions.width, minYear, maxYear)
@@ -997,9 +946,13 @@ class InfluenceCanvas {
 
       const sel = this.nodesElem
         .selectAll('.translate')
-        .data(graph.getVisibleNodes(), n => n ? n.getId() : null)
-      sel.enter().append(d => renderPersonIcon(d))
+        .data(graph.getVisibleNodes(), n => (n ? n.getId() : null))
+      renderPeople(sel.enter())
       sel.exit().remove()
+
+      this.nodesElem
+        .selectAll('.scale')
+        .attr('transform', d => (d.getId() === graph.focus.getId() ? 'scale(1.0)' : 'scale(0.5)'))
     }
 
     /*
