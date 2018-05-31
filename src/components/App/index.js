@@ -70,7 +70,6 @@ class App_ extends React.Component<AppProps, AppState> {
   componentDidMount() {
     const getAndCachePerson = (n: string) => { 
       return dbpedia.getPerson(n).then((person: ?PersonAbstract | ?PersonDetail) => {
-        console.log('[get person]', n, person)
         return new Promise((res, rej) => {
           if(person === null || person === undefined) {
             rej()

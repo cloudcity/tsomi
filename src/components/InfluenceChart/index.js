@@ -5,6 +5,7 @@ import moment from 'moment'
 import { connect } from 'react-redux'
 import { type SubjectId, type PersonAbstract, type PersonDetail } from '../../types'
 import { type PeopleCache } from '../../store'
+import { difference, union } from '../../utils/Set'
 
 const store = require('../../store')
 
@@ -109,7 +110,7 @@ type Selection = {
   append: any => Selection,
   attr: (string, ?string | ?number | ?Function) => Selection,
   call: (Function | Selection) => Selection,
-  classed: (string, bool) => Selection,
+  classed: (string, bool | Function) => Selection,
   data: (Array<any>, ?(any => any)) => Selection,
   duration: number => Selection,
   ease: number => Selection,
@@ -138,14 +139,6 @@ type LinkForces = {
 }
 
 
-type Location = { x: number, y: number }
-
-type TLink = {
-  source: string,
-  middle: string,
-  target: string,
-}
-
 type InvisibleNode = {
   type: 'InvisibleNode',
   x: number,
@@ -166,21 +159,28 @@ type PersonNode = {
 }
 
 
+type TLink = {
+  source: PersonNode,
+  middle: InvisibleNode,
+  target: PersonNode,
+}
+
+
 class TGraph {
   nodes: { [SubjectId]: InvisibleNode | PersonNode }
-  links: { [string]: TLink }
+  links: Array<TLink>
   focus: PersonNode
 
   constructor(focus: PersonDetail) {
     this.nodes = {}
-    this.links = {}
+    this.links = []
 
     this.setFocus(focus)
   }
 
   setFocus(person: PersonDetail): PersonNode {
     const node = this.addPerson(person)
-    this.focus = node && node.type === 'PersonNode' ?  node : this.focus
+    this.focus = node && node.type === 'PersonNode' ? node : this.focus
     return node
   }
 
@@ -189,14 +189,19 @@ class TGraph {
   }
 
   addPerson(person: PersonAbstract | PersonDetail): PersonNode {
+    const p = this.nodes[person.id]
+    if (p != null && p.type === 'PersonNode' && p.person.type === person.type) {
+      return p
+    }
+
     const node = {
       type: 'PersonNode',
       x: 0,
       y: 0,
       vx: 0,
       vy: 0,
-      person: person,
-      getId: () => person.id
+      person,
+      getId: () => person.id,
     }
     this.addNode(node)
     return node
@@ -216,9 +221,10 @@ class TGraph {
       vy: 0,
       getId: () => `${source.id} - ${target.id}`
     }
-    const link = { source: source.id, middle: middle.getId(), target: target.id }
+    const link = { source: sourceNode, middle: middle, target: targetNode }
 
-    this.nodes[middle.getId()]
+    this.nodes[middle.getId()] = middle
+    this.links.push(link)
     return link
   }
 
@@ -231,11 +237,14 @@ class TGraph {
   }
 
   getLinks(): Array<TLink> {
-    return []
+    return this.links
   }
 
   getLinkSegments(): Array<LinkSegment> {
-    return []
+    return fp.flatten(fp.map(link => [
+      { source: link.source, target: link.middle },
+      { source: link.middle, target: link.target },
+    ])(this.links))
   }
 }
 
@@ -448,11 +457,10 @@ const renderPeople = (sel: Selection) => {
   return circle
 }
 
-/*
-const calculateSelectionScale = (node: Selection, centerNode: PersonNode, isMouseOver: bool): number =>
-  (node.id === centerNode.getId() || isMouseOver ? 1.0 : 0.5)
+const calculateNodeScale = (node: PersonNode, centerNode: PersonNode, isMouseOver: bool): number =>
+  (node.getId() === centerNode.getId() || isMouseOver ? 1.0 : 0.5)
 
-const calculateLinkPath = (link: TLink, center: PersonNode) => {
+const calculateLinkPath = (link: TLink, center: PersonNode): string => {
   const s = link.source
   const m = link.middle
   const t = link.target
@@ -469,24 +477,21 @@ const calculateLinkPath = (link: TLink, center: PersonNode) => {
     [s, m, tip, left, tip, right],
   )
 }
-*/
 
-/*
-const renderLink = (container: Selection, center: TNode, link: TLink): Selection => {
+
+const renderLinks = (container: Selection, graph: TGraph): Selection => {
   const path = container.append('path')
 
   path.classed('link', true)
-    .classed('from', link.source === center)
-    .classed('to', link.target === center)
+    .classed('from', (link: TLink): bool => link.source.getId() === graph.focus.getId())
+    .classed('to', (link: TLink): bool => link.target.getId() === graph.focus.getId())
     .style('stroke-width', ARROW_WIDTH)
-    .attr('visibity', 'visibile')
-    .attr('d', calculateLinkPath(link, center))
-    //.attr('d', populate_path('M X0 Y0 L X1 Y1 L X2 Y2', [link.source, link.middle, link.target]))
-    .attr('id', `${link.source.id}-${link.target.id}`)
+    .attr('visibity', 'visible')
+    .attr('d', (link: TLink): string => calculateLinkPath(link, graph.focus))
+    .attr('id', (link: TLink): string => `${link.source.getId()}-${link.target.getId()}`)
 
   return path
 }
-*/
 
 
 const listOfPeopleInGraph = (
@@ -668,33 +673,44 @@ const createInfluenceGraph = (
 
 
 const createInfluenceGraph = (focus: PersonDetail, people: PeopleCache): TGraph => {
-  const createNodes = (
-    graph: TGraph,
-  ): (Array<SubjectId> => Array<PersonAbstract | PersonDetail>) => fp.compose([
+  const graph = new TGraph(focus)
+  return graph
+  /*
+  const createNodes = (): (Array<SubjectId> => Array<PersonAbstract | PersonDetail>) => fp.compose([
     fp.filter(person => person != null),
-    fp.map(name => people[name])
+    fp.map(name => people[name]),
   ])
 
   const graph = new TGraph(focus)
-  fp.map(p => graph.createLink(p, focus))(createNodes(graph)(focus.influencedBy))
-  fp.map(p => graph.createLink(focus, p))(createNodes(graph)(focus.influenced))
+  fp.map(p => graph.createLink(p, focus))(createNodes()(focus.influencedBy))
+  fp.map(p => graph.createLink(focus, p))(createNodes()(focus.influenced))
   return graph
+  */
 }
 
 
 const updateInfluenceGraph = (graph: TGraph, focus: PersonDetail, people: PeopleCache) => {
-  const newPeople = new Set(
-    fp.compose(
-      fp.filter(p => p != null),
-      fp.map(id => people[id]),
-    )([focus.id].concat(focus.influencedBy, focus.influenced)))
+  const influencedBy = new Set(focus.influencedBy)
+  const influenced = new Set(focus.influenced)
+  const currentIds = union(new Set([focus.id]), influencedBy, influenced)
+  const currentPeople = new Set(fp.compose(
+    fp.filter(p => p != null),
+    fp.map(id => people[id]),
+  )(Array.from(currentIds.values())))
   const oldPeople = new Set(fp.map(n => n.person)(graph.getVisibleNodes()))
 
-  const incomingPeople = new Set(fp.filter(x => !oldPeople.has(x))(Array.from(newPeople)));
-  const outgoingPeople = new Set(fp.filter(x => !newPeople.has(x))(Array.from(oldPeople)));
+  const incomingPeople = difference(currentPeople, oldPeople)
+  const outgoingPeople = difference(oldPeople, currentPeople)
 
   graph.setFocus(focus)
-  incomingPeople.forEach(p => graph.addPerson(p))
+  incomingPeople.forEach((p) => {
+    graph.addPerson(p)
+    if (influencedBy.has(p.id)) {
+      graph.createLink(p, focus)
+    } else {
+      graph.createLink(focus, p)
+    }
+  })
 }
 
 
@@ -818,18 +834,23 @@ class InfluenceCanvas {
 
     this.timelineAxis.call(timeline.axis)
 
-    const sel = this.nodesElem.selectAll('.translate')
+    const nodeSel = this.nodesElem.selectAll('.translate')
       .data(graph.getVisibleNodes(), n => (n ? n.getId() : null))
-    renderPeople(sel.enter())
-    sel.exit().remove()
+    renderPeople(nodeSel.enter())
+    nodeSel.exit().remove()
 
     this.nodesElem
       .selectAll('.scale')
       .attr('transform', d => (d.getId() === graph.focus.getId() ? 'scale(1.0)' : 'scale(0.5)'))
 
+    const linkSel = this.linksElem.selectAll('path')
+      .data(graph.getLinks())
+    renderLinks(linkSel.enter(), graph)
+    linkSel.exit().remove()
+
     this.fdl = d3.forceSimulation(graph.getNodes())
 
-    this.fdlLinks = d3.forceLink(graph.getLinks())
+    this.fdlLinks = d3.forceLink(graph.getLinkSegments())
       .strength(LINK_STRENGTH)
       .distance(() => (Math.random() * LINK_RANDOM) + ((NODE_SIZE / 2) + LINK_MIN_OFFSET))
 
@@ -852,12 +873,9 @@ class InfluenceCanvas {
     const k = 0.5 * this.fdl.alpha()
     const k2 = 15 * this.fdl.alpha()
 
-    if (this.graph != null) {
-      this.graph.focus.x += ((width / 2) - this.graph.focus.x) * k
-      this.graph.focus.y += ((height / 2) - this.graph.focus.y) * k
-    }
+    graph.focus.x = width / 2
+    graph.focus.y = height / 2
 
-    /*
     graph.getLinks().forEach((link) => {
       if (link.source === graph.focus) {
         link.target.x += k2
@@ -865,17 +883,9 @@ class InfluenceCanvas {
         link.source.x -= k2
       }
     })
-    */
 
     const [minX, minY] = [MARGIN, MARGIN]
     const [maxX, maxY] = [width - MARGIN, height - MARGIN]
-
-    /*
-    graph.getNodes().forEach((n) => {
-      n.x = largest(minX, smallest(maxX, n.x))
-      n.y = largest(minY, smallest(maxY, n.y))
-    })
-    */
 
     this.nodesElem
       .selectAll('.translate')
@@ -885,22 +895,8 @@ class InfluenceCanvas {
         return `translate(${n.x}, ${n.y})`
       })
 
-    /*
-    graph.getNodes().forEach((n) => {
-      if (n.contents != null) {
-        translateNode(n, { x: n.x, y: n.y })
-        if (n !== this.center) {
-          scaleNode(n, 0.5)
-        }
-      }
-    })
-
-    graph.links.forEach((l) => {
-      if (l.path != null && this.center != null) {
-        l.path.attr('d', calculateLinkPath(l, this.center))
-      }
-    })
-    */
+    this.linksElem.selectAll('path')
+      .attr('d', (link: TLink): string => calculateLinkPath(link, graph.focus))
   }
 
   setDimensions(dimensions: Dimensions) {
@@ -943,16 +939,22 @@ class InfluenceCanvas {
         .call(timeline.axis)
 
       this.fdl.nodes(graph.getNodes())
+      this.fdlLinks.links(graph.getLinkSegments())
 
-      const sel = this.nodesElem
+      const nodeSel = this.nodesElem
         .selectAll('.translate')
         .data(graph.getVisibleNodes(), n => (n ? n.getId() : null))
-      renderPeople(sel.enter())
-      sel.exit().remove()
+      renderPeople(nodeSel.enter())
+      nodeSel.exit().remove()
 
       this.nodesElem
         .selectAll('.scale')
         .attr('transform', d => (d.getId() === graph.focus.getId() ? 'scale(1.0)' : 'scale(0.5)'))
+
+      const linkSel = this.linksElem.selectAll('path')
+        .data(graph.getLinks())
+      renderLinks(linkSel.enter(), graph)
+      linkSel.exit().remove()
     }
 
     /*
