@@ -1,5 +1,7 @@
 // @flow
 
+/* eslint no-param-assign: off, no-param-reassign: off */
+
 import React from 'react'
 import moment from 'moment'
 import { connect } from 'react-redux'
@@ -10,95 +12,39 @@ import { difference, union } from '../../utils/Set'
 const store = require('../../store')
 
 const d3 = require('d3')
-const $ = require('jquery')
-const _ = require('lodash')
 const fp = require('lodash/fp')
-
-/*
-const { 
-  createSpecialData, 
-  subjects, 
-  lengthen, 
-  getPerson, 
-  searchForPeople 
-} = require('../../tsomi-rdf')
-*/
 
 const {
   angleRadians,
-  convertSpaces,
-  getURLParameter,
-  getURLElement,
-  largest, 
-  //parseDate,
+  largest,
   populate_path,
   radial,
-  smallest
+  smallest,
 } = require('../../util')
 
 const {
   ARROW_WIDTH,
-  BACK_BUTTON,
   BANNER_X,
   BANNER_Y,
-  BANNER_SIZE,
   CHARGE_BASE,
   CHARGE_HIDDEN,
   CHARGE_RANDOM,
   DEFAULT_DURATION,
-  FB_BUTTON_SIZE,
-  FB_BUTTON_X_OFF,
-  FB_BUTTON_X,
-  FB_BUTTON_Y,
-  FORWARD_BUTTON,
   GRAVITY,
   HEAD_ANGLE,
   IMAGE_SIZE,
-  LINK_BASE,
   LINK_MIN_OFFSET,
   LINK_RANDOM,
   LINK_STRENGTH,
   MAX_SCREEN_NODES,
   MARGIN,
   NODE_SIZE,
-  PRINTABLE,
-  PRINTABLE_PARAM,
-  RIM_SIZE,
   STOCK_EASE,
-  TIMELINE_OPACITY,
-  TIMELINE_HIGHLIGHT_OPACITY,
-  TIMELINE_MARGIN,
   TIMELINE_Y,
-  UNKNOWN_PERSON,
-  WIKI_LOGO,
-  WIKI_ICON_WIDTH
 } = require('../../constants')
 
 const DEFAULT_ANIMATION_DURATION = 2000
 
-// defining a buncha variables that sadly need to be in
-// global scope for now. TODO: refactor this!!
-//let svg
-//let force
-//let timelineScale
-//let timelineAxis
-//let nextMidId = 0
-//let linkGroup
-//let timelinesGroup
-//let nodeGroup
-//let axiesGroup
-//let CHART_WIDTH
-//let CHART_HEIGHT
-
-// utility functions
-/*
-const establishInitialSubject = () => {
-  const urlSubject = getURLParameter('subject')
-  return urlSubject
-    ? `dbpedia:${urlSubject}`
-    : subjects.oats
-}
-*/
 
 type LinkSegment = {
   source: any,
@@ -227,7 +173,7 @@ class TGraph {
       vy: 0,
       getId: () => `${source.id} - ${target.id}`
     }
-    const link = { source: sourceNode, middle: middle, target: targetNode }
+    const link = { source: sourceNode, middle, target: targetNode }
 
     this.nodes[middle.getId()] = middle
     this.links.push(link)
@@ -255,157 +201,7 @@ class TGraph {
 }
 
 
-/*
-class TNode {
-  id: SubjectId
-  x: number
-  y: number
-  vx: number
-  vy: number
-  middle: bool
-
-  constructor(id: string, middle: bool, location: ?Location) {
-    this.id = id
-    this.x = location != null ? location.x : 0
-    this.y = location != null ? location.y : 0
-    this.vx = 0
-    this.vy = 0
-    this.middle = middle
-  }
-
-  getId(): SubjectId {
-    return this.id
-  }
-
-  isMiddle(): bool {
-    return this.middle
-  }
-
-  attach(contents: Selection) {
-    this.contents = contents
-  }
-
-  remove() {
-    if (this.contents) {
-      this.contents.remove()
-    }
-  }
-}
-
-
-class TLink {
-  source: TNode
-  middle: TNode
-  target: TNode
-
-  path: ?Selection
-
-  constructor(source: TNode, middle: TNode, target: TNode, path: ?Selection) {
-    this.source = source
-    this.middle = middle
-    this.target = target
-    this.path = path
-  }
-
-  attach(path: Selection) {
-    this.path = path
-  }
-
-  remove() {
-    if (this.path != null) {
-      this.path.remove()
-    }
-  }
-}
-
-
-class TGraph {
-  nodes: { [string]: TNode }
-  links: Array<TLink>
-
-  constructor() {
-    this.nodes = {}
-    this.links = []
-  }
-
-  getNodes(): Array<TNode> {
-    return (((Object.values(this.nodes)): any): Array<TNode>)
-  }
-
-  getLinkSegments(): Array<D3Link> {
-    return fp.flatten(
-      fp.map(
-        l => [{source: l.source, target: l.middle}, {source: l.middle, target: l.target}])
-      (this.links)
-    )
-  }
-
-  getLinks(): Array<TLink> {
-    return this.links
-  }
-
-  addNode(node: TNode): TNode {
-    this.nodes[node.getId()] = node
-    return node
-  }
-
-  removeNode(node: TNode): void {
-    delete this.nodes[node.getId()]
-    node.remove()
-    for (let i = 0; i < this.links.length; i += 1) {
-      const elem = this.links[i]
-      if (elem.source === node) {
-        this.links[i].remove()
-        elem.source.remove()
-        delete this.nodes[elem.source.getId()]
-        delete this.nodes[elem.middle.getId()]
-        delete this.links[i]
-      } else if (elem.target === node) {
-        this.links[i].remove()
-        elem.target.remove()
-        delete this.nodes[elem.target.getId()]
-        delete this.nodes[elem.middle.getId()]
-        delete this.links[i]
-      }
-    }
-  }
-
-  createNode(id: string, contents: ?Selection, middle: bool, location: Location): TNode {
-    return this.addNode(new TNode(id, contents, middle, location))
-  }
-
-  createLink(source: TNode, target: TNode): TLink {
-    const midNode = this.createNode(
-      `${source.getId()}-${target.getId()}`,
-      null,
-      true,
-      { x: (source.x + target.x) / 2, y: (source.y + target.y) / 2 },
-    )
-
-    this.addNode(source)
-    this.addNode(midNode)
-    this.addNode(target)
-    const link = new TLink(source, midNode, target)
-    this.links.push(link)
-    return link
-  }
-}
-*/
-
-
 type Dimensions = { width: number, height: number }
-
-
-/*
-const translateSelection = (n: Selection, destination: Location): void => {
-  n.attr('transform', `translate(${destination.x}, ${destination.y})`)
-}
-
-const scaleSelection = (n: Selection, scale: number): void => {
-  n.select('.scale')
-    .attr('transform', `scale(${scale})`)
-}
-*/
 
 
 /* A timeline class represents the time-based axis that appears somewhere
@@ -580,151 +376,6 @@ const calculateTimeRange = (people: Array<PersonAbstract | PersonDetail>): [mome
 }
 
 
-/*
-const timelinePath = (
-  dimensions: Dimensions,
-  timeline: Timeline,
-  person: PersonDetail,
-  node: { x: number, y: number },
-) => {
-  const TIMELINE_UPSET = 50
-
-  const birth = { x: timeline.scale(person.birthDate), y: TIMELINE_Y(dimensions.height) }
-  const bc1 = { x: node.x, y: TIMELINE_Y(dimensions.height) - TIMELINE_UPSET }
-  const bc2 = { x: birth.x, y: TIMELINE_Y(dimensions.height) - TIMELINE_UPSET }
-  const death = { x: timeline.scale(person.deathDate), y: TIMELINE_Y(dimensions.height) }
-  const dc1 = { x: death.x, y: TIMELINE_Y(dimensions.height) - TIMELINE_UPSET }
-  const dc2 = { x: node.x, y: TIMELINE_Y(dimensions.height) - TIMELINE_UPSET }
-
-  return populate_path(
-    'M X0 Y0 C X1 Y1 X2 Y2 X3 Y3 L X4 Y4 C X5 Y5 X6 Y6 X7 Y7', [node, bc1, bc2, birth, death, dc1, dc2, node])
-}
-*/
-
-
-function limitScreenNodes(graph, centerPerson) {
-  var nodes = graph.getNodes();
-  if (nodes.length > MAX_SCREEN_NODES) {
-
-    // this overly simple algorithm sorts nodes by influence score and keeps
-    // only those with the highest scores.  it would probably be better to represent
-    // influencers and influencies proportionally.
-
-    nodes.sort(function(a, b) {return b.getProperty('score') - a.getProperty('score');});
-    nodes.forEach(function(node, i) {
-      if (i >= MAX_SCREEN_NODES && node != centerPerson) {
-        graph.removeNode(node);
-      }
-    });
-  }
-}
-
-function scaleElement(element, scale, duration, ease) {
-  var te = element
-    .transition()
-    .style('transform', 'scale(' + scale + ')')
-    .style('-o-transform', 'scale(' + scale + ')')
-    .style('-ms-transform', 'scale(' + scale + ')')
-    .style('-moz-transform', 'scale(' + scale + ')')
-    .style('-webkit-transform', 'scale(' + scale + ')');
-
-  if (ease !== undefined) te.ease(ease);
-  if (duration !== undefined) te.duration(duration);
-}
-
-function setWikiConnectButtonVisibility(visible) {
-  var wc = d3.select('#wikiconnect');
-  if (visible) {
-    scaleElement(wc, 1, DEFAULT_DURATION, STOCK_EASE);
-  } else {
-    scaleElement(wc, 0, DEFAULT_DURATION);
-  }
-}
-
-function wcMouseEvent(over) {
-  var wc = d3.select('#wikiconnect');
-  scaleElement(wc, over ? 1.2 : 1, DEFAULT_DURATION, STOCK_EASE);
-}
-
-
-/*
-function updateTimeline(timelineScale: any, timelineAxis: any, width: number, startDate: Date, endDate: Date) {
-  timelineScale.domain([minDate, maxDate]);
-  timelineScale.domain([
-    timelineScale.invert(timelineScale.range()[0] - TIMELINE_MARGIN),
-    timelineScale.invert(timelineScale.range()[1] + TIMELINE_MARGIN)
-  ]);
-
-  // transition in the new scale
-
-  d3elem.transition()
-    .duration(2000)
-    .select('.axis')
-    .call(timelineAxis);
-}
-*/
-
-/*
-const createNodeFromPerson = (container: Selection, graph: TGraph, person: PersonAbstract | PersonDetail, location: Location): TNode =>
-  graph.createNode(person.id, renderPersonIcon(container, person).circle, false, location)
-
-const createNodes = (
-  container: Selection,
-  location: Location,
-  graph: TGraph,
-  people: PeopleCache,
-): (Array<SubjectId> => Array<TNode>) => fp.compose([
-  fp.map(person => createNodeFromPerson(container, graph, person, location)),
-  fp.filter(person => person != null),
-  fp.map(name => people[name]),
-])
-
-const createInfluenceGraph = (
-  linksContainer: Selection,
-  nodesContainer: Selection,
-  dimensions: Dimensions,
-  subjectId: SubjectId,
-  people: PeopleCache,
-): { centerNode: ?TNode, graph: TGraph } => {
-  const graph = new TGraph()
-
-  const person = people[subjectId]
-  if (person != null && person.type === 'PersonDetail') {
-    const subjectNode = createNodeFromPerson(nodesContainer, graph, person, { x: dimensions.width / 2, y: dimensions.height / 2 })
-
-    createNodes(nodesContainer, { x: 0, y: dimensions.height / 2 }, graph, people)(person.influencedBy).forEach(n => graph.createLink(n, subjectNode))
-    createNodes(nodesContainer, { x: dimensions.width, y: dimensions.height / 2 }, graph, people)(person.influenced).forEach(n => graph.createLink(subjectNode, n))
-
-    graph.links.forEach((l) => {
-      //const path = renderLink(linksContainer, subjectNode, l)
-      //l.attach(path)
-    })
-    return { centerNode: subjectNode, graph }
-  }
-
-
-  return { centerNode: null, graph }
-}
-*/
-
-
-const createInfluenceGraph = (focus: PersonDetail, people: PeopleCache): TGraph => {
-  const graph = new TGraph(focus)
-  return graph
-  /*
-  const createNodes = (): (Array<SubjectId> => Array<PersonAbstract | PersonDetail>) => fp.compose([
-    fp.filter(person => person != null),
-    fp.map(name => people[name]),
-  ])
-
-  const graph = new TGraph(focus)
-  fp.map(p => graph.createLink(p, focus))(createNodes()(focus.influencedBy))
-  fp.map(p => graph.createLink(focus, p))(createNodes()(focus.influenced))
-  return graph
-  */
-}
-
-
 const updateInfluenceGraph = (graph: TGraph, focus: PersonDetail, people: PeopleCache) => {
   const influencedBy = new Set(focus.influencedBy)
   const influenced = new Set(focus.influenced)
@@ -750,68 +401,20 @@ const updateInfluenceGraph = (graph: TGraph, focus: PersonDetail, people: People
 }
 
 
-/*
-const updateInfluenceGraph = (
-  linksContainer: Selection,
-  nodesContainer: Selection,
-  dimensions: Dimensions,
-  graph: TGraph,
-  subjectId: SubjectId,
-  people: PeopleCache,
-): ?TNode => {
-  const subject = people[subjectId]
-
-  if (subject != null && subject.type === 'PersonDetail') {
-    let subjectNode = graph.nodes[subjectId]
-    const necessaryNodeIds = [subjectId].concat(subject.influencedBy, subject.influenced)
-    const presentNodeIds = fp.map(n => n.getId())(graph.getNodes())
-    const nodeIds = presentNodeIds.concat(necessaryNodeIds)
-
-    if (!subjectNode) {
-      subjectNode = graph.createNode(subjectId, renderPersonIcon(nodesContainer, subject).circle, false, { x: dimensions.width / 2, y: dimensions.height / 2 })
-    }
-
-    nodeIds.forEach((nid) => {
-      const person = people[nid]
-      let personNode = graph.nodes[nid]
-
-      if (person != null) {
-        if (necessaryNodeIds.includes(nid) && personNode != null) {
-        } else if (necessaryNodeIds.includes(nid) && !personNode) {
-          if (subject.influencedBy.includes(nid)) {
-            personNode = createNodeFromPerson(nodesContainer, graph, person, { x: 0, y: dimensions.height / 2 })
-            const link = graph.createLink(personNode, subjectNode)
-          } else {
-            personNode = createNodeFromPerson(nodesContainer, graph, person, { x: dimensions.width, y: dimensions.height / 2 })
-            const link = graph.createLink(subjectNode, personNode)
-            link.attach(renderLink(linksContainer, subjectNode, link))
-          }
-        } else if (!necessaryNodeIds.includes(nid) && personNode != null) {
-          graph.removeNode(personNode)
-        } else {
-        }
-      }
-    })
-  }
-
-  return graph.nodes[subjectId]
-}
-*/
-
-
 class InfluenceCanvas {
+  focus: PersonDetail
+  people: PeopleCache
+  timeline: Timeline
+
+  dimensions: Dimensions
+  graph: TGraph
+
   topElem: Selection
   definitions: Selection
   nodesElem: Selection
   linksElem: Selection
   lifelinesElem: Selection
-  dimensions: Dimensions
 
-  focusedId: ?SubjectId
-  people: PeopleCache
-  timeline: Timeline
-
-  graph: ?TGraph
 
   timelineAxis: Selection
   fdl: ForceSimulation
@@ -820,22 +423,18 @@ class InfluenceCanvas {
   constructor(
     topElem: Selection,
     dimensions: Dimensions,
-    focusedId: SubjectId,
+    focus: PersonDetail,
     people: PeopleCache,
   ) {
     this.topElem = topElem
     this.dimensions = dimensions
-    this.focusedId = focusedId
+    this.focus = focus
     this.people = people
-
-    const focus = this.people[focusedId]
-    if (focus != null && focus.type === 'PersonDetail') {
-      this.setup(focus)
-    }
+    this.graph = new TGraph(focus)
 
     // create clip path for image
     this.definitions = this.topElem.append('defs')
-    
+
     this.definitions.append('svg:clipPath')
       .attr('id', 'image-clip')
       .append('svg:circle')
@@ -852,25 +451,15 @@ class InfluenceCanvas {
     this.linksElem = this.topElem.append('g').classed('links', true)
     this.nodesElem = this.topElem.append('g').classed('nodes', true)
 
-    if (! this.graph) {
-      this.timeline = createTimeline(dimensions.width, moment('1900-01-01'), moment())
-
-      this.timelineAxis = topElem
-        .append('g')
-        .classed('axies', true)
-        .attr('class', 'axis')
-        .attr('transform', `translate(0, ${TIMELINE_Y(dimensions.height)})`)
-        .call(this.timeline.axis)
-    }
-  }
-
-  setup(focus: PersonDetail): void {
-    const graph = createInfluenceGraph(focus, this.people)
-    const [minYear, maxYear] = calculateTimeRange(listOfPeopleInGraph(graph, this.people))
-
+    const [minYear, maxYear] = calculateTimeRange(listOfPeopleInGraph(this.graph, this.people))
     this.timeline = createTimeline(this.dimensions.width, minYear, maxYear)
-    this.graph = graph
-    this.timelineAxis.call(this.timeline.axis)
+    this.timelineAxis = topElem
+      .append('g')
+      .classed('axies', true)
+      .attr('class', 'axis')
+      .attr('transform', `translate(0, ${TIMELINE_Y(dimensions.height)})`)
+      .call(this.timeline.axis)
+
     this.fdl = d3.forceSimulation()
     this.fdlLinks = d3.forceLink()
       .strength(LINK_STRENGTH)
@@ -879,30 +468,28 @@ class InfluenceCanvas {
     this.fdl
       .force('center', d3.forceCenter(this.dimensions.width / 2, this.dimensions.height / 2))
       .force('gravity', d3.forceManyBody().strength(GRAVITY))
-      .force('charge', d3.forceManyBody().strength((d: InvisibleNode | PersonNode): number => {
-        return d.type === 'InvisibleNode'
+      .force('charge', d3.forceManyBody().strength((d: InvisibleNode | PersonNode): number => (
+        d.type === 'InvisibleNode'
           ? -CHARGE_HIDDEN
           : -((Math.random() * CHARGE_RANDOM) + CHARGE_BASE)
-      }))
+      )))
       .force('links', this.fdlLinks)
 
-    this.fdl.on('tick', () => {
-        if (this.graph != null) this.animate(this.graph)
-      })
+    this.fdl.on('tick', () => this.animate())
   }
 
-  animate(graph: TGraph): void {
+  animate(): void {
     const { width, height } = this.dimensions
-    const k = 0.5 * this.fdl.alpha()
+    // const k = 0.5 * this.fdl.alpha()
     const k2 = 15 * this.fdl.alpha()
 
-    graph.focus.x = width / 2
-    graph.focus.y = height / 2
+    this.graph.focus.x = width / 2
+    this.graph.focus.y = height / 2
 
-    graph.getLinks().forEach((link) => {
-      if (link.source === graph.focus) {
+    this.graph.getLinks().forEach((link) => {
+      if (link.source === this.graph.focus) {
         link.target.x += k2
-      } else if (link.target === graph.focus) {
+      } else if (link.target === this.graph.focus) {
         link.source.x -= k2
       }
     })
@@ -912,17 +499,17 @@ class InfluenceCanvas {
 
     this.nodesElem
       .selectAll('.translate')
-      .attr('transform', n => {
+      .attr('transform', (n) => {
         n.x = largest(minX, smallest(maxX, n.x))
         n.y = largest(minY, smallest(maxY, n.y))
         return `translate(${n.x}, ${n.y})`
       })
 
     this.linksElem.selectAll('path')
-      .attr('d', (link: TLink): string => calculateLinkPath(link, graph.focus))
+      .attr('d', (link: TLink): string => calculateLinkPath(link, this.graph.focus))
 
     this.lifelinesElem.selectAll('path')
-      .attr('d', (node: PersonNode): string => calculateLifelinePath(this.dimensions, this.timeline,  node))
+      .attr('d', (node: PersonNode): string => calculateLifelinePath(this.dimensions, this.timeline, node))
   }
 
   setDimensions(dimensions: Dimensions) {
@@ -939,54 +526,42 @@ class InfluenceCanvas {
     this.fdl.restart()
   }
 
-  setFocused(focusedId: SubjectId, people: PeopleCache) {
-    this.focusedId = focusedId
+  setFocused(focus: PersonDetail, people: PeopleCache) {
+    this.focus = focus
     this.people = people
 
-    const newFocus = people[focusedId]
-
-    /* trigger animations to update the center */
-    if (newFocus != null && newFocus.type === 'PersonDetail') {
-      if (!this.graph) {
-        this.setup(newFocus)
-      } else {
-        updateInfluenceGraph(this.graph, newFocus, people)
-      }
-    }
-
-    if (this.graph != null && this.fdl != null) {
-      this.updateCanvas(this.graph, this.fdl, this.fdlLinks)
-    }
+    updateInfluenceGraph(this.graph, this.focus, people)
+    this.refreshCanvas()
   }
 
-  updateCanvas(graph: TGraph, fdl: ForceSimulation, fdlLinks: LinkForces) {
-    const [minYear, maxYear] = calculateTimeRange(listOfPeopleInGraph(graph, this.people))
+  refreshCanvas() {
+    const [minYear, maxYear] = calculateTimeRange(listOfPeopleInGraph(this.graph, this.people))
     this.timeline.scale.domain([minYear, maxYear])
     this.timelineAxis.transition()
       .duration(DEFAULT_ANIMATION_DURATION)
       .attr('transform', `translate(0, ${TIMELINE_Y(this.dimensions.height)})`)
       .call(this.timeline.axis)
 
-    fdl.nodes(graph.getNodes())
-    fdlLinks.links(graph.getLinkSegments())
+    this.fdl.nodes(this.graph.getNodes())
+    this.fdlLinks.links(this.graph.getLinkSegments())
 
     const nodeSel = this.nodesElem
       .selectAll('.translate')
-      .data(graph.getVisibleNodes(), n => (n ? n.getId() : null))
+      .data(this.graph.getVisibleNodes(), n => (n ? n.getId() : null))
     renderPeople(nodeSel.enter())
     nodeSel.exit().remove()
 
     this.nodesElem
       .selectAll('.scale')
-      .attr('transform', d => (d.getId() === graph.focus.getId() ? 'scale(1.0)' : 'scale(0.5)'))
+      .attr('transform', d => (d.getId() === this.graph.focus.getId() ? 'scale(1.0)' : 'scale(0.5)'))
 
     const linkSel = this.linksElem.selectAll('path')
-      .data(graph.getLinks())
-    renderLinks(linkSel.enter(), graph)
+      .data(this.graph.getLinks())
+    renderLinks(linkSel.enter(), this.graph)
     linkSel.exit().remove()
 
     const lifespanSel = this.lifelinesElem.selectAll('path')
-      .data(graph.getVisibleNodes(), n => (n ? n.getId() : null))
+      .data(this.graph.getVisibleNodes(), n => (n ? n.getId() : null))
     renderLifelines(lifespanSel.enter(), this.dimensions, this.timeline)
     lifespanSel.exit().remove()
   }
@@ -1003,7 +578,6 @@ type InfluenceChartState = {
   domElem: ?HTMLElement,
   d3Elem: ?Selection,
   canvas: ?InfluenceCanvas,
-  focusedId: ?SubjectId,
 }
 
 class InfluenceChart_ extends React.Component<InfluenceChartProps, InfluenceChartState> {
@@ -1012,9 +586,20 @@ class InfluenceChart_ extends React.Component<InfluenceChartProps, InfluenceChar
     prevState: InfluenceChartState,
   ): InfluenceChartState {
     const { focusedId } = newProps
-    if (focusedId != null) {
-      if (prevState.canvas != null) {
-        prevState.canvas.setFocused(focusedId, newProps.people)
+    const focus = newProps.people[focusedId]
+
+    if (focus != null && focus.type === 'PersonDetail') {
+      if (prevState.domElem != null && prevState.d3Elem != null) {
+        const canvas = prevState.canvas
+          ? prevState.canvas
+          : new InfluenceCanvas(
+            prevState.d3Elem,
+            prevState.domElem.getBoundingClientRect(),
+            focus,
+            newProps.people,
+          )
+        canvas.setFocused(focus, newProps.people)
+        return { ...prevState, canvas, focusedId }
       }
       return { ...prevState, focusedId }
     }
@@ -1024,18 +609,10 @@ class InfluenceChart_ extends React.Component<InfluenceChartProps, InfluenceChar
   constructor(props: InfluenceChartProps) {
     super(props)
 
-    /*
-    this.state = InfluenceChart_.getDerivedStateFromProps(props, {
-      domElem: null,
-      d3Elem: null,
-      canvas: null,
-    })
-    */
     this.state = {
       domElem: null,
       d3Elem: null,
       canvas: null,
-      focusedId: null
     }
   }
 
@@ -1043,11 +620,12 @@ class InfluenceChart_ extends React.Component<InfluenceChartProps, InfluenceChar
     this.state.domElem = document.getElementById(this.props.label)
     this.state.d3Elem = d3.select(`#${this.props.label}`)
 
-    if (this.state.domElem != null && this.state.d3Elem != null) {
+    const focus = this.props.people[this.props.focusedId]
+    if (focus != null && focus === 'PersonDetail' && this.state.domElem != null && this.state.d3Elem != null) {
       this.state.canvas = new InfluenceCanvas(
         this.state.d3Elem,
         this.state.domElem.getBoundingClientRect(),
-        this.props.focusedId,
+        focus,
         this.props.people,
       )
     }
@@ -1061,23 +639,7 @@ class InfluenceChart_ extends React.Component<InfluenceChartProps, InfluenceChar
     })
   }
 
-  /*
-  renderCanvas() {
-    if (this.state.domElem != null && this.state.d3Elem != null && this.state.canvas != null) {
-      const { domElem, d3Elem, canvas } = this.state
-      console.log('[InfluenceChart_.renderCanvas] rendering')
-
-      const dimensions = domElem.getBoundingClientRect()
-      const person = this.props.people[this.props.focusedId]
-      if (person != null && person.type === 'PersonDetail') {
-        canvas.render(dimensions, person, this.props.people, this.state.graph)
-      }
-    } // TODO: what should I do if the nodes aren't found?
-  }
-  */
-
   render() {
-    //this.renderCanvas()
     return React.createElement('svg', { id: `${this.props.label}`, style: { height: '100%', width: '100%' } }, [])
   }
 }
