@@ -125,13 +125,19 @@ type Selection = {
   transition: () => Selection,
 }
 
-type ForceSimulation = {
+type D3Scale<D, R> = {|
+  (D): D,
+  domain: Array<D> => void,
+  range: R => void,
+|}
+
+type ForceSimulation = {|
   alpha: (?number) => number,
   force: (string, any) => ForceSimulation,
   nodes: Array<InvisibleNode | PersonNode> => ForceSimulation,
   restart: () => void,
   on: (string, () => void) => ForceSimulation,
-}
+|}
 
 type LinkForces = {
   links: Array<LinkSegment> => LinkForces,
@@ -405,7 +411,7 @@ const scaleSelection = (n: Selection, scale: number): void => {
 /* A timeline class represents the time-based axis that appears somewhere
  * towards the bottom of the page.
  */
-type Timeline = { scale: Selection, axis: Selection }
+type Timeline = { scale: D3Scale<moment, number>, axis: Selection }
 
 const createTimeline = (width: number, startDate: moment, endDate: moment): Timeline => {
   const scale = d3.scaleTime()
@@ -457,6 +463,7 @@ const renderPeople = (sel: Selection) => {
   return circle
 }
 
+
 const calculateNodeScale = (node: PersonNode, centerNode: PersonNode, isMouseOver: bool): number =>
   (node.getId() === centerNode.getId() || isMouseOver ? 1.0 : 0.5)
 
@@ -489,6 +496,35 @@ const renderLinks = (container: Selection, graph: TGraph): Selection => {
     .attr('visibity', 'visible')
     .attr('d', (link: TLink): string => calculateLinkPath(link, graph.focus))
     .attr('id', (link: TLink): string => `${link.source.getId()}-${link.target.getId()}`)
+
+  return path
+}
+
+
+const calculateLifelinePath = (dimensions: Dimensions, timeline: Timeline, node: PersonNode): string => {
+  const TIMELINE_UPSET = 50
+
+  const death = node.person.deathDate ? node.person.deathDate : moment()
+
+  const birthPx = { x: timeline.scale(node.person.birthDate), y: TIMELINE_Y(dimensions.height) }
+  const bc1 = { x: node.x, y: TIMELINE_Y(dimensions.height) - TIMELINE_UPSET }
+  const bc2 = { x: birthPx.x, y: TIMELINE_Y(dimensions.height) - TIMELINE_UPSET }
+
+  const deathPx = { x: timeline.scale(death), y: TIMELINE_Y(dimensions.height) }
+  const dc1 = { x: deathPx.x, y: TIMELINE_Y(dimensions.height) - TIMELINE_UPSET }
+  const dc2 = { x: node.x, y: TIMELINE_Y(dimensions.height) - TIMELINE_UPSET }
+
+  return populate_path(
+    'M X0 Y0 C X1 Y1 X2 Y2 X3 Y3 L X4 Y4 C X5 Y5 X6 Y6 X7 Y7', [node, bc1, bc2, birthPx, deathPx, dc1, dc2, node])
+}
+
+
+const renderLifelines = (container: Selection, dimensions: Dimensions, timeline: Timeline): Selection => {
+  const path = container.append('path')
+
+  path.classed('timeline', true)
+    .attr('style', 'opacity: 0.03;')
+    .attr('d', (node: PersonNode): string => calculateLifelinePath(dimensions, timeline, node))
 
   return path
 }
@@ -768,10 +804,12 @@ class InfluenceCanvas {
   definitions: Selection
   nodesElem: Selection
   linksElem: Selection
+  lifelinesElem: Selection
   dimensions: Dimensions
 
   focusedId: ?SubjectId
   people: PeopleCache
+  timeline: Timeline
 
   graph: ?TGraph
 
@@ -810,51 +848,36 @@ class InfluenceCanvas {
      * of the nodes appear in another container, and the nodes container comes
      * after the links container, this makes the nodes render atop the links.
      */
+    this.lifelinesElem = this.topElem.append('g').classed('timelines', true)
     this.linksElem = this.topElem.append('g').classed('links', true)
     this.nodesElem = this.topElem.append('g').classed('nodes', true)
 
     if (! this.graph) {
-      const timeline = createTimeline(dimensions.width, moment('1900-01-01'), moment())
+      this.timeline = createTimeline(dimensions.width, moment('1900-01-01'), moment())
 
       this.timelineAxis = topElem
         .append('g')
         .classed('axies', true)
         .attr('class', 'axis')
         .attr('transform', `translate(0, ${TIMELINE_Y(dimensions.height)})`)
-        .call(timeline.axis)
+        .call(this.timeline.axis)
     }
   }
 
   setup(focus: PersonDetail): void {
     const graph = createInfluenceGraph(focus, this.people)
     const [minYear, maxYear] = calculateTimeRange(listOfPeopleInGraph(graph, this.people))
-    const timeline = createTimeline(this.dimensions.width, minYear, maxYear)
 
+    this.timeline = createTimeline(this.dimensions.width, minYear, maxYear)
     this.graph = graph
-
-    this.timelineAxis.call(timeline.axis)
-
-    const nodeSel = this.nodesElem.selectAll('.translate')
-      .data(graph.getVisibleNodes(), n => (n ? n.getId() : null))
-    renderPeople(nodeSel.enter())
-    nodeSel.exit().remove()
-
-    this.nodesElem
-      .selectAll('.scale')
-      .attr('transform', d => (d.getId() === graph.focus.getId() ? 'scale(1.0)' : 'scale(0.5)'))
-
-    const linkSel = this.linksElem.selectAll('path')
-      .data(graph.getLinks())
-    renderLinks(linkSel.enter(), graph)
-    linkSel.exit().remove()
-
-    this.fdl = d3.forceSimulation(graph.getNodes())
-
-    this.fdlLinks = d3.forceLink(graph.getLinkSegments())
+    this.timelineAxis.call(this.timeline.axis)
+    this.fdl = d3.forceSimulation()
+    this.fdlLinks = d3.forceLink()
       .strength(LINK_STRENGTH)
       .distance(() => (Math.random() * LINK_RANDOM) + ((NODE_SIZE / 2) + LINK_MIN_OFFSET))
 
-    this.fdl.force('center', d3.forceCenter(this.dimensions.width / 2, this.dimensions.height / 2))
+    this.fdl
+      .force('center', d3.forceCenter(this.dimensions.width / 2, this.dimensions.height / 2))
       .force('gravity', d3.forceManyBody().strength(GRAVITY))
       .force('charge', d3.forceManyBody().strength((d: InvisibleNode | PersonNode): number => {
         return d.type === 'InvisibleNode'
@@ -897,17 +920,20 @@ class InfluenceCanvas {
 
     this.linksElem.selectAll('path')
       .attr('d', (link: TLink): string => calculateLinkPath(link, graph.focus))
+
+    this.lifelinesElem.selectAll('path')
+      .attr('d', (node: PersonNode): string => calculateLifelinePath(this.dimensions, this.timeline,  node))
   }
 
   setDimensions(dimensions: Dimensions) {
     this.dimensions = dimensions
 
     // calculateTimeRange here
-    const timeline = createTimeline(dimensions.width, new Date(1900, 1, 1), new Date())
+    this.timeline.scale.range(dimensions.width)
     this.timelineAxis.transition()
       .duration(DEFAULT_ANIMATION_DURATION)
       .attr('transform', `translate(0, ${TIMELINE_Y(dimensions.height)})`)
-      .call(timeline.axis)
+      .call(this.timeline.axis)
 
     this.fdl.alpha(2)
     this.fdl.restart()
@@ -929,42 +955,40 @@ class InfluenceCanvas {
     }
 
     if (this.graph != null && this.fdl != null) {
-      const { graph } = this
-
-      const [minYear, maxYear] = calculateTimeRange(listOfPeopleInGraph(this.graph, this.people))
-      const timeline = createTimeline(this.dimensions.width, minYear, maxYear)
-      this.timelineAxis.transition()
-        .duration(DEFAULT_ANIMATION_DURATION)
-        .attr('transform', `translate(0, ${TIMELINE_Y(this.dimensions.height)})`)
-        .call(timeline.axis)
-
-      this.fdl.nodes(graph.getNodes())
-      this.fdlLinks.links(graph.getLinkSegments())
-
-      const nodeSel = this.nodesElem
-        .selectAll('.translate')
-        .data(graph.getVisibleNodes(), n => (n ? n.getId() : null))
-      renderPeople(nodeSel.enter())
-      nodeSel.exit().remove()
-
-      this.nodesElem
-        .selectAll('.scale')
-        .attr('transform', d => (d.getId() === graph.focus.getId() ? 'scale(1.0)' : 'scale(0.5)'))
-
-      const linkSel = this.linksElem.selectAll('path')
-        .data(graph.getLinks())
-      renderLinks(linkSel.enter(), graph)
-      linkSel.exit().remove()
+      this.updateCanvas(this.graph, this.fdl, this.fdlLinks)
     }
+  }
 
-    /*
-    this.center = updateInfluenceGraph(this.linksElem, this.nodesElem, this.dimensions, this.graph, this.focusedId, this.people)
+  updateCanvas(graph: TGraph, fdl: ForceSimulation, fdlLinks: LinkForces) {
+    const [minYear, maxYear] = calculateTimeRange(listOfPeopleInGraph(graph, this.people))
+    this.timeline.scale.domain([minYear, maxYear])
+    this.timelineAxis.transition()
+      .duration(DEFAULT_ANIMATION_DURATION)
+      .attr('transform', `translate(0, ${TIMELINE_Y(this.dimensions.height)})`)
+      .call(this.timeline.axis)
 
-    //const graph = this.graph
-    //debugger
-    this.fdl.nodes(this.graph.getNodes())
-    this.fdlLinks.links(this.graph.getLinkSegments())
-    */
+    fdl.nodes(graph.getNodes())
+    fdlLinks.links(graph.getLinkSegments())
+
+    const nodeSel = this.nodesElem
+      .selectAll('.translate')
+      .data(graph.getVisibleNodes(), n => (n ? n.getId() : null))
+    renderPeople(nodeSel.enter())
+    nodeSel.exit().remove()
+
+    this.nodesElem
+      .selectAll('.scale')
+      .attr('transform', d => (d.getId() === graph.focus.getId() ? 'scale(1.0)' : 'scale(0.5)'))
+
+    const linkSel = this.linksElem.selectAll('path')
+      .data(graph.getLinks())
+    renderLinks(linkSel.enter(), graph)
+    linkSel.exit().remove()
+
+    const lifespanSel = this.lifelinesElem.selectAll('path')
+      .data(graph.getVisibleNodes(), n => (n ? n.getId() : null))
+    renderLifelines(lifespanSel.enter(), this.dimensions, this.timeline)
+    lifespanSel.exit().remove()
   }
 }
 
