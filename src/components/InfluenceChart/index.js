@@ -339,24 +339,24 @@ const calculateTimeRange = (people: Array<PersonAbstract | PersonDetail>): [mome
   let maxDate = null
 
   people.forEach((p) => {
-    const dob = p.birthDate ? p.birthDate : null
-    if (dob != null) {
-      if (minDate === null || dob < minDate) {
-        minDate = dob
+    if (p.birthDate != null) {
+      if (minDate === null || p.birthDate < minDate) {
+        minDate = p.birthDate
       }
-      if (maxDate === null || dob > maxDate) {
-        maxDate = dob
+      if (maxDate === null || p.birthDate > maxDate) {
+        maxDate = p.birthDate
       }
     }
 
-    const dod = p.deathDate ? p.deathDate : null
-    if (dod != null) {
-      if (minDate === null || dod < minDate) {
-        minDate = dod
+    if (p.deathDate != null) {
+      if (minDate === null || p.deathDate < minDate) {
+        minDate = p.deathDate
       }
-      if (maxDate === null || dod > maxDate) {
-        maxDate = dod
+      if (maxDate === null || p.deathDate > maxDate) {
+        maxDate = p.deathDate
       }
+    } else {
+      maxDate = moment()
     }
   })
 
