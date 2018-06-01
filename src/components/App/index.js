@@ -92,19 +92,6 @@ class App_ extends React.Component<AppProps, AppState> {
     })
   }
 
-  wikiFrameLoad() {
-    // d3 intercepts popstate events.
-    // when the wikiframe reloads,
-    // we need to pass that event on to
-    // the window so that d3 can see it.
-    // otherwise it'll be swallowed by
-    // the wikiframe itself.
-    console.log('[wikiFrameLoad]')
-    const e = new Event('popstate')
-    console.log('[wikiFrameLoad event]', e)
-    window.dispatchEvent(e)
-  }
-
   setWikiPage(node: any) {
     const url = getUrlFromNode(node)
     console.log('[setWikiPage url]', url)
@@ -152,7 +139,6 @@ class App_ extends React.Component<AppProps, AppState> {
     const wikiDiv = React.createElement(WikiDiv, {
       hidden: this.props.wikiDivHidden,
       key: 'wikidiv',
-      onLoad: () => this.wikiFrameLoad(),
       subject: this.props.subjectId,
       url: this.props.wikiUri,
     })

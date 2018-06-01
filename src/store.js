@@ -17,7 +17,7 @@ export const initialState = (): Store => ({
   focusedSubject: 'Joyce_Carol_Oates',
   wikiDivHidden: false,
   people: {},
-  currentWikiPageUri: '',
+  currentWikiPageUri: 'http://en.wikipedia.org/wiki/Joyce_Carol_Oates',
 })
 
 export type Action = {
