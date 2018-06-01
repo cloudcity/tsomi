@@ -11,19 +11,15 @@ const mediator = require('../Mediator/')
 const { WikiDiv } = require('../Wikidiv/')
 const { Navbar } = require('../Navbar/')
 const { History } = require('../History/')
-//const { subjects } = require('../../constants')
 const { About } = require('../About/')
 
 const store = require('../../store')
-//const { searchForPeople } = require('../../tsomi-rdf')
 const { getURLParameter } = require('../../util')
 
 require('./main.css')
 
 type AppProps = {
   focusedSubject: SubjectId,
-  influencers: number,
-  influenced: number,
   people: { [SubjectId]: PersonAbstract | PersonDetail },
   showAboutPage: bool,
   subjectId: string,
@@ -34,8 +30,6 @@ type AppProps = {
   goHome: void => void,
   setWikiUri: Uri => void,
   toggleAboutPage: void => void,
-  updateInfluences: number => void,
-  updateInfluencers: number => void,
 }
 type AppState = { }
 
@@ -98,17 +92,6 @@ class App_ extends React.Component<AppProps, AppState> {
     })
   }
 
-  //componentDidMount() {
-    //[>
-    //if (!this.state.showAboutPage)
-      //render(this.state.history)
-      //*/
-    //const chartBase = document.getElementById('chartdiv')
-    //if (chartBase != null) {
-      //InfluenceChart(chartBase, this.props.subjectId, this.props.people)
-    //}
-  //}
-
   wikiFrameLoad() {
     // d3 intercepts popstate events.
     // when the wikiframe reloads,
@@ -146,21 +129,16 @@ class App_ extends React.Component<AppProps, AppState> {
   }
 
   render() {
-    const { influencers, influenced } = this.props
     const navbar = React.createElement(Navbar, {
       key: 'navbar',
       goHome: () => this.props.goHome(),
-      influencers,
-      influenced,
       toggleAbout: () => this.props.toggleAboutPage(),
-      updateInfluences: val => this.props.updateInfluences(val),
-      updateInfluencers: val => this.props.updateInfluencers(val),
       submitSearch: name => this.submitSearch(name),
     })
 
     const about = React.createElement(About, {
       key: 'about',
-      goBack: () => this.props.toggleAboutPage(),
+      goBack: () => this.props.toggleAboutPage()
     })
 
     const influenceChart = React.createElement(InfluenceChart, {
@@ -200,8 +178,6 @@ class App_ extends React.Component<AppProps, AppState> {
 export const App = connect(
   state => ({
     focusedSubject: store.focusedSubject(state),
-    influencers: store.influencers(state),
-    influenced: store.influenced(state),
     showAboutPage: store.showAboutPage(state),
     wikiUri: store.wikiUri(state),
     people: store.people(state),
@@ -211,8 +187,6 @@ export const App = connect(
     goHome: () => dispatch(store.setAboutPage(false)),
     setWikiUri: uri => dispatch(store.setWikiUri(uri)),
     toggleAboutPage: () => dispatch(store.toggleAboutPage()),
-    updateInfluencers: cnt => dispatch(store.updateInfluencerCount(cnt)),
-    updateInfluences: cnt => dispatch(store.updateInfluencedCount(cnt)),
   }),
 )(App_)
 

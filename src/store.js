@@ -5,8 +5,6 @@ import type { PersonAbstract, PersonDetail, SubjectId, Uri } from './types'
 export type PeopleCache = { [SubjectId]: PersonAbstract | PersonDetail }
 
 export type Store = {
-  influencers: number,
-  influenced: number,
   showAboutPage: bool,
   focusedSubject: string,
   wikiDivHidden: bool,
@@ -15,10 +13,7 @@ export type Store = {
 }
 
 export const initialState = (): Store => ({
-  influencers: 10,
-  influenced: 20,
   showAboutPage: false,
-  // focusedSubject: 'Octavia_E._Butler',
   focusedSubject: 'Joyce_Carol_Oates',
   wikiDivHidden: false,
   people: {},
@@ -40,14 +35,8 @@ export const setWikiUri = (uri: Uri): Action =>
   ({ type: 'SET_WIKI_URI', uri })
 export const toggleAboutPage = (): Action =>
   ({ type: 'TOGGLE_ABOUT_PAGE' })
-export const updateInfluencerCount = (i: number): Action =>
-  ({ type: 'UPDATE_INFLUENCER_COUNT', cnt: i })
-export const updateInfluencedCount = (i: number): Action =>
-  ({ type: 'UPDATE_INFLUENCED_COUNT', cnt: i })
 
 export const focusedSubject = (store: Store): SubjectId => store.focusedSubject
-export const influencers = (store: Store): number => store.influencers
-export const influenced = (store: Store): number => store.influenced
 export const people = (store: Store) => store.people
 export const lookupPerson = (s: SubjectId) =>
   (store: Store): PersonAbstract | PersonDetail | void => store.people[s]
@@ -85,18 +74,6 @@ export const runState = (state?: Store = initialState(), action: any): Store => 
       return {
         ...state,
         showAboutPage: !state.showAboutPage,
-      }
-
-    case 'UPDATE_INFLUENCER_COUNT':
-      return {
-        ...state,
-        influencers: action.cnt,
-      }
-
-    case 'UPDATE_INFLUENCED_COUNT':
-      return {
-        ...state,
-        influenced: action.cnt,
       }
 
     default:
