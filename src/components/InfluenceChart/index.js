@@ -327,6 +327,9 @@ const renderLinks = (container: Selection, graph: TGraph): Selection => {
 const calculateLifelinePath = (dimensions: Dimensions, timeline: Timeline, node: PersonNode): string => {
   const TIMELINE_UPSET = 50
 
+  if (!node.person.birthDate) {
+    return ''
+  }
   const death = node.person.deathDate ? node.person.deathDate : moment()
 
   const birthPx = { x: timeline.scale(node.person.birthDate), y: TIMELINE_Y(dimensions.height) }
