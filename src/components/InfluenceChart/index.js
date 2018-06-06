@@ -247,12 +247,17 @@ d3.selectAll('p').attr('href', 'abcd')
 
 const renderPeople = (sel: Selection, selectNode: PersonNode => void) => {
   const circle = sel.append('g')
-    .on('click', (n) => selectNode(n))
+    .on('click', n => selectNode(n))
+
   const canvas = circle.classed('translate', true)
     .attr('id', node => node.person.id)
     .append('g')
     .classed('scale', true)
     .attr('clip-path', 'url(#image-clip)')
+
+  canvas.append('circle')
+    .classed('backdrop', true)
+    .attr('r', IMAGE_SIZE / 2);
 
   canvas.append('image')
     .attr('href', node => (node.person.thumbnail ? node.person.thumbnail : ''))
@@ -276,7 +281,7 @@ const renderPeople = (sel: Selection, selectNode: PersonNode => void) => {
     .attr('text-anchor', 'middle')
     .attr('y', BANNER_Y)
     .attr('dy', '0.3em')
-    .text(node => node.person.id)
+    .text(node => node.person.name)
 
   return circle
 }
