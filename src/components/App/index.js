@@ -7,10 +7,8 @@ import dbpedia from '../../clients/DBpedia'
 const React = require('react')
 const { connect } = require('react-redux')
 
-// const mediator = require('../Mediator/')
 const { WikiDiv } = require('../Wikidiv/')
 const { Navbar } = require('../Navbar/')
-// const { History } = require('../History/')
 const { About } = require('../About/')
 
 const store = require('../../store')
@@ -55,13 +53,6 @@ const changeSubject = (url: string, subject: string) => {
 }
 
 class App_ extends React.Component<AppProps, AppState> {
-  constructor() {
-    super()
-
-    // window.mediator = mediator
-    // mediator.addEntry('react', 'setWikiPage', this.setWikiPage.bind(this))
-  }
-
   getAndCachePerson(n: SubjectId): Promise<PersonDetail> { 
     console.log('[getAndCachePerson]', n)
     return dbpedia.getPerson(n).then((person: ?PersonDetail) => {

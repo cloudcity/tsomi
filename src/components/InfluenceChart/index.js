@@ -257,7 +257,7 @@ const renderPeople = (sel: Selection, selectNode: PersonNode => void) => {
 
   canvas.append('circle')
     .classed('backdrop', true)
-    .attr('r', IMAGE_SIZE / 2);
+    .attr('r', IMAGE_SIZE / 2)
 
   canvas.append('image')
     .attr('href', node => (node.person.thumbnail ? node.person.thumbnail : ''))
