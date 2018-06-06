@@ -66,6 +66,7 @@ const mapObjKeys = (f: Function, o: Object): Object => {
   return newObj
 }
 
+/* TODO: why is Flow allowing points with undefined x or y values through without comment? I'm having trouble reproducing this, but it's a big issue. */
 const populate_path = (path: string, points: Array<Point>) => {
   points.forEach((point: Point, index: number) => {
     if (point.x === undefined || point.y === undefined) {

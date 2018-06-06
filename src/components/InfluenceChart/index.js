@@ -63,6 +63,7 @@ type Selection = {
   enter: () => Selection,
   exit: () => Selection,
   filter: Function => Selection,
+  on: (string, (any, number) => void) => Selection,
   remove: () => Selection,
   select: string => Selection,
   selectAll: string => Selection,
@@ -83,6 +84,7 @@ type ForceSimulation = {|
   nodes: Array<InvisibleNode | PersonNode> => ForceSimulation,
   restart: () => void,
   on: (string, () => void) => ForceSimulation,
+  restart: () => void,
 |}
 
 type LinkForces = {
@@ -224,8 +226,9 @@ const createTimeline = (width: number, startDate: moment, endDate: moment): Time
 d3.selectAll('p').attr('href', 'abcd')
 
 
-const renderPeople = (sel: Selection) => {
+const renderPeople = (sel: Selection, selectNode: PersonNode => void) => {
   const circle = sel.append('g')
+    .on('click', (n) => selectNode(n))
   const canvas = circle.classed('translate', true)
     .attr('id', node => node.person.id)
     .append('g')
@@ -415,22 +418,25 @@ class InfluenceCanvas {
   linksElem: Selection
   lifelinesElem: Selection
 
-
   timelineAxis: Selection
   fdl: ForceSimulation
   fdlLinks: LinkForces
+
+  selectNode: (PersonAbstract | PersonDetail) => void
 
   constructor(
     topElem: Selection,
     dimensions: Dimensions,
     focus: PersonDetail,
     people: PeopleCache,
+    selectNode: (PersonAbstract | PersonDetail) => void
   ) {
     this.topElem = topElem
     this.dimensions = dimensions
     this.focus = focus
     this.people = people
     this.graph = new TGraph(focus)
+    this.selectNode = selectNode
 
     // create clip path for image
     this.definitions = this.topElem.append('defs')
@@ -548,7 +554,7 @@ class InfluenceCanvas {
     const nodeSel = this.nodesElem
       .selectAll('.translate')
       .data(this.graph.getVisibleNodes(), n => (n ? n.getId() : null))
-    renderPeople(nodeSel.enter())
+    renderPeople(nodeSel.enter(), (n) => this.selectNode(n.person))
     nodeSel.exit().remove()
 
     this.nodesElem
@@ -564,6 +570,9 @@ class InfluenceCanvas {
       .data(this.graph.getVisibleNodes(), n => (n ? n.getId() : null))
     renderLifelines(lifespanSel.enter(), this.dimensions, this.timeline)
     lifespanSel.exit().remove()
+
+    this.fdl.alpha(2)
+    this.fdl.restart()
   }
 }
 
@@ -572,6 +581,7 @@ type InfluenceChartProps = {
   label: string,
   focusedId: SubjectId,
   people: PeopleCache,
+  selectPerson: (PersonAbstract | PersonDetail) => void,
 }
 
 type InfluenceChartState = {
@@ -585,6 +595,7 @@ class InfluenceChart_ extends React.Component<InfluenceChartProps, InfluenceChar
     newProps: InfluenceChartProps,
     prevState: InfluenceChartState,
   ): InfluenceChartState {
+    console.log('[getDerivedStateFromProps]', prevState, newProps)
     const { focusedId } = newProps
     const focus = newProps.people[focusedId]
 
@@ -597,6 +608,7 @@ class InfluenceChart_ extends React.Component<InfluenceChartProps, InfluenceChar
             prevState.domElem.getBoundingClientRect(),
             focus,
             newProps.people,
+            newProps.selectPerson,
           )
         canvas.setFocused(focus, newProps.people)
         return { ...prevState, canvas, focusedId }
@@ -627,6 +639,7 @@ class InfluenceChart_ extends React.Component<InfluenceChartProps, InfluenceChar
         this.state.domElem.getBoundingClientRect(),
         focus,
         this.props.people,
+        this.props.selectPerson,
       )
     }
 

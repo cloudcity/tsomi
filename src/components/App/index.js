@@ -27,6 +27,7 @@ type AppProps = {
   wikiUri: string,
 
   cachePerson: (SubjectId, PersonAbstract | PersonDetail) => void,
+  focusOnPerson: SubjectId => void,
   goHome: void => void,
   setWikiUri: Uri => void,
   toggleAboutPage: void => void,
@@ -61,34 +62,48 @@ class App_ extends React.Component<AppProps, AppState> {
     mediator.addEntry('react', 'setWikiPage', this.setWikiPage.bind(this))
   }
 
-  componentDidMount() {
-    const getAndCachePerson = (n: string) => { 
-      return dbpedia.getPerson(n).then((person: ?PersonAbstract | ?PersonDetail) => {
-        return new Promise((res, rej) => {
-          if(person === null || person === undefined) {
-            rej()
-          } else {
-            this.props.cachePerson(n, person)
-            res(person)
-          }
-        })
+  getAndCachePerson(n: SubjectId): Promise<PersonDetail> { 
+    console.log('[getAndCachePerson]', n)
+    return dbpedia.getPerson(n).then((person: ?PersonDetail) => {
+      return new Promise((res, rej) => {
+        if(person === null || person === undefined) {
+          rej()
+        } else {
+          this.props.cachePerson(n, person)
+          res(person)
+        }
       })
-    }
+    })
+  }
 
-    getAndCachePerson(this.props.focusedSubject).then((person: PersonAbstract | PersonDetail) => {
+  componentDidMount() {
+    this.getAndCachePerson(this.props.focusedSubject).then((person: PersonDetail) => {
       if(person.influencedBy && person.influenced) {
         console.log('[influenced]', person.influenced)
         return Promise.all([
-          person.influencedBy.map(getAndCachePerson),
-          person.influenced.map(getAndCachePerson)
+          person.influencedBy.map(i => this.getAndCachePerson(i)),
+          person.influenced.map(i => this.getAndCachePerson(i)),
         ])
       }
     },
     (err) => {
       console.log('whoops!', err)
     })
+  }
+
+  selectPerson(n: PersonAbstract | PersonDetail): void {
+    this.getAndCachePerson(n.id).then((person: PersonDetail) => {
+      console.log('[retrieved person]', person)
+      return Promise.all([
+        person.influencedBy.map(i => this.getAndCachePerson(i)),
+        person.influenced.map(i => this.getAndCachePerson(i)),
+      ])
+    },
+    (err) => {
+      console.log('whoops!', err)
+    })
     .then(() => {
-      console.log('[people]', this.props.people)
+      this.props.focusOnPerson(n.id)
     })
   }
 
@@ -130,6 +145,7 @@ class App_ extends React.Component<AppProps, AppState> {
 
     const influenceChart = React.createElement(InfluenceChart, {
       label: 'influencechart',
+      selectPerson: (n) => this.selectPerson(n)
     })
     const chartDiv = React.createElement('div', {
       key: 'chartdiv',
@@ -170,6 +186,7 @@ export const App = connect(
   }),
   dispatch => ({
     cachePerson: (subjectId, person) => dispatch(store.cachePerson(subjectId, person)),
+    focusOnPerson: subjectId => dispatch(store.focusOnPerson(subjectId)),
     goHome: () => dispatch(store.setAboutPage(false)),
     setWikiUri: uri => dispatch(store.setWikiUri(uri)),
     toggleAboutPage: () => dispatch(store.toggleAboutPage()),
