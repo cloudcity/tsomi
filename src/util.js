@@ -68,6 +68,9 @@ const mapObjKeys = (f: Function, o: Object): Object => {
 
 const populate_path = (path: string, points: Array<Point>) => {
   points.forEach((point: Point, index: number) => {
+    if (point.x === undefined || point.y === undefined) {
+      debugger
+    }
     path = path
       .replace('X' + index, point.x.toString())
       .replace('Y' + index, point.y.toString())
