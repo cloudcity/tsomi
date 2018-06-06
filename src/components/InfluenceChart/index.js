@@ -161,7 +161,26 @@ class TGraph {
     return node
   }
 
-  removeNode(person: SubjectId | PersonAbstract | PersonDetail | PersonNode): void {
+  removePerson(person: SubjectId | PersonAbstract | PersonDetail): void {
+    /* remove the person, all links going to or leaving that person, and the
+     * middle nodes for thos e links */
+    const personId = typeof person === 'string' ? person : person.id
+
+    delete this.nodes[personId]
+
+    const removeLinks = fp.filter(
+      (l: TLink): bool => l.source.getId() === personId || l.target.getId() === personId,
+      this.links,
+    )
+
+    this.links = fp.filter(
+      (l: TLink): bool => l.source.getId() !== personId && l.target.getId() !== personId,
+      this.links,
+    )
+
+    removeLinks.forEach((l: TLink): void => {
+      delete this.nodes[l.middle.getId()]
+    })
   }
 
   createLink(source: PersonAbstract | PersonDetail, target: PersonAbstract | PersonDetail): TLink {
@@ -400,6 +419,12 @@ const updateInfluenceGraph = (graph: TGraph, focus: PersonDetail, people: People
     } else {
       graph.createLink(focus, p)
     }
+  })
+
+  console.log('[updateInfluenceGraph incoming]', Array.from(incomingPeople))
+  console.log('[updateInfluenceGraph outgoing]', Array.from(outgoingPeople))
+  outgoingPeople.forEach((p) => {
+    graph.removePerson(p)
   })
 }
 
