@@ -7,10 +7,10 @@ import dbpedia from '../../clients/DBpedia'
 const React = require('react')
 const { connect } = require('react-redux')
 
-const mediator = require('../Mediator/')
+// const mediator = require('../Mediator/')
 const { WikiDiv } = require('../Wikidiv/')
 const { Navbar } = require('../Navbar/')
-const { History } = require('../History/')
+// const { History } = require('../History/')
 const { About } = require('../About/')
 
 const store = require('../../store')
@@ -58,8 +58,8 @@ class App_ extends React.Component<AppProps, AppState> {
   constructor() {
     super()
 
-    window.mediator = mediator
-    mediator.addEntry('react', 'setWikiPage', this.setWikiPage.bind(this))
+    // window.mediator = mediator
+    // mediator.addEntry('react', 'setWikiPage', this.setWikiPage.bind(this))
   }
 
   getAndCachePerson(n: SubjectId): Promise<PersonDetail> { 
@@ -91,9 +91,13 @@ class App_ extends React.Component<AppProps, AppState> {
     })
   }
 
-  selectPerson(n: PersonAbstract | PersonDetail): void {
+  focusPerson(n: PersonAbstract | PersonDetail): void {
     this.getAndCachePerson(n.id).then((person: PersonDetail) => {
       console.log('[retrieved person]', person)
+      window.history.pushState('', n.id, location.origin + location.host + location.pathname + `?subject=${n.id}`)
+      if (person.wikipediaUri) {
+        this.props.setWikiUri(person.wikipediaUri)
+      }
       return Promise.all([
         person.influencedBy.map(i => this.getAndCachePerson(i)),
         person.influenced.map(i => this.getAndCachePerson(i)),
@@ -107,6 +111,7 @@ class App_ extends React.Component<AppProps, AppState> {
     })
   }
 
+  /*
   setWikiPage(node: any) {
     const url = getUrlFromNode(node)
     console.log('[setWikiPage url]', url)
@@ -117,6 +122,7 @@ class App_ extends React.Component<AppProps, AppState> {
     ))
     this.props.setWikiUri(url)
   }
+  */
 
   //toggleAboutPage() {
     //this.setState({ showAboutPage: !this.state.showAboutPage })
@@ -145,7 +151,7 @@ class App_ extends React.Component<AppProps, AppState> {
 
     const influenceChart = React.createElement(InfluenceChart, {
       label: 'influencechart',
-      selectPerson: (n) => this.selectPerson(n)
+      selectPerson: (n) => this.focusPerson(n),
     })
     const chartDiv = React.createElement('div', {
       key: 'chartdiv',

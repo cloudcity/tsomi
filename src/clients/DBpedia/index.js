@@ -161,6 +161,10 @@ const getPerson = (s: SubjectId): Promise<?PersonDetail> => {
       const influencedBy__ = findByRelationship('http://dbpedia.org/ontology/influencedBy', s)(Object.entries(r))
       const influencedBy = new Set(influencedBy_.concat(influencedBy__))
 
+      const wikipediaUri = person.isPrimaryTopicOf
+        ? person.isPrimaryTopicOf[0].value
+        : null
+
       const deathDate = person.deathDate
         ? moment(person.deathDate[0].value)
         : null
@@ -173,6 +177,7 @@ const getPerson = (s: SubjectId): Promise<?PersonDetail> => {
         type:'PersonDetail',
         id: s,
         uri: `http://dbpedia.org/resource/${ s }`,
+        wikipediaUri: wikipediaUri,
         name: person.name[0].value,
         abstract: person.abstract.filter(i => i.lang === 'en')[0].value,
         birthPlace: person.birthPlace[0].value,

@@ -27,6 +27,7 @@ export type PersonDetail = {|
   id: SubjectId,
   thumbnail: ?string,
   uri: Uri,
+  wikipediaUri: ?Uri,
   name: string,
   abstract: ?string,
   birthPlace: ?string,
