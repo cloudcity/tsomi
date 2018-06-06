@@ -56,15 +56,40 @@ describe('searching dbpedia', () => {
 describe('precise dbpedia gets', () => {
   it('retrieves Joyce Carol Oates with all influencers', (done) => {
     getPerson('Joyce_Carol_Oates'.trim()).then(person => {
-      console.log(person)
 
       expect(person.uri).toEqual('http://dbpedia.org/resource/Joyce_Carol_Oates')
       expect(person.name).toEqual('Joyce Carol Oates')
       expect(person.birthPlace).toEqual('http://dbpedia.org/resource/Lockport_(city),_New_York')
       expect(person.birthDate.isSame(moment('1938-06-16'))).toBe(true)
       expect(person.deathDate).toBeFalsy()
-      console.log(person.influencedBy)
-      console.log(person.influenced)
+      expect(person.influencedBy.length).toEqual(18)
+      expect(person.influenced.length).toEqual(6)
+      done()
+    }).catch(err => {
+      console.log('exception:', err)
+      expect(false).toEqual(true)
+      done()
+    })
+  })
+
+  it('retrieves Ernest Hemingway with all influencers', (done) => {
+    getPerson('Ernest_Hemingway'.trim()).then(person => {
+
+      expect(person.uri).toEqual('http://dbpedia.org/resource/Ernest_Hemingway')
+      expect(person.influencedBy.length).toEqual(62)
+      expect(person.influenced.length).toEqual(8)
+      done()
+    }).catch(err => {
+      console.log('exception:', err)
+      expect(false).toEqual(true)
+      done()
+    })
+  })
+
+  it('retrieves a person with only a year in their birth date', (done) => {
+    getPerson('Mikhail_Lermontov'.trim()).then(person => {
+      expect(person.uri).toEqual('http://dbpedia.org/resource/Mikhail_Lermontov')
+      expect(person.birthDate.isSame(moment('1814-01-01'))).toBe(true)
       done()
     }).catch(err => {
       console.log('exception:', err)

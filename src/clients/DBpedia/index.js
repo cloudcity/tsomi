@@ -1,6 +1,7 @@
 // @flow
 
 import moment from 'moment'
+import { parseDate } from '../../util'
 import fp from 'lodash/fp'
 
 import { type PersonAbstract, type PersonDetail, type SubjectId, mkSubjectFromDBpediaUri } from '../../types'
@@ -17,6 +18,17 @@ class ParseError {
     this.message = message
     this.args = args
   }
+}
+
+
+// Handle a variety of different date format issues. Dates, especially in the
+// distant past, are somewhat uncertain and DBpedia returns dates in a few
+// different formats.
+const parseDBpediaDate = (str: string): ?moment => {
+  if (str.endsWith('-0-0')) {
+    return parseDate(`${str.slice(0, -4)}-01-01`)
+  }
+  return parseDate(str)
 }
 
 
@@ -91,8 +103,8 @@ const personAbstractFromJS = (js: PersonJSON): PersonAbstract => {
     name: js.name.value,
     abstract: js.abstract.value,
     birthPlace: js.birthPlace ? js.birthPlace.value : undefined,
-    birthDate: js.birthDate ? moment(js.birthDate.value) : undefined,
-    deathDate: js.deathDate ? moment(js.deathDate.value) : undefined,
+    birthDate: js.birthDate ? parseDBpediaDate(js.birthDate.value) : undefined,
+    deathDate: js.deathDate ? parseDBpediaDate(js.deathDate.value) : undefined,
     influencedByCount: js.influencedByCount ? parseInt(js.influencedByCount.value, 10) : 0,
     influencedCount: js.influencedCount ? parseInt(js.influencedCount.value, 10) : 0,
   }
@@ -165,29 +177,25 @@ const getPerson = (s: SubjectId): Promise<?PersonDetail> => {
         ? person.isPrimaryTopicOf[0].value
         : null
 
-      const deathDate = person.deathDate
-        ? moment(person.deathDate[0].value)
-        : null
-
       const thumbnail = person.thumbnail
         ? person.thumbnail[0].value
         : null
 
       return {
-        type:'PersonDetail',
+        type: 'PersonDetail',
         id: s,
-        uri: `http://dbpedia.org/resource/${ s }`,
-        wikipediaUri: wikipediaUri,
+        uri: `http://dbpedia.org/resource/${s}`,
+        wikipediaUri,
         name: person.name[0].value,
         abstract: person.abstract.filter(i => i.lang === 'en')[0].value,
         birthPlace: person.birthPlace[0].value,
-        birthDate: moment(person.birthDate[0].value),
-        deathDate, 
+        birthDate: person.birthDate ? parseDBpediaDate(person.birthDate[0].value) : null,
+        deathDate: person.deathDate ? parseDBpediaDate(person.deathDate[0].value) : null,
         influencedBy: Array.from(influencedBy),
         influenced: Array.from(influenced),
         thumbnail,
       }
-		})
+    })
 }
 
 module.exports = {

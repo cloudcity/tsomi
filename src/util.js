@@ -1,8 +1,6 @@
 // @flow
 
-const d3 = require('d3')
-const $ = require('jquery')
-//const dateFormat = d3.time.format('%Y-%m-%d')
+import moment from 'moment'
 
 type Point = {
   x: number,
@@ -14,16 +12,18 @@ type Viewport = {
   width: number
 }
 
+/*
 const getViewportDimensions = (): Viewport => ({
   // the navbar is 60px tall, so we subtract 60 from the height we report here.
   height: $('#chart').height(),
   width:  $('#chart').width()
 })
+*/
 
-/*
-const parseDate = (dateString: string) =>
-  dateFormat.parse(dateString.substr(0, 10))
-  */
+const parseDate = (dateString: string, fmt: ?string): ?moment => {
+  const res = fmt ? moment(dateString, fmt) : moment(dateString)
+  return res.isValid() ? res : null
+}
 
 const convertSpaces = (element: string): string =>
   element.replace(/(%20| )/g, '_')
@@ -69,7 +69,7 @@ const mapObjKeys = (f: Function, o: Object): Object => {
 /* TODO: why is Flow allowing points with undefined x or y values through without comment? I'm having trouble reproducing this, but it's a big issue. */
 const populate_path = (path: string, points: Array<Point>) => {
   points.forEach((point: Point, index: number) => {
-    if (point.x === undefined || point.y === undefined) {
+    if (isNaN(point.x) || isNaN(point.y)) {
       debugger
     }
     path = path
@@ -87,12 +87,12 @@ module.exports = {
   convertSpaces,
   getURLElement,
   getURLParameter,
-  getViewportDimensions,
+  //getViewportDimensions,
   isAboutPage,
   largest,
   last,
   mapObjKeys,
-  //parseDate,
+  parseDate,
   populate_path,
   smallest,
   radial,
