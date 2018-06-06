@@ -421,8 +421,6 @@ const updateInfluenceGraph = (graph: TGraph, focus: PersonDetail, people: People
     }
   })
 
-  console.log('[updateInfluenceGraph incoming]', Array.from(incomingPeople))
-  console.log('[updateInfluenceGraph outgoing]', Array.from(outgoingPeople))
   outgoingPeople.forEach((p) => {
     graph.removePerson(p)
   })
@@ -620,7 +618,6 @@ class InfluenceChart_ extends React.Component<InfluenceChartProps, InfluenceChar
     newProps: InfluenceChartProps,
     prevState: InfluenceChartState,
   ): InfluenceChartState {
-    console.log('[getDerivedStateFromProps]', prevState, newProps)
     const { focusedId } = newProps
     const focus = newProps.people[focusedId]
 

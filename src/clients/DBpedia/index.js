@@ -1,6 +1,7 @@
 // @flow
 
 import moment from 'moment'
+import fp from 'lodash/fp'
 
 import { type PersonAbstract, type PersonDetail, type SubjectId, mkSubjectFromDBpediaUri } from '../../types'
 require('isomorphic-fetch')
@@ -134,19 +135,31 @@ WHERE { \
 const mkDataUrl = (s: SubjectId) => 
   `http://dbpedia.org/data/${ s }.json`
 
+const findByRelationship = (relationship: string, target: SubjectId): (any => [SubjectId]) =>
+  fp.compose(
+    fp.map(([k]) => mkSubjectFromDBpediaUri(k)),
+    fp.filter(([, v]) => v[relationship] !== undefined &&
+      mkSubjectFromDBpediaUri(v[relationship][0].value) === target),
+  )
+
 const getPerson = (s: SubjectId): Promise<?PersonDetail> => {
   const dataUrl = mkDataUrl(s)
 
-	return fetch(dataUrl).then(r => r.json())
-		.then(r => {
-      const person = mapObjKeys(i => last(i.split('/')), r[`http://dbpedia.org/resource/${ s }`])
-      const influenced = person.influenced
+  return fetch(dataUrl).then(r => r.json())
+    .then((r) => {
+      const person = mapObjKeys(i => last(i.split('/')), r[`http://dbpedia.org/resource/${s}`])
+      /* eslint no-underscore-dangle: off */
+      const influenced_ = person.influenced
         ? person.influenced.map(i => mkSubjectFromDBpediaUri(i.value))
         : []
+      const influenced__ = findByRelationship('http://dbpedia.org/ontology/influenced', s)(Object.entries(r))
+      const influenced = new Set(influenced_.concat(influenced__))
 
-      const influencedBy = person.influencedBy
+      const influencedBy_ = person.influencedBy
         ? person.influencedBy.map(i => mkSubjectFromDBpediaUri(i.value))
         : []
+      const influencedBy__ = findByRelationship('http://dbpedia.org/ontology/influencedBy', s)(Object.entries(r))
+      const influencedBy = new Set(influencedBy_.concat(influencedBy__))
 
       const deathDate = person.deathDate
         ? moment(person.deathDate[0].value)
@@ -155,7 +168,7 @@ const getPerson = (s: SubjectId): Promise<?PersonDetail> => {
       const thumbnail = person.thumbnail
         ? person.thumbnail[0].value
         : null
-      
+
       return {
         type:'PersonDetail',
         id: s,
@@ -165,8 +178,8 @@ const getPerson = (s: SubjectId): Promise<?PersonDetail> => {
         birthPlace: person.birthPlace[0].value,
         birthDate: moment(person.birthDate[0].value),
         deathDate, 
-        influencedBy,
-        influenced,
+        influencedBy: Array.from(influencedBy),
+        influenced: Array.from(influenced),
         thumbnail,
       }
 		})
