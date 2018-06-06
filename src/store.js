@@ -1,6 +1,7 @@
 // @flow
 
 import type { PersonAbstract, PersonDetail, SubjectId, Uri } from './types'
+import queryString from 'query-string'
 
 export type PeopleCache = { [SubjectId]: PersonAbstract | PersonDetail }
 
@@ -12,13 +13,16 @@ export type Store = {
   currentWikiPageUri: Uri,
 }
 
-export const initialState = (): Store => ({
-  showAboutPage: false,
-  focusedSubject: 'Joyce_Carol_Oates',
-  wikiDivHidden: false,
-  people: {},
-  currentWikiPageUri: 'http://en.wikipedia.org/wiki/Joyce_Carol_Oates',
-})
+export const initialState = (): Store => {
+  const params = queryString.parse(location.search)
+  return {
+    showAboutPage: false,
+    focusedSubject: params.subject ? params.subject : 'Joyce_Carol_Oates',
+    wikiDivHidden: false,
+    people: {},
+    currentWikiPageUri: '',
+  }
+}
 
 export type Action = {
   type: string,

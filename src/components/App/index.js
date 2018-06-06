@@ -78,35 +78,30 @@ class App_ extends React.Component<AppProps, AppState> {
 
   componentDidMount() {
     this.getAndCachePerson(this.props.focusedSubject).then((person: PersonDetail) => {
-      if(person.influencedBy && person.influenced) {
-        console.log('[influenced]', person.influenced)
-        return Promise.all([
-          person.influencedBy.map(i => this.getAndCachePerson(i)),
-          person.influenced.map(i => this.getAndCachePerson(i)),
-        ])
-      }
-    },
-    (err) => {
-      console.log('whoops!', err)
+      this.focusPerson(person)
     })
   }
 
   focusPerson(n: PersonAbstract | PersonDetail): void {
-    this.getAndCachePerson(n.id).then((person: PersonDetail) => {
-      console.log('[retrieved person]', person)
-      window.history.pushState('', n.id, location.origin + location.host + location.pathname + `?subject=${n.id}`)
-      if (person.wikipediaUri) {
-        this.props.setWikiUri(person.wikipediaUri)
-      }
-      return Promise.all([
-        person.influencedBy.map(i => this.getAndCachePerson(i)),
-        person.influenced.map(i => this.getAndCachePerson(i)),
-      ])
-    },
-    (err) => {
-      console.log('whoops!', err)
-    })
-    .then(() => {
+    this.getAndCachePerson(n.id).then(
+      (person: PersonDetail) => {
+        window.history.pushState(
+          '',
+          n.id,
+          `${location.origin}${location.host}${location.pathname}?subject=${n.id}`,
+        )
+        if (person.wikipediaUri) {
+          this.props.setWikiUri(person.wikipediaUri)
+        }
+        return Promise.all([
+          person.influencedBy.map(i => this.getAndCachePerson(i)),
+          person.influenced.map(i => this.getAndCachePerson(i)),
+        ])
+      },
+      (err) => {
+        console.log('whoops!', err)
+      },
+    ).then(() => {
       this.props.focusOnPerson(n.id)
     })
   }
