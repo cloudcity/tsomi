@@ -224,6 +224,8 @@ class TGraph {
 
 type Dimensions = { width: number, height: number }
 
+const convertToSafeDomId = (str: string): string => str.replace(/(%20| |\.)/g, '_')
+
 
 /* A timeline class represents the time-based axis that appears somewhere
  * towards the bottom of the page.
@@ -252,7 +254,7 @@ const renderPeople = (sel: Selection, selectNode: PersonNode => void, mouseOver:
     .on('mouseout', n => mouseOver(n, false))
 
   const canvas = circle.classed('translate', true)
-    .attr('id', node => node.person.id)
+    .attr('id', node => convertToSafeDomId(node.person.id))
     .append('g')
     .classed('scale', true)
     .attr('clip-path', 'url(#image-clip)')
@@ -356,7 +358,7 @@ const renderLifelines = (container: Selection, dimensions: Dimensions, timeline:
   const path = container.append('path')
 
   path.classed('timeline', true)
-    .attr('id', (node: PersonNode): string => node.getId())
+    .attr('id', (node: PersonNode): string => convertToSafeDomId(node.getId()))
     .attr('style', 'opacity: 0.03;')
     .attr('d', (node: PersonNode): string => calculateLifelinePath(dimensions, timeline, node))
 
@@ -473,7 +475,7 @@ class InfluenceCanvas {
     dimensions: Dimensions,
     focus: PersonDetail,
     people: PeopleCache,
-    selectNode: (PersonAbstract | PersonDetail) => void
+    selectNode: (PersonAbstract | PersonDetail) => void,
   ) {
     this.topElem = topElem
     this.dimensions = dimensions
@@ -586,11 +588,11 @@ class InfluenceCanvas {
 
     updateInfluenceGraph(this.graph, this.focus, people)
 
-    this.lifelinesElem.select(`#${oldFocus.id}`)
+    this.lifelinesElem.select(`#${convertToSafeDomId(oldFocus.id)}`)
       .transition()
       .attr('style', 'opacity: 0.03;')
 
-    this.lifelinesElem.select(`#${this.focus.id}`)
+    this.lifelinesElem.select(`#${convertToSafeDomId(this.focus.id)}`)
       .transition()
       .attr('style', 'opacity: 0.5;')
 
@@ -619,17 +621,17 @@ class InfluenceCanvas {
           return
         }
         if (over) {
-          this.nodesElem.select(`#${n.getId()} .scale`)
+          this.nodesElem.select(`#${convertToSafeDomId(n.getId())} .scale`)
             .transition()
             .attr('transform', 'scale(0.75)')
-          this.lifelinesElem.select(`#${n.getId()}`)
+          this.lifelinesElem.select(`#${convertToSafeDomId(n.getId())}`)
             .transition()
             .attr('style', 'opacity: 0.5;')
         } else {
-          this.nodesElem.select(`#${n.getId()} .scale`)
+          this.nodesElem.select(`#${convertToSafeDomId(n.getId())} .scale`)
             .transition()
             .attr('transform', 'scale(0.5)')
-          this.lifelinesElem.select(`#${n.getId()}`)
+          this.lifelinesElem.select(`#${convertToSafeDomId(n.getId())}`)
             .transition()
             .attr('style', 'opacity: 0.03;')
         }
