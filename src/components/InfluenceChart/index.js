@@ -180,7 +180,10 @@ class TGraph {
     })
   }
 
-  createLink(source: PersonAbstract | PersonDetail, target: PersonAbstract | PersonDetail): TLink {
+  createLink(source: PersonAbstract | PersonDetail, target: PersonAbstract | PersonDetail): ?TLink {
+    if (source === target) {
+      return null
+    }
     const sourceNode = this.addPerson(source)
     const targetNode = this.addPerson(target)
     const middle = {
@@ -426,6 +429,9 @@ const updateInfluenceGraph = (graph: TGraph, focus: PersonDetail, people: People
 
   graph.setFocus(focus)
   incomingPeople.forEach((p) => {
+    if (p === focus) {
+      return
+    }
     graph.addPerson(p)
     if (influencedBy.has(p.id)) {
       graph.createLink(p, focus)
