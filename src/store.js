@@ -17,7 +17,7 @@ export const initialState = (): Store => {
   const params = queryString.parse(location.search)
   return {
     showAboutPage: false,
-    focusedSubject: params.subject ? params.subject : 'Joyce_Carol_Oates',
+    focusedSubject: params.subject ? params.subject : 'Ursula_K._Le_Guin',
     wikiDivHidden: false,
     people: {},
     currentWikiPageUri: '',

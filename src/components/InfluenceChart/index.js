@@ -403,10 +403,10 @@ const calculateTimeRange = (people: Array<PersonAbstract | PersonDetail>): [mome
   if (minDate != null && maxDate != null) {
     return [minDate, maxDate]
   } else if (minDate === null && maxDate != null) {
-    minDate = moment.clone(maxDate).year(maxDate.year() - 100)
+    minDate = moment(maxDate).year(maxDate.year() - 100)
     return [minDate, maxDate]
   } else if (minDate != null && maxDate === null) {
-    maxDate = moment.clone(minDate).year(minDate.year() + 100)
+    maxDate = moment(minDate).year(minDate.year() + 100)
     return [minDate, maxDate]
   }
 
