@@ -37,3 +37,12 @@ export type PersonDetail = {|
   influenced: Array<SubjectId>,
 |}
 
+
+export const wikipediaMobileUri = (uri: Uri): ?Uri => {
+  const idx = uri.search('wikipedia.org')
+  if (idx >= 0) {
+    return uri.slice(0, idx - 1) + '.m.' + uri.slice(idx)
+  }
+  return null
+}
+

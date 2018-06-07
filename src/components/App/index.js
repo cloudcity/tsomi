@@ -1,7 +1,7 @@
 // @flow
 
 import InfluenceChart from '../InfluenceChart'
-import { type Uri, type SubjectId, type PersonAbstract, type PersonDetail } from '../../types'
+import { type Uri, type SubjectId, type PersonAbstract, type PersonDetail, wikipediaMobileUri } from '../../types'
 import dbpedia from '../../clients/DBpedia'
 
 const React = require('react')
@@ -82,7 +82,9 @@ class App_ extends React.Component<AppProps, AppState> {
           `${location.origin}${location.host}${location.pathname}?subject=${n.id}`,
         )
         if (person.wikipediaUri) {
-          this.props.setWikiUri(person.wikipediaUri)
+          const uri = person.wikipediaUri
+          const muri = wikipediaMobileUri(uri)
+          this.props.setWikiUri(muri || uri)
         }
         return Promise.all([
           person.influencedBy.map(i => this.getAndCachePerson(i)),

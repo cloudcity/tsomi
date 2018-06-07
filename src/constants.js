@@ -1,7 +1,7 @@
 const $ = require('jquery')
 const { getViewportDimensions } = require('./util')
 
-const ARROW_WIDTH = 6
+const ARROW_WIDTH = 3
 const BACK_BUTTON = 'static/images/backbutton.png'
 const BANNER_SIZE = 25
 const BANNER_X = 180

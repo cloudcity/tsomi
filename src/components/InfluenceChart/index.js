@@ -192,7 +192,7 @@ class TGraph {
       y: 0,
       vx: 0,
       vy: 0,
-      getId: () => `${source.id} - ${target.id}`
+      getId: () => `${source.id} - ${target.id}`,
     }
     const link = { source: sourceNode, middle, target: targetNode }
 
@@ -298,16 +298,17 @@ const calculateLinkPath = (link: TLink, center: PersonNode): string => {
   const t = link.target
 
   const angle = angleRadians(t, m)
-  const nodeRadius = ((IMAGE_SIZE / 2) * calculateNodeScale(t, center, false)) + ARROW_WIDTH
+  const nodeRadius = ((IMAGE_SIZE / 2) * calculateNodeScale(t, center, false))
 
   const tip = radial(t, nodeRadius, angle)
   const left = radial(tip, 20, angle + HEAD_ANGLE)
   const right = radial(tip, 20, angle - HEAD_ANGLE)
 
   return populate_path(
-    'M X0 Y0 Q X1 Y1 X2 Y2 M X3 Y3 L X4 Y4 L X5 Y5',
-    [s, m, tip, left, tip, right],
+    'M X0 Y0 Q X1 Y1 X2 Y2',
+    [s, m, tip],
   )
+
 }
 
 
@@ -341,6 +342,10 @@ const calculateLifelinePath = (dimensions: Dimensions, timeline: Timeline, node:
   const deathPx = { x: timeline.scale(death), y: TIMELINE_Y(dimensions.height) }
   const dc1 = { x: deathPx.x, y: TIMELINE_Y(dimensions.height) - TIMELINE_UPSET }
   const dc2 = { x: node.x, y: TIMELINE_Y(dimensions.height) - TIMELINE_UPSET }
+
+  if (birthPx.x === undefined || deathPx.x === undefined) {
+    return ''
+  }
 
   return populate_path(
     'M X0 Y0 C X1 Y1 X2 Y2 X3 Y3 L X4 Y4 C X5 Y5 X6 Y6 X7 Y7', [node, bc1, bc2, birthPx, deathPx, dc1, dc2, node])
