@@ -245,9 +245,11 @@ const createTimeline = (width: number, startDate: moment, endDate: moment): Time
 d3.selectAll('p').attr('href', 'abcd')
 
 
-const renderPeople = (sel: Selection, selectNode: PersonNode => void) => {
+const renderPeople = (sel: Selection, selectNode: PersonNode => void, mouseOver: (PersonNode, bool) => void) => {
   const circle = sel.append('g')
     .on('click', n => selectNode(n))
+    .on('mouseover', n => mouseOver(n, true))
+    .on('mouseout', n => mouseOver(n, false))
 
   const canvas = circle.classed('translate', true)
     .attr('id', node => node.person.id)
@@ -349,6 +351,7 @@ const renderLifelines = (container: Selection, dimensions: Dimensions, timeline:
   const path = container.append('path')
 
   path.classed('timeline', true)
+    .attr('id', (node: PersonNode): string => node.getId())
     .attr('style', 'opacity: 0.03;')
     .attr('d', (node: PersonNode): string => calculateLifelinePath(dimensions, timeline, node))
 
@@ -454,6 +457,8 @@ class InfluenceCanvas {
   fdlLinks: LinkForces
 
   selectNode: (PersonAbstract | PersonDetail) => void
+
+  highlight: ?PersonNode
 
   constructor(
     topElem: Selection,
@@ -564,10 +569,21 @@ class InfluenceCanvas {
   }
 
   setFocused(focus: PersonDetail, people: PeopleCache) {
+    const oldFocus = this.focus
+
     this.focus = focus
     this.people = people
 
     updateInfluenceGraph(this.graph, this.focus, people)
+
+    this.lifelinesElem.select(`#${oldFocus.id}`)
+      .transition()
+      .attr('style', 'opacity: 0.03;')
+
+    this.lifelinesElem.select(`#${this.focus.id}`)
+      .transition()
+      .attr('style', 'opacity: 0.5;')
+
     this.refreshCanvas()
   }
 
@@ -585,7 +601,30 @@ class InfluenceCanvas {
     const nodeSel = this.nodesElem
       .selectAll('.translate')
       .data(this.graph.getVisibleNodes(), n => (n ? n.getId() : null))
-    renderPeople(nodeSel.enter(), (n) => this.selectNode(n.person))
+    renderPeople(
+      nodeSel.enter(),
+      n => this.selectNode(n.person),
+      (n, over) => {
+        if (n.getId() === this.focus.id) {
+          return
+        }
+        if (over) {
+          this.nodesElem.select(`#${n.getId()} .scale`)
+            .transition()
+            .attr('transform', 'scale(0.75)')
+          this.lifelinesElem.select(`#${n.getId()}`)
+            .transition()
+            .attr('style', 'opacity: 0.5;')
+        } else {
+          this.nodesElem.select(`#${n.getId()} .scale`)
+            .transition()
+            .attr('transform', 'scale(0.5)')
+          this.lifelinesElem.select(`#${n.getId()}`)
+            .transition()
+            .attr('style', 'opacity: 0.03;')
+        }
+      },
+    )
     nodeSel.exit().remove()
 
     this.nodesElem
