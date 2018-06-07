@@ -67,7 +67,7 @@ const mapObjKeys = (f: Function, o: Object): Object => {
 }
 
 /* TODO: why is Flow allowing points with undefined x or y values through without comment? I'm having trouble reproducing this, but it's a big issue. */
-const populate_path = (path: string, points: Array<Point>) => {
+const populatePath = (path: string, points: Array<Point>) => {
   points.forEach((point: Point, index: number) => {
     if (isNaN(point.x) || isNaN(point.y)) {
       debugger
@@ -87,13 +87,12 @@ module.exports = {
   convertSpaces,
   getURLElement,
   getURLParameter,
-  //getViewportDimensions,
   isAboutPage,
   largest,
   last,
   mapObjKeys,
   parseDate,
-  populate_path,
+  populatePath,
   smallest,
   radial,
   queryParamsToHash,

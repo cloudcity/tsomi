@@ -17,33 +17,30 @@ const fp = require('lodash/fp')
 const {
   angleRadians,
   largest,
-  populate_path,
+  populatePath,
   radial,
   smallest,
 } = require('../../util')
 
 const {
+  ALPHA,
   ARROW_WIDTH,
   BANNER_X,
   BANNER_Y,
   CHARGE_BASE,
   CHARGE_HIDDEN,
   CHARGE_RANDOM,
-  DEFAULT_DURATION,
+  DEFAULT_ANIMATION_DURATION,
   GRAVITY,
   HEAD_ANGLE,
   IMAGE_SIZE,
   LINK_MIN_OFFSET,
   LINK_RANDOM,
   LINK_STRENGTH,
-  MAX_SCREEN_NODES,
   MARGIN,
   NODE_SIZE,
-  STOCK_EASE,
   TIMELINE_Y,
 } = require('../../constants')
-
-const DEFAULT_ANIMATION_DURATION = 2000
 
 
 type LinkSegment = {
@@ -69,13 +66,13 @@ type Selection = {
   selectAll: string => Selection,
   style: (string, string) => Selection,
   text: (string | Function) => Selection,
-  transition: () => Selection,
+  transition: (?number) => Selection,
 }
 
 type D3Scale<D, R> = {|
   (D): D,
   domain: Array<D> => void,
-  range: R => void,
+  range: Array<R> => void,
 |}
 
 type ForceSimulation = {|
@@ -272,7 +269,7 @@ const renderPeople = (sel: Selection, selectNode: PersonNode => void, mouseOver:
   canvas.append('path')
     .attr('class', 'banner')
     .attr('style', 'stroke-width: 25;')
-    .attr('d', populate_path(
+    .attr('d', populatePath(
       'M X0 Y0 L X1 Y1',
       [{ x: -BANNER_X, y: BANNER_Y },
         { x: +BANNER_X, y: BANNER_Y }],
@@ -304,7 +301,7 @@ const calculateLinkPath = (link: TLink, center: PersonNode): string => {
   const left = radial(tip, 20, angle + HEAD_ANGLE)
   const right = radial(tip, 20, angle - HEAD_ANGLE)
 
-  return populate_path(
+  return populatePath(
     'M X0 Y0 Q X1 Y1 X2 Y2',
     [s, m, tip],
   )
@@ -347,7 +344,7 @@ const calculateLifelinePath = (dimensions: Dimensions, timeline: Timeline, node:
     return ''
   }
 
-  return populate_path(
+  return populatePath(
     'M X0 Y0 C X1 Y1 X2 Y2 X3 Y3 L X4 Y4 C X5 Y5 X6 Y6 X7 Y7', [node, bc1, bc2, birthPx, deathPx, dc1, dc2, node])
 }
 
@@ -522,16 +519,18 @@ class InfluenceCanvas {
       )))
       .force('links', this.fdlLinks)
 
+    this.fdl.alpha(ALPHA)
     this.fdl.on('tick', () => this.animate())
   }
 
   animate(): void {
     const { width, height } = this.dimensions
-    // const k = 0.5 * this.fdl.alpha()
+    const k = 0.5 * this.fdl.alpha()
     const k2 = 15 * this.fdl.alpha()
 
-    this.graph.focus.x = width / 2
-    this.graph.focus.y = height / 2
+    const center = { x: width / 2, y: height / 2 }
+    this.graph.focus.x += (center.x - this.graph.focus.x) * k
+    this.graph.focus.y += (center.y - this.graph.focus.y) * k
 
     this.graph.getLinks().forEach((link) => {
       if (link.source === this.graph.focus) {
@@ -563,13 +562,13 @@ class InfluenceCanvas {
     this.dimensions = dimensions
 
     // calculateTimeRange here
-    this.timeline.scale.range(dimensions.width)
+    this.timeline.scale.range([0, dimensions.width - 1])
     this.timelineAxis.transition()
       .duration(DEFAULT_ANIMATION_DURATION)
       .attr('transform', `translate(0, ${TIMELINE_Y(dimensions.height)})`)
       .call(this.timeline.axis)
 
-    this.fdl.alpha(2)
+    this.fdl.alpha(ALPHA)
     this.fdl.restart()
   }
 
@@ -646,7 +645,7 @@ class InfluenceCanvas {
     renderLifelines(lifespanSel.enter(), this.dimensions, this.timeline)
     lifespanSel.exit().remove()
 
-    this.fdl.alpha(2)
+    this.fdl.alpha(ALPHA)
     this.fdl.restart()
   }
 }

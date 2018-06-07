@@ -1,6 +1,7 @@
 const $ = require('jquery')
 const { getViewportDimensions } = require('./util')
 
+const ALPHA = 1
 const ARROW_WIDTH = 3
 const BACK_BUTTON = 'static/images/backbutton.png'
 const BANNER_SIZE = 25
@@ -11,7 +12,7 @@ const CHART_WIDTH = $('#chart').width()
 const CHARGE_BASE = 200
 const CHARGE_HIDDEN = 25
 const CHARGE_RANDOM = 0
-const DEFAULT_DURATION = 1000
+const DEFAULT_ANIMATION_DURATION = 1000
 const FB_BUTTON_SIZE = 34
 const FB_BUTTON_X_OFF = (80 - FB_BUTTON_SIZE) / 2
 const FB_BUTTON_X = () => getViewportDimensions().width - 60
@@ -91,6 +92,7 @@ const WIKI_LOGO = 'static/images/Wikipedia-logo.png'
 const WIKI_ICON_WIDTH = 30
 
 module.exports = {
+  ALPHA,
   ARROW_WIDTH,
   BACK_BUTTON,
   BANNER_X,
@@ -101,7 +103,7 @@ module.exports = {
   CHARGE_BASE,
   CHARGE_HIDDEN,
   CHARGE_RANDOM,
-  DEFAULT_DURATION,
+  DEFAULT_ANIMATION_DURATION,
   FB_BUTTON_SIZE,
   FB_BUTTON_X_OFF,
   FB_BUTTON_X,
