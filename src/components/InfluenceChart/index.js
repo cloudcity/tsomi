@@ -372,6 +372,34 @@ const renderLifelines = (
 }
 
 
+const focusHighlight = (
+  nodesElem: Selection,
+  lifelinesElem: Selection,
+  focus: PersonDetail,
+  n: PersonNode,
+  over: bool,
+) => {
+  if (n.getId() === focus.id) {
+    return
+  }
+  if (over) {
+    nodesElem.select(`#${convertToSafeDOMId(n.getId())} .scale`)
+      .transition()
+      .attr('transform', 'scale(0.75)')
+    lifelinesElem.select(`#${convertToSafeDOMId(n.getId())}`)
+      .transition()
+      .attr('style', 'opacity: 0.5;')
+  } else {
+    nodesElem.select(`#${convertToSafeDOMId(n.getId())} .scale`)
+      .transition()
+      .attr('transform', 'scale(0.5)')
+    lifelinesElem.select(`#${convertToSafeDOMId(n.getId())}`)
+      .transition()
+      .attr('style', 'opacity: 0.03;')
+  }
+}
+
+
 const listOfPeopleInGraph = (
   graph: TGraph,
   people: store.PeopleCache,
@@ -622,26 +650,7 @@ class InfluenceCanvas {
     renderPeople(
       nodeSel.enter(),
       n => this.selectNode(n.person),
-      (n, over) => {
-        if (n.getId() === this.focus.id) {
-          return
-        }
-        if (over) {
-          this.nodesElem.select(`#${convertToSafeDOMId(n.getId())} .scale`)
-            .transition()
-            .attr('transform', 'scale(0.75)')
-          this.lifelinesElem.select(`#${convertToSafeDOMId(n.getId())}`)
-            .transition()
-            .attr('style', 'opacity: 0.5;')
-        } else {
-          this.nodesElem.select(`#${convertToSafeDOMId(n.getId())} .scale`)
-            .transition()
-            .attr('transform', 'scale(0.5)')
-          this.lifelinesElem.select(`#${convertToSafeDOMId(n.getId())}`)
-            .transition()
-            .attr('style', 'opacity: 0.03;')
-        }
-      },
+      (n, over) => focusHighlight(this.nodesElem, this.lifelinesElem, this.focus, n, over),
     )
     nodeSel.exit().remove()
 
