@@ -1,175 +1,159 @@
 // @flow
 
-import { type Uri } from '../../types'
+import InfluenceChart from '../InfluenceChart'
+import { type Uri, type SubjectId, type PersonAbstract, type PersonDetail, wikipediaMobileUri } from '../../types'
+import dbpedia from '../../clients/DBpedia'
 
 const React = require('react')
 const { connect } = require('react-redux')
 
-const mediator = require('../Mediator/')
-const { render } = require('../Renderer/')
 const { WikiDiv } = require('../Wikidiv/')
 const { Navbar } = require('../Navbar/')
-const { History } = require('../History/')
-//const { subjects } = require('../../constants')
 const { About } = require('../About/')
 
 const store = require('../../store')
-const { searchForPeople } = require('../../tsomi-rdf')
-const { getURLParameter } = require('../../util')
 
 require('./main.css')
 
 type AppProps = {
-  influencers: number,
-  influenced: number,
+  focusedSubject: SubjectId,
+  searchResults: Array<PersonAbstract>,
+  showAboutPage: bool,
   showAboutPage: bool,
   subjectId: string,
   wikiDivHidden: bool,
   wikiUri: string,
 
+  cachePerson: (SubjectId, PersonAbstract | PersonDetail) => void,
+  focusOnPerson: SubjectId => void,
   goHome: void => void,
+  saveSearchResults: Array<PersonAbstract> => void,
   setWikiUri: Uri => void,
   toggleAboutPage: void => void,
-  updateInfluences: number => void,
-  updateInfluencers: number => void,
 }
-type AppState = {
-  history: History,
-}
-
-const getUrlFromNode = (node: any): string =>
-  node.getProperty('wikiTopic').replace(/en./, 'en.m.')
-
-/* TODO: swap this out for the foaf:isPrimaryTopicOf field */
-const getUrlFromSubject = () => {
-  const subject = getURLParameter('subject')
-  return subject
-    ? `en.m.wikipedia.org/wiki/${ getURLParameter('subject') }`
-    : 'https://en.m.wikipedia.org/wiki/Joyce_Carol_Oates'
-}
-
-/* TODO: change this into a proper URL encoding function and move it to `utils/http.js` */
-const changeSubject = (url: string, subject: string) => {
-  const sanitizedSubject = `?subject=${ subject.replace(/ /g, '_') }`
-
-  return /subject=/.test(url)
-    ? url.replace(/\?subject=.+/, sanitizedSubject)
-    : url + sanitizedSubject
-}
+type AppState = { }
 
 class App_ extends React.Component<AppProps, AppState> {
-  state: AppState
-
-  constructor() {
-    super()
-
-    this.state = {
-      history: new History(),
-    }
-
-    window.mediator = mediator
-    mediator.addEntry('react', 'setWikiPage', this.setWikiPage.bind(this))
-  }
-
   componentDidMount() {
-    /*
-    if (!this.state.showAboutPage)
-      render(this.state.history)
-      */
-    render()
+    this.getAndCachePerson(this.props.focusedSubject).then((person: PersonDetail) => {
+      this.focusPerson(person)
+    })
   }
 
-  wikiFrameLoad() {
-    // d3 intercepts popstate events.
-    // when the wikiframe reloads,
-    // we need to pass that event on to
-    // the window so that d3 can see it.
-    // otherwise it'll be swallowed by
-    // the wikiframe itself.
-    console.log('[wikiFrameLoad]')
-    const e = new Event('popstate')
-    console.log('[wikiFrameLoad event]', e)
-    window.dispatchEvent(e)
+  getAndCachePerson(n: SubjectId): Promise<PersonDetail> {
+    return dbpedia.getPerson(n).then((person: ?PersonDetail) =>
+      new Promise((res, rej) => {
+        if (person === null || person === undefined) {
+          rej()
+        } else {
+          this.props.cachePerson(n, person)
+          res(person)
+        }
+      }))
   }
 
-  setWikiPage(node: any) {
-    const url = getUrlFromNode(node)
-    console.log('[setWikiPage url]', url)
-
-    window.history.pushState({}, '', changeSubject(
-      window.location.href, 
-      node.properties.name
-    ))
-    this.props.setWikiUri(url)
+  focusPerson(n: PersonAbstract | PersonDetail): void {
+    this.getAndCachePerson(n.id).then((person: PersonDetail) => {
+      window.history.pushState(
+        '',
+        n.id,
+        `${location.origin}${location.host}${location.pathname}?subject=${n.id}`,
+      )
+      if (person.wikipediaUri) {
+        const uri = person.wikipediaUri
+        const muri = wikipediaMobileUri(uri)
+        this.props.setWikiUri(muri || uri)
+      }
+      this.props.saveSearchResults([])
+      return Promise.all([
+        person.influencedBy.map(i => this.getAndCachePerson(i)),
+        person.influenced.map(i => this.getAndCachePerson(i)),
+      ])
+    }).then(() => {
+      this.props.focusOnPerson(n.id)
+    }).catch((err) => {
+      console.log('Getting a person failed with an error: ', err)
+    })
   }
-
-  //toggleAboutPage() {
-    //this.setState({ showAboutPage: !this.state.showAboutPage })
-  //}
-
-  //goHome() {
-    //this.setState({ showAboutPage: false })
-  //}
 
   submitSearch(name: string) {
-    searchForPeople(name).then(people => console.log('[searchForPeople results]', people))
+    dbpedia.searchForPeople(name)
+      .then(people => this.props.saveSearchResults(people))
+      .catch((err) => {
+        console.log('Searching failed with an error: ', err)
+      })
   }
 
   render() {
-    const { influencers, influenced } = this.props
     const navbar = React.createElement(Navbar, {
       key: 'navbar',
+      focusPerson: subjectId => this.focusPerson(subjectId),
       goHome: () => this.props.goHome(),
       toggleAbout: () => this.props.toggleAboutPage(),
       submitSearch: name => this.submitSearch(name),
+      searchResults: this.props.searchResults,
     })
 
     const about = React.createElement(About, {
       key: 'about',
-      goBack: () => this.props.toggleAboutPage()
+      goBack: () => this.props.toggleAboutPage(),
     })
 
-    const innerChartDiv = React.createElement('div', { id: 'chart' })
+    const influenceChart = React.createElement(InfluenceChart, {
+      label: 'influencechart',
+      selectPerson: n => this.focusPerson(n),
+    })
     const chartDiv = React.createElement('div', {
       key: 'chartdiv',
       id: 'chartdiv',
-    }, innerChartDiv)
+    }, influenceChart)
 
     const wikiDiv = React.createElement(WikiDiv, {
       hidden: this.props.wikiDivHidden,
       key: 'wikidiv',
-      onLoad: () => this.wikiFrameLoad(),
       subject: this.props.subjectId,
       url: this.props.wikiUri,
     })
 
     if (this.props.showAboutPage) {
-      return React.createElement(React.Fragment, {}, 
+      return React.createElement(
+        React.Fragment,
+        {},
         navbar,
-        React.createElement('div', { className: 'container-wrapper', }, 
-          about, 
-          chartDiv, 
-          wikiDiv
-        )
-      )
-    } else {
-      return React.createElement(React.Fragment, {}, 
-        navbar, 
-        React.createElement('div', { className: 'container-wrapper' }, chartDiv, wikiDiv)
+        React.createElement(
+          'div',
+          { className: 'container-wrapper' },
+          about,
+          chartDiv,
+          wikiDiv,
+        ),
       )
     }
+    return React.createElement(
+      React.Fragment,
+      {},
+      navbar,
+      React.createElement('div', { className: 'container-wrapper' }, chartDiv, wikiDiv),
+    )
   }
 }
 
-export const App = connect(
+const App = connect(
   state => ({
+    focusedSubject: store.focusedSubject(state),
+    searchResults: store.searchResults(state),
     showAboutPage: store.showAboutPage(state),
     wikiUri: store.wikiUri(state),
   }),
   dispatch => ({
+    cachePerson: (subjectId, person) => dispatch(store.cachePerson(subjectId, person)),
+    focusOnPerson: subjectId => dispatch(store.focusOnPerson(subjectId)),
     goHome: () => dispatch(store.setAboutPage(false)),
+    saveSearchResults: results => dispatch(store.saveSearchResults(results)),
     setWikiUri: uri => dispatch(store.setWikiUri(uri)),
     toggleAboutPage: () => dispatch(store.toggleAboutPage()),
   }),
 )(App_)
+
+export default App
 
