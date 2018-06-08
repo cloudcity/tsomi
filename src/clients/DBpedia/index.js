@@ -1,14 +1,13 @@
 // @flow
 
-import moment from 'moment'
-import { parseDate } from '../../util'
 import fp from 'lodash/fp'
+import moment from 'moment'
 
+import { runSparqlQuery } from '../Sparql'
 import { type PersonAbstract, type PersonDetail, type SubjectId, mkSubjectFromDBpediaUri } from '../../types'
-require('isomorphic-fetch')
+import { last, mapObjKeys, uniqueBy, parseDate } from '../../util'
 
-const { last, mapObjKeys, uniqueBy } = require('../../util')
-const { runSparqlQuery } = require('../../components/Sparql')
+require('isomorphic-fetch')
 
 type PersonJSON = {
   person: { [string]: any },
@@ -21,6 +20,8 @@ type PersonJSON = {
   influencedCount?: { [string]: any },
   influencedBy: { [string]: any },
   influenced: { [string]: any },
+  wikipediaUri: { [string]: any },
+  thumbnail: { [string]: any },
 }
 
 type SearchResultJSON = {
@@ -52,7 +53,7 @@ const parseDBpediaDate = (str: string): ?moment => {
 
 
 /* eslint no-multi-str: off */
-const queryPersonAbstract = 'SELECT ?person ?name ?birthPlace ?birthDate ?deathDate COUNT(DISTINCT ?influencedBy) as ?influencedByCount COUNT(DISTINCT ?influenced) as ?influencedCount ?abstract \
+const queryPersonAbstract = 'SELECT ?person ?thumbnail ?wikipediaUri ?name ?birthPlace ?birthDate ?deathDate COUNT(DISTINCT ?influencedBy) as ?influencedByCount COUNT(DISTINCT ?influenced) as ?influencedCount ?abstract \
 WHERE { \
   ?person a foaf:Person. \
   ?person foaf:name ?name. \
@@ -60,6 +61,8 @@ WHERE { \
   OPTIONAL { ?person dbo:birthPlace ?birthPlace. } \
   OPTIONAL { ?person dbo:birthDate ?birthDate. } \
   OPTIONAL { ?person dbo:deathDate ?deathDate. } \
+  OPTIONAL { ?person foaf:isPrimaryTopicOf ?wikipediaUri. } \
+  OPTIONAL { ?person dbo:thumbnail ?thumbnail. } \
   OPTIONAL { ?person dbpedia-owl:influencedBy ?influencedBy. } \
   OPTIONAL { ?person dbpedia-owl:influenced ?influenced. } \
   filter( regex(str(?name), "%search_query%", "i") ) \
@@ -79,6 +82,14 @@ const personAbstractFromJS = (js: PersonJSON): PersonAbstract => {
 
   if (js.birthPlace && js.birthPlace.type !== 'uri') {
     throw new ParseError('Unexpected birthPlace type:', js.birthPlace.type)
+  }
+
+  if (js.thumbnail && js.thumbnail.type !== 'uri') {
+    throw new ParseError('Unexpected thumbnail uri type:', js.thumbnail.type)
+  }
+
+  if (js.wikipediaUri && js.wikipediaUri.type !== 'uri') {
+    throw new ParseError('Unexpected wikipedia uri type:', js.wikipediaUri.type)
   }
 
   if (js.birthDate &&
@@ -105,7 +116,9 @@ const personAbstractFromJS = (js: PersonJSON): PersonAbstract => {
   return {
     type: 'PersonAbstract',
     id: mkSubjectFromDBpediaUri(js.person.value),
+    thumbnail: js.thumbnail ? js.thumbnail.value : undefined,
     uri: js.person.value,
+    wikipediaUri: js.wikipediaUri ? js.wikipediaUri.value : undefined,
     name: js.name.value,
     abstract: js.abstract.value,
     birthPlace: js.birthPlace ? js.birthPlace.value : undefined,
@@ -136,8 +149,8 @@ WHERE { \
   filter( lang(?abstract) = "en" ). \
 }'
 
-const mkDataUrl = (s: SubjectId) => 
-  `http://dbpedia.org/data/${ s }.json`
+const mkDataUrl = (s: SubjectId) =>
+  `http://dbpedia.org/data/${s}.json`
 
 const findByRelationship = (relationship: string, target: SubjectId): (any => [SubjectId]) =>
   fp.compose(

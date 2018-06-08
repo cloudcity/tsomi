@@ -12,13 +12,13 @@ const { Navbar } = require('../Navbar/')
 const { About } = require('../About/')
 
 const store = require('../../store')
-const { getURLParameter } = require('../../util')
 
 require('./main.css')
 
 type AppProps = {
   focusedSubject: SubjectId,
-  people: { [SubjectId]: PersonAbstract | PersonDetail },
+  searchResults: Array<PersonAbstract>,
+  showAboutPage: bool,
   showAboutPage: bool,
   subjectId: string,
   wikiDivHidden: bool,
@@ -27,98 +27,81 @@ type AppProps = {
   cachePerson: (SubjectId, PersonAbstract | PersonDetail) => void,
   focusOnPerson: SubjectId => void,
   goHome: void => void,
+  saveSearchResults: Array<PersonAbstract> => void,
   setWikiUri: Uri => void,
   toggleAboutPage: void => void,
 }
 type AppState = { }
 
-const getUrlFromNode = (node: any): string =>
-  node.getProperty('wikiTopic').replace(/en./, 'en.m.')
-
-/* TODO: swap this out for the foaf:isPrimaryTopicOf field */
-const getUrlFromSubject = () => {
-  const subject = getURLParameter('subject')
-  return subject
-    ? `en.m.wikipedia.org/wiki/${ getURLParameter('subject') }`
-    : 'https://en.m.wikipedia.org/wiki/Joyce_Carol_Oates'
-}
-
-/* TODO: change this into a proper URL encoding function and move it to `utils/http.js` */
-const changeSubject = (url: string, subject: string) => {
-  const sanitizedSubject = `?subject=${ subject.replace(/ /g, '_') }`
-
-  return /subject=/.test(url)
-    ? url.replace(/\?subject=.+/, sanitizedSubject)
-    : url + sanitizedSubject
-}
-
 class App_ extends React.Component<AppProps, AppState> {
-  getAndCachePerson(n: SubjectId): Promise<PersonDetail> { 
-    console.log('[getAndCachePerson]', n)
-    return dbpedia.getPerson(n).then((person: ?PersonDetail) => {
-      return new Promise((res, rej) => {
-        if(person === null || person === undefined) {
-          rej()
-        } else {
-          this.props.cachePerson(n, person)
-          res(person)
-        }
-      })
-    })
-  }
-
   componentDidMount() {
     this.getAndCachePerson(this.props.focusedSubject).then((person: PersonDetail) => {
       this.focusPerson(person)
     })
   }
 
-  focusPerson(n: PersonAbstract | PersonDetail): void {
-    this.getAndCachePerson(n.id).then(
-      (person: PersonDetail) => {
-        window.history.pushState(
-          '',
-          n.id,
-          `${location.origin}${location.host}${location.pathname}?subject=${n.id}`,
-        )
-        if (person.wikipediaUri) {
-          const uri = person.wikipediaUri
-          const muri = wikipediaMobileUri(uri)
-          this.props.setWikiUri(muri || uri)
+  getAndCachePerson(n: SubjectId): Promise<PersonDetail> {
+    return dbpedia.getPerson(n).then((person: ?PersonDetail) =>
+      new Promise((res, rej) => {
+        if (person === null || person === undefined) {
+          rej()
+        } else {
+          this.props.cachePerson(n, person)
+          res(person)
         }
-        return Promise.all([
-          person.influencedBy.map(i => this.getAndCachePerson(i)),
-          person.influenced.map(i => this.getAndCachePerson(i)),
-        ])
-      },
-      (err) => {
-        console.log('whoops!', err)
-      },
-    ).then(() => {
+      }))
+  }
+
+  focusPerson(n: PersonAbstract | PersonDetail): void {
+    this.getAndCachePerson(n.id).then((person: PersonDetail) => {
+      window.history.pushState(
+        '',
+        n.id,
+        `${location.origin}${location.host}${location.pathname}?subject=${n.id}`,
+      )
+      if (person.wikipediaUri) {
+        const uri = person.wikipediaUri
+        const muri = wikipediaMobileUri(uri)
+        this.props.setWikiUri(muri || uri)
+      }
+      this.props.saveSearchResults([])
+      return Promise.all([
+        person.influencedBy.map(i => this.getAndCachePerson(i)),
+        person.influenced.map(i => this.getAndCachePerson(i)),
+      ])
+    }).then(() => {
       this.props.focusOnPerson(n.id)
+    }).catch((err) => {
+      console.log('Getting a person failed with an error: ', err)
     })
   }
 
   submitSearch(name: string) {
-    dbpedia.searchForPeople(name).then(people => console.log('[searchForPeople results]', people))
+    dbpedia.searchForPeople(name)
+      .then(people => this.props.saveSearchResults(people))
+      .catch((err) => {
+        console.log('Searching failed with an error: ', err)
+      })
   }
 
   render() {
     const navbar = React.createElement(Navbar, {
       key: 'navbar',
+      focusPerson: subjectId => this.focusPerson(subjectId),
       goHome: () => this.props.goHome(),
       toggleAbout: () => this.props.toggleAboutPage(),
       submitSearch: name => this.submitSearch(name),
+      searchResults: this.props.searchResults,
     })
 
     const about = React.createElement(About, {
       key: 'about',
-      goBack: () => this.props.toggleAboutPage()
+      goBack: () => this.props.toggleAboutPage(),
     })
 
     const influenceChart = React.createElement(InfluenceChart, {
       label: 'influencechart',
-      selectPerson: (n) => this.focusPerson(n),
+      selectPerson: n => this.focusPerson(n),
     })
     const chartDiv = React.createElement('div', {
       key: 'chartdiv',
@@ -133,36 +116,44 @@ class App_ extends React.Component<AppProps, AppState> {
     })
 
     if (this.props.showAboutPage) {
-      return React.createElement(React.Fragment, {}, 
+      return React.createElement(
+        React.Fragment,
+        {},
         navbar,
-        React.createElement('div', { className: 'container-wrapper', }, 
-          about, 
-          chartDiv, 
-          wikiDiv
-        )
-      )
-    } else {
-      return React.createElement(React.Fragment, {}, 
-        navbar, 
-        React.createElement('div', { className: 'container-wrapper' }, chartDiv, wikiDiv)
+        React.createElement(
+          'div',
+          { className: 'container-wrapper' },
+          about,
+          chartDiv,
+          wikiDiv,
+        ),
       )
     }
+    return React.createElement(
+      React.Fragment,
+      {},
+      navbar,
+      React.createElement('div', { className: 'container-wrapper' }, chartDiv, wikiDiv),
+    )
   }
 }
 
-export const App = connect(
+const App = connect(
   state => ({
     focusedSubject: store.focusedSubject(state),
+    searchResults: store.searchResults(state),
     showAboutPage: store.showAboutPage(state),
     wikiUri: store.wikiUri(state),
-    people: store.people(state),
   }),
   dispatch => ({
     cachePerson: (subjectId, person) => dispatch(store.cachePerson(subjectId, person)),
     focusOnPerson: subjectId => dispatch(store.focusOnPerson(subjectId)),
     goHome: () => dispatch(store.setAboutPage(false)),
+    saveSearchResults: results => dispatch(store.saveSearchResults(results)),
     setWikiUri: uri => dispatch(store.setWikiUri(uri)),
     toggleAboutPage: () => dispatch(store.toggleAboutPage()),
   }),
 )(App_)
+
+export default App
 

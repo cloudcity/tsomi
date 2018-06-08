@@ -11,6 +11,7 @@ export type Store = {
   wikiDivHidden: bool,
   people: PeopleCache,
   currentWikiPageUri: Uri,
+  searchResults: Array<PersonAbstract>,
 }
 
 export const initialState = (): Store => {
@@ -21,6 +22,7 @@ export const initialState = (): Store => {
     wikiDivHidden: false,
     people: {},
     currentWikiPageUri: '',
+    searchResults: [],
   }
 }
 
@@ -33,6 +35,8 @@ export const cachePerson = (subjectId: SubjectId, person: PersonAbstract | Perso
   ({ type: 'CACHE_PERSON', subjectId, person })
 export const focusOnPerson = (subjectId: SubjectId): Action =>
   ({ type: 'FOCUS_ON_PERSON', subjectId })
+export const saveSearchResults = (results: Array<PersonAbstract>): Action =>
+  ({ type: 'SAVE_SEARCH_RESULTS', results })
 export const setAboutPage = (state: bool): Action =>
   ({ type: 'SET_ABOUT_PAGE', state })
 export const setWikiUri = (uri: Uri): Action =>
@@ -44,6 +48,7 @@ export const focusedSubject = (store: Store): SubjectId => store.focusedSubject
 export const people = (store: Store) => store.people
 export const lookupPerson = (s: SubjectId) =>
   (store: Store): PersonAbstract | PersonDetail | void => store.people[s]
+export const searchResults = (store: Store): Array<PersonAbstract> => store.searchResults
 export const showAboutPage = (store: Store): bool => store.showAboutPage
 export const wikiUri = (store: Store): Uri => store.currentWikiPageUri
 
@@ -62,6 +67,13 @@ export const runState = (state?: Store = initialState(), action: any): Store => 
         ...state,
         focusedSubject: state.people[action.subjectId] ? action.subjectId : state.focusedSubject,
       }
+
+    case 'SAVE_SEARCH_RESULTS':
+      return {
+        ...state,
+        searchResults: action.results,
+      }
+
     case 'SET_ABOUT_PAGE':
       return {
         ...state,

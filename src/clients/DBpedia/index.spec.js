@@ -2,13 +2,13 @@ import moment from 'moment'
 
 const { getPerson, searchForPeople } = require('./')
 
-describe('searching dbpedia', () => {
-  var originalTimeout
+describe('DBpedia library', () => {
+  var originalTimeout;
 
   beforeEach(() => {
     originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 15000
-  })
+  });
 
   afterEach(() => jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout)
 
