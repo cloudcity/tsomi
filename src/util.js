@@ -2,6 +2,10 @@
 
 import moment from 'moment'
 
+type Map<T> = {
+  [string]: T
+}
+
 type Point = {
   x: number,
   y: number
@@ -32,6 +36,16 @@ const convertToSafeDOMId = (str: string): string => str.replace(/(%20| |\.)/g, '
 
 const angleRadians = (p1: Point, p2: Point): number =>
   Math.atan2(p2.y - p1.y, p2.x - p1.x)
+
+const uniqueBy = <T>(f: Function, c: Array<T>): Array<T> => {
+  const lookup = c.reduce((acc, item) => {
+    const id = f(item)
+    if(!acc[id]) acc[id] = item
+    return acc
+  }, {})
+
+  return ((Object.values(lookup): any): Array<T>)
+}
 
 const radial = (point: Point, radius: number, radians: number): Point => ({ 
   x: Math.cos(radians) * radius + point.x, 
@@ -103,5 +117,6 @@ module.exports = {
   smallest,
   radial,
   queryParamsToHash,
+  uniqueBy,
 }
 

@@ -7,6 +7,7 @@ const {
  mapObjKeys,
  smallest,
  queryParamsToHash,
+ uniqueBy,
 } = require('./util')
 
 describe('convertSpaces', () => {
@@ -103,6 +104,28 @@ describe('queryParamsToHash', () => {
 
     expect(queryParamsToHash(withQ)).toEqual(o)
     expect(queryParamsToHash(withoutQ)).toEqual(o)
+  })
+})
+
+describe('uniqueBy', () => {
+  it('should filter unique values', () => {
+    const input = [
+      { id: 'a' },
+      { id: 'b' },
+      { id: 'b' },
+      { id: 'b' },
+      { id: 'c' },
+      { id: 'c' },
+    ]
+
+    const output = new Set([
+      { id: 'a' },
+      { id: 'b' },
+      { id: 'c' },
+    ])
+
+    const uniq = uniqueBy(i => i.id, input)
+    expect(new Set(uniq)).toEqual(output)
   })
 })
 
