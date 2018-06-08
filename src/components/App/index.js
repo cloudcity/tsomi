@@ -57,7 +57,7 @@ class App_ extends React.Component<AppProps, AppState> {
       window.history.pushState(
         '',
         n.id,
-        `${location.origin}${location.host}${location.pathname}?subject=${n.id}`,
+        `${location.origin}${location.pathname}?subject=${n.id}`,
       )
       if (person.wikipediaUri) {
         const uri = person.wikipediaUri
