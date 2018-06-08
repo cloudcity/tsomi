@@ -2,20 +2,24 @@
 
 /* eslint no-param-assign: off, no-param-reassign: off */
 
-import React from 'react'
+import * as d3 from 'd3'
+import * as fp from 'lodash/fp'
 import moment from 'moment'
+import React from 'react'
 import { connect } from 'react-redux'
-import { type SubjectId, type PersonAbstract, type PersonDetail } from '../../types'
-import { type PeopleCache } from '../../store'
+
+import * as store from '../../store'
+import {
+  type Dimensions,
+  type PersonAbstract,
+  type PersonDetail,
+  type SubjectId,
+} from '../../types'
 import { difference, union } from '../../utils/Set'
-
-const store = require('../../store')
-
-const d3 = require('d3')
-const fp = require('lodash/fp')
 
 const {
   angleRadians,
+  convertToSafeDOMId,
   largest,
   populatePath,
   radial,
@@ -79,7 +83,6 @@ type ForceSimulation = {|
   alpha: (?number) => number,
   force: (string, any) => ForceSimulation,
   nodes: Array<InvisibleNode | PersonNode> => ForceSimulation,
-  restart: () => void,
   on: (string, () => void) => ForceSimulation,
   restart: () => void,
 |}
@@ -90,16 +93,16 @@ type LinkForces = {
 }
 
 
-type InvisibleNode = {
+type InvisibleNode = {|
   type: 'InvisibleNode',
   x: number,
   y: number,
   vx: number,
   vy: number,
   getId: () => string,
-}
+|}
 
-type PersonNode = {
+type PersonNode = {|
   type: 'PersonNode',
   x: number,
   y: number,
@@ -107,7 +110,7 @@ type PersonNode = {
   vy: number,
   person: PersonAbstract | PersonDetail,
   getId: () => string,
-}
+|}
 
 
 type TLink = {
@@ -222,11 +225,6 @@ class TGraph {
 }
 
 
-type Dimensions = { width: number, height: number }
-
-const convertToSafeDomId = (str: string): string => str.replace(/(%20| |\.)/g, '_')
-
-
 /* A timeline class represents the time-based axis that appears somewhere
  * towards the bottom of the page.
  */
@@ -244,17 +242,69 @@ const createTimeline = (width: number, startDate: moment, endDate: moment): Time
 }
 
 
-d3.selectAll('p').attr('href', 'abcd')
+const calculateNodeScale = (node: PersonNode, centerNode: PersonNode, isMouseOver: bool): number =>
+  (node.getId() === centerNode.getId() || isMouseOver ? 1.0 : 0.5)
+
+const calculateLinkPath = (link: TLink, center: PersonNode): string => {
+  const s = link.source
+  const m = link.middle
+  const t = link.target
+
+  const angle = angleRadians(t, m)
+  const nodeRadius = ((IMAGE_SIZE / 2) * calculateNodeScale(t, center, false))
+
+  const tip = radial(t, nodeRadius, angle)
+
+  return populatePath(
+    'M X0 Y0 Q X1 Y1 X2 Y2',
+    [s, m, tip],
+  )
+}
 
 
-const renderPeople = (sel: Selection, selectNode: PersonNode => void, mouseOver: (PersonNode, bool) => void) => {
+const calculateLifelinePath = (
+  dimensions: Dimensions,
+  timeline: Timeline,
+  node: PersonNode,
+): string => {
+  const TIMELINE_UPSET = 50
+
+  if (!node.person.birthDate) {
+    return ''
+  }
+  const death = node.person.deathDate ? node.person.deathDate : moment()
+
+  const birthPx = { x: timeline.scale(node.person.birthDate), y: TIMELINE_Y(dimensions.height) }
+  const bc1 = { x: node.x, y: TIMELINE_Y(dimensions.height) - TIMELINE_UPSET }
+  const bc2 = { x: birthPx.x, y: TIMELINE_Y(dimensions.height) - TIMELINE_UPSET }
+
+  const deathPx = { x: timeline.scale(death), y: TIMELINE_Y(dimensions.height) }
+  const dc1 = { x: deathPx.x, y: TIMELINE_Y(dimensions.height) - TIMELINE_UPSET }
+  const dc2 = { x: node.x, y: TIMELINE_Y(dimensions.height) - TIMELINE_UPSET }
+
+  if (birthPx.x === undefined || deathPx.x === undefined) {
+    return ''
+  }
+
+  return populatePath(
+    'M X0 Y0 C X1 Y1 X2 Y2 X3 Y3 L X4 Y4 C X5 Y5 X6 Y6 X7 Y7',
+    [node, bc1, bc2, birthPx, deathPx, dc1, dc2, node],
+  )
+}
+
+
+const renderPeople = (
+  sel: Selection,
+  selectNode: PersonNode => void,
+  mouseOver: (PersonNode, bool) => void,
+) => {
   const circle = sel.append('g')
     .on('click', n => selectNode(n))
     .on('mouseover', n => mouseOver(n, true))
     .on('mouseout', n => mouseOver(n, false))
 
   const canvas = circle.classed('translate', true)
-    .attr('id', node => convertToSafeDomId(node.person.id))
+    .attr('id', node => convertToSafeDOMId(node.person.id))
     .append('g')
     .classed('scale', true)
     .attr('clip-path', 'url(#image-clip)')
@@ -291,29 +341,6 @@ const renderPeople = (sel: Selection, selectNode: PersonNode => void, mouseOver:
 }
 
 
-const calculateNodeScale = (node: PersonNode, centerNode: PersonNode, isMouseOver: bool): number =>
-  (node.getId() === centerNode.getId() || isMouseOver ? 1.0 : 0.5)
-
-const calculateLinkPath = (link: TLink, center: PersonNode): string => {
-  const s = link.source
-  const m = link.middle
-  const t = link.target
-
-  const angle = angleRadians(t, m)
-  const nodeRadius = ((IMAGE_SIZE / 2) * calculateNodeScale(t, center, false))
-
-  const tip = radial(t, nodeRadius, angle)
-  const left = radial(tip, 20, angle + HEAD_ANGLE)
-  const right = radial(tip, 20, angle - HEAD_ANGLE)
-
-  return populatePath(
-    'M X0 Y0 Q X1 Y1 X2 Y2',
-    [s, m, tip],
-  )
-
-}
-
-
 const renderLinks = (container: Selection, graph: TGraph): Selection => {
   const path = container.append('path')
 
@@ -329,36 +356,15 @@ const renderLinks = (container: Selection, graph: TGraph): Selection => {
 }
 
 
-const calculateLifelinePath = (dimensions: Dimensions, timeline: Timeline, node: PersonNode): string => {
-  const TIMELINE_UPSET = 50
-
-  if (!node.person.birthDate) {
-    return ''
-  }
-  const death = node.person.deathDate ? node.person.deathDate : moment()
-
-  const birthPx = { x: timeline.scale(node.person.birthDate), y: TIMELINE_Y(dimensions.height) }
-  const bc1 = { x: node.x, y: TIMELINE_Y(dimensions.height) - TIMELINE_UPSET }
-  const bc2 = { x: birthPx.x, y: TIMELINE_Y(dimensions.height) - TIMELINE_UPSET }
-
-  const deathPx = { x: timeline.scale(death), y: TIMELINE_Y(dimensions.height) }
-  const dc1 = { x: deathPx.x, y: TIMELINE_Y(dimensions.height) - TIMELINE_UPSET }
-  const dc2 = { x: node.x, y: TIMELINE_Y(dimensions.height) - TIMELINE_UPSET }
-
-  if (birthPx.x === undefined || deathPx.x === undefined) {
-    return ''
-  }
-
-  return populatePath(
-    'M X0 Y0 C X1 Y1 X2 Y2 X3 Y3 L X4 Y4 C X5 Y5 X6 Y6 X7 Y7', [node, bc1, bc2, birthPx, deathPx, dc1, dc2, node])
-}
-
-
-const renderLifelines = (container: Selection, dimensions: Dimensions, timeline: Timeline): Selection => {
+const renderLifelines = (
+  container: Selection,
+  dimensions: Dimensions,
+  timeline: Timeline,
+): Selection => {
   const path = container.append('path')
 
   path.classed('timeline', true)
-    .attr('id', (node: PersonNode): string => convertToSafeDomId(node.getId()))
+    .attr('id', (node: PersonNode): string => convertToSafeDOMId(node.getId()))
     .attr('style', 'opacity: 0.03;')
     .attr('d', (node: PersonNode): string => calculateLifelinePath(dimensions, timeline, node))
 
@@ -368,10 +374,10 @@ const renderLifelines = (container: Selection, dimensions: Dimensions, timeline:
 
 const listOfPeopleInGraph = (
   graph: TGraph,
-  people: PeopleCache,
-): Array<PersonAbstract | PersonDetail> => {
-  return fp.filter(p => p != null)(fp.map(node => people[node.getId()])(graph.nodes))
-}
+  people: store.PeopleCache,
+): Array<PersonAbstract | PersonDetail> => (
+  fp.filter(p => p != null)(fp.map(node => people[node.getId()])(graph.nodes))
+)
 
 
 const calculateTimeRange = (people: Array<PersonAbstract | PersonDetail>): [moment, moment] => {
@@ -416,7 +422,7 @@ const calculateTimeRange = (people: Array<PersonAbstract | PersonDetail>): [mome
 }
 
 
-const updateInfluenceGraph = (graph: TGraph, focus: PersonDetail, people: PeopleCache) => {
+const updateInfluenceGraph = (graph: TGraph, focus: PersonDetail, people: store.PeopleCache) => {
   const influencedBy = new Set(focus.influencedBy)
   const influenced = new Set(focus.influenced)
   const currentIds = union(new Set([focus.id]), influencedBy, influenced)
@@ -450,7 +456,7 @@ const updateInfluenceGraph = (graph: TGraph, focus: PersonDetail, people: People
 
 class InfluenceCanvas {
   focus: PersonDetail
-  people: PeopleCache
+  people: store.PeopleCache
   timeline: Timeline
 
   dimensions: Dimensions
@@ -474,7 +480,7 @@ class InfluenceCanvas {
     topElem: Selection,
     dimensions: Dimensions,
     focus: PersonDetail,
-    people: PeopleCache,
+    people: store.PeopleCache,
     selectNode: (PersonAbstract | PersonDetail) => void,
   ) {
     this.topElem = topElem
@@ -580,7 +586,7 @@ class InfluenceCanvas {
     this.fdl.restart()
   }
 
-  setFocused(focus: PersonDetail, people: PeopleCache) {
+  setFocused(focus: PersonDetail, people: store.PeopleCache) {
     const oldFocus = this.focus
 
     this.focus = focus
@@ -588,11 +594,11 @@ class InfluenceCanvas {
 
     updateInfluenceGraph(this.graph, this.focus, people)
 
-    this.lifelinesElem.select(`#${convertToSafeDomId(oldFocus.id)}`)
+    this.lifelinesElem.select(`#${convertToSafeDOMId(oldFocus.id)}`)
       .transition()
       .attr('style', 'opacity: 0.03;')
 
-    this.lifelinesElem.select(`#${convertToSafeDomId(this.focus.id)}`)
+    this.lifelinesElem.select(`#${convertToSafeDOMId(this.focus.id)}`)
       .transition()
       .attr('style', 'opacity: 0.5;')
 
@@ -621,17 +627,17 @@ class InfluenceCanvas {
           return
         }
         if (over) {
-          this.nodesElem.select(`#${convertToSafeDomId(n.getId())} .scale`)
+          this.nodesElem.select(`#${convertToSafeDOMId(n.getId())} .scale`)
             .transition()
             .attr('transform', 'scale(0.75)')
-          this.lifelinesElem.select(`#${convertToSafeDomId(n.getId())}`)
+          this.lifelinesElem.select(`#${convertToSafeDOMId(n.getId())}`)
             .transition()
             .attr('style', 'opacity: 0.5;')
         } else {
-          this.nodesElem.select(`#${convertToSafeDomId(n.getId())} .scale`)
+          this.nodesElem.select(`#${convertToSafeDOMId(n.getId())} .scale`)
             .transition()
             .attr('transform', 'scale(0.5)')
-          this.lifelinesElem.select(`#${convertToSafeDomId(n.getId())}`)
+          this.lifelinesElem.select(`#${convertToSafeDOMId(n.getId())}`)
             .transition()
             .attr('style', 'opacity: 0.03;')
         }
@@ -662,7 +668,7 @@ class InfluenceCanvas {
 type InfluenceChartProps = {
   label: string,
   focusedId: SubjectId,
-  people: PeopleCache,
+  people: store.PeopleCache,
   selectPerson: (PersonAbstract | PersonDetail) => void,
 }
 
@@ -714,7 +720,8 @@ class InfluenceChart_ extends React.Component<InfluenceChartProps, InfluenceChar
     this.state.d3Elem = d3.select(`#${this.props.label}`)
 
     const focus = this.props.people[this.props.focusedId]
-    if (focus != null && focus === 'PersonDetail' && this.state.domElem != null && this.state.d3Elem != null) {
+    if (focus != null && focus.type === 'PersonDetail'
+      && this.state.domElem != null && this.state.d3Elem != null) {
       this.state.canvas = new InfluenceCanvas(
         this.state.d3Elem,
         this.state.domElem.getBoundingClientRect(),

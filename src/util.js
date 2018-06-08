@@ -28,6 +28,8 @@ const parseDate = (dateString: string, fmt: ?string): ?moment => {
 const convertSpaces = (element: string): string =>
   element.replace(/(%20| )/g, '_')
 
+const convertToSafeDOMId = (str: string): string => str.replace(/(%20| |\.)/g, '_')
+
 const angleRadians = (p1: Point, p2: Point): number =>
   Math.atan2(p2.y - p1.y, p2.x - p1.x)
 
@@ -81,10 +83,15 @@ const populatePath = (path: string, points: Array<Point>) => {
 
 const isAboutPage = (href: string = window.location.href) => 
   last(href.split('/')) === 'about'
-  
+
+type RequestParameters = {
+  method: string
+}
+
 module.exports = {
   angleRadians,
   convertSpaces,
+  convertToSafeDOMId,
   getURLElement,
   getURLParameter,
   isAboutPage,

@@ -4,6 +4,8 @@ import moment from 'moment'
 
 export type Uri = string
 
+export type Dimensions = { width: number, height: number }
+
 export type SubjectId = string
 export const mkSubjectId = (s: string): SubjectId => s.trim()
 export const mkSubjectFromDBpediaUri = (url: Uri): SubjectId => url.trim().split('/').reverse()[0]

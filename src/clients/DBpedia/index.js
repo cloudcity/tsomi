@@ -26,9 +26,9 @@ class ParseError {
 // different formats.
 const parseDBpediaDate = (str: string): ?moment => {
   if (str.endsWith('-0-0')) {
-    return parseDate(`${str.slice(0, -4)}-01-01`)
+    return parseDate(`${str.slice(0, -4)}-01-01`, 'YYYY')
   }
-  return parseDate(str)
+  return parseDate(str, 'YYYY-M-D')
 }
 
 

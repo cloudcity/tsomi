@@ -99,27 +99,6 @@ class App_ extends React.Component<AppProps, AppState> {
     })
   }
 
-  /*
-  setWikiPage(node: any) {
-    const url = getUrlFromNode(node)
-    console.log('[setWikiPage url]', url)
-
-    window.history.pushState({}, '', changeSubject(
-      window.location.href, 
-      node.properties.name
-    ))
-    this.props.setWikiUri(url)
-  }
-  */
-
-  //toggleAboutPage() {
-    //this.setState({ showAboutPage: !this.state.showAboutPage })
-  //}
-
-  //goHome() {
-    //this.setState({ showAboutPage: false })
-  //}
-
   submitSearch(name: string) {
     dbpedia.searchForPeople(name).then(people => console.log('[searchForPeople results]', people))
   }
