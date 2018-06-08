@@ -49248,7 +49248,7 @@ var App_ = function (_React$Component) {
       var _this4 = this;
 
       this.getAndCachePerson(n.id).then(function (person) {
-        window.history.pushState('', n.id, '' + location.origin + location.host + location.pathname + '?subject=' + n.id);
+        window.history.pushState('', n.id, '' + location.origin + location.pathname + '?subject=' + n.id);
         if (person.wikipediaUri) {
           var uri = person.wikipediaUri;
           var muri = (0, _types.wikipediaMobileUri)(uri);
