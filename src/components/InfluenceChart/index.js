@@ -167,12 +167,12 @@ class TGraph {
     delete this.nodes[personId.asString()]
 
     const removeLinks = fp.filter(
-      (l: TLink): bool => l.source.getId() === personId || l.target.getId() === personId,
+      (l: TLink): bool => l.source.getId() === personId.asString() || l.target.getId() === personId.asString(),
       this.links,
     )
 
     this.links = fp.filter(
-      (l: TLink): bool => l.source.getId() !== personId && l.target.getId() !== personId,
+      (l: TLink): bool => l.source.getId() !== personId.asString() && l.target.getId() !== personId.asString(),
       this.links,
     )
 

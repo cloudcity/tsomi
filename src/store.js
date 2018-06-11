@@ -65,7 +65,7 @@ export const runState = (state?: Store = initialState(), action: any): Store => 
     case 'FOCUS_ON_PERSON':
       return {
         ...state,
-        focusedSubject: state.people[action.subjectId] ? action.subjectId : state.focusedSubject,
+        focusedSubject: state.people[action.subjectId.asString()] ? action.subjectId : state.focusedSubject,
       }
 
     case 'SAVE_SEARCH_RESULTS':
