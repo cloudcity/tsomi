@@ -1,10 +1,14 @@
 // @flow
 
 import React from 'react'
+import { connect } from 'react-redux'
 
 import { inputElement } from '../../eventtypes'
+import * as store from '../../store'
 import { type PersonAbstract } from '../../types'
-import { SearchResult } from '../SearchResult/'
+import Spinner from '../Spinner/'
+import SearchResult from '../SearchResult/'
+
 
 require('./main.css')
 
@@ -16,11 +20,12 @@ type SearchProps = {
   closeSearch: () => void,
   focusPerson: PersonAbstract => void,
   submitSearch: string => void,
+  searchInProgress: bool,
   searchString: ?string,
   searchResults: Array<PersonAbstract>,
 }
 
-class Search extends React.Component<SearchProps, SearchState> {
+class Search_ extends React.Component<SearchProps, SearchState> {
   constructor(props: SearchProps) {
     super(props)
     this.props = props
@@ -50,7 +55,9 @@ class Search extends React.Component<SearchProps, SearchState> {
       type: 'text',
     })
 
-    const submit = React.createElement('button', { className: 'link search-go', onClick: () => this.submit() }, 'GO')
+    const submit = this.props.searchInProgress
+      ? React.createElement(Spinner, { className: 'spinner-searchbar' })
+      : React.createElement('button', { className: 'link search-go', onClick: () => this.submit() }, 'GO')
 
     const searchResult = this.props.searchString
       ? React.createElement(
@@ -70,10 +77,20 @@ class Search extends React.Component<SearchProps, SearchState> {
       searchGlyph,
       input,
       submit,
+      //loadingSpinner,
       searchResult,
     )
   }
 }
 
-module.exports = { Search }
+const Search = connect(
+  state => ({
+    searchInProgress: store.searchInProgress(state),
+    searchString: store.searchString(state),
+    searchResults: store.searchResults(state),
+  }),
+  dispatch => ({ }),
+)(Search_)
+
+export default Search
 
