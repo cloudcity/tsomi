@@ -1,15 +1,13 @@
 // @flow
 
+import fp from 'lodash/fp'
 import React from 'react'
+import { type Element } from 'react'
 
 import type { PersonAbstract } from '../../types'
+import CloseButton from '../../components/CloseButton'
 
 require('./main.css')
-
-type SearchResultProps = {
-  searchResults: Array<PersonAbstract>,
-  selectPerson: PersonAbstract => void,
-}
 
 const summarize = (msg: string, skipNWords: number, maxlength: number): string => {
   let res = '...'
@@ -20,7 +18,7 @@ const summarize = (msg: string, skipNWords: number, maxlength: number): string =
   return res.concat('...')
 }
 
-const makeListItem = (selectPerson: PersonAbstract => void) => (person: PersonAbstract) => {
+const ListItem = (selectPerson: PersonAbstract => void) => (person: PersonAbstract) => {
   const {
     name,
     birthDate,
@@ -35,10 +33,12 @@ const makeListItem = (selectPerson: PersonAbstract => void) => (person: PersonAb
 
   const img = React.createElement('img', { src: thumbnail || 'http://via.placeholder.com/100x100' })
   const imgContainer = React.createElement('div', { className: 'search-thumbnail' }, img)
-  /* TODO: make this into a link that centers this person in TSOMI */
   const nodeName = React.createElement(
     'h3',
-    { onClick: () => selectPerson(person) },
+    {
+      onClick: () => selectPerson(person),
+      className: 'link',
+    },
     name,
   )
   const dates = birthDate
@@ -79,9 +79,85 @@ const makeListItem = (selectPerson: PersonAbstract => void) => (person: PersonAb
   )
 }
 
-const SearchResult = ({ searchResults, selectPerson }: SearchResultProps) => {
-  const results = searchResults.map(makeListItem(selectPerson))
-  return React.createElement('div', { className: 'search-results' }, ...results)
+type ResultCountProps = {
+  resultCount: number,
+  searchString: string,
+}
+
+const ResultCount = (props: ResultCountProps): Element<'div'> =>
+  React.createElement(
+    'div',
+    { className: 'search-result-count' },
+    React.createElement(
+      'span',
+      {},
+      /* eslint no-nested-ternary: off */
+      props.resultCount === 0
+        ? 'No results found for '
+        : props.resultCount === 1
+          ? `${props.resultCount} result for `
+          : `${props.resultCount} results for `,
+      React.createElement(
+        'span',
+        { className: 'search-term' },
+        `${props.searchString}`,
+      ),
+      props.resultCount === 0
+        ? React.createElement(
+          'span',
+          {},
+          '. Be sure to check the spelling and include any and all middle initials.',
+        )
+        : null,
+    ),
+  )
+
+
+type ResultSummaryProps = {
+  closeSearch: () => void,
+  resultCount: number,
+  searchString: string,
+}
+
+const ResultSummary = (props: ResultSummaryProps): Element<'div'> =>
+  React.createElement(
+    'div',
+    { className: 'search-result-summary' },
+    React.createElement(
+      ResultCount,
+      {
+        resultCount: props.resultCount,
+        searchString: props.searchString,
+      },
+    ),
+    React.createElement(
+      CloseButton,
+      { closeSearch: props.closeSearch },
+    ),
+  )
+
+type SearchResultProps = {
+  searchString: string,
+  searchResults: Array<PersonAbstract>,
+  selectPerson: PersonAbstract => void,
+  closeSearch: () => void,
+}
+
+const SearchResult = (props: SearchResultProps) => {
+  const results = fp.map(ListItem(props.selectPerson))(props.searchResults)
+  return React.createElement(
+    'div',
+    { className: 'search-results' },
+    React.createElement(
+      ResultSummary,
+      {
+        closeSearch: props.closeSearch,
+        resultCount: props.searchResults.length,
+        searchString: props.searchString,
+      },
+    ),
+    React.createElement('div', { className: 'search-result-list' }, ...results),
+  )
 }
 
 module.exports = { SearchResult }

@@ -18,6 +18,7 @@ require('./main.css')
 type AppProps = {
   focusedSubject: SubjectId,
   searchResults: Array<PersonAbstract>,
+  searchString: ?string,
   showAboutPage: bool,
   showAboutPage: bool,
   subjectId: string,
@@ -27,7 +28,7 @@ type AppProps = {
   cachePerson: (SubjectId, PersonAbstract | PersonDetail) => void,
   focusOnPerson: SubjectId => void,
   goHome: void => void,
-  saveSearchResults: Array<PersonAbstract> => void,
+  saveSearchResults: (?string, Array<PersonAbstract>) => void,
   setWikiUri: Uri => void,
   toggleAboutPage: void => void,
 }
@@ -64,7 +65,7 @@ class App_ extends React.Component<AppProps, AppState> {
         const muri = wikipediaMobileUri(uri)
         this.props.setWikiUri(muri || uri)
       }
-      this.props.saveSearchResults([])
+      this.props.saveSearchResults(null, [])
       return Promise.all([
         person.influencedBy.map(i => this.getAndCachePerson(i)),
         person.influenced.map(i => this.getAndCachePerson(i)),
@@ -78,7 +79,7 @@ class App_ extends React.Component<AppProps, AppState> {
 
   submitSearch(name: string) {
     dbpedia.searchForPeople(name)
-      .then(people => this.props.saveSearchResults(people))
+      .then(people => this.props.saveSearchResults(name, people))
       .catch((err) => {
         console.log('Searching failed with an error: ', err)
       })
@@ -87,10 +88,12 @@ class App_ extends React.Component<AppProps, AppState> {
   render() {
     const navbar = React.createElement(Navbar, {
       key: 'navbar',
+      closeSearch: () => this.props.saveSearchResults(null, []),
       focusPerson: subjectId => this.focusPerson(subjectId),
       goHome: () => this.props.goHome(),
       toggleAbout: () => this.props.toggleAboutPage(),
       submitSearch: name => this.submitSearch(name),
+      searchString: this.props.searchString,
       searchResults: this.props.searchResults,
     })
 
@@ -141,6 +144,7 @@ class App_ extends React.Component<AppProps, AppState> {
 const App = connect(
   state => ({
     focusedSubject: store.focusedSubject(state),
+    searchString: store.searchString(state),
     searchResults: store.searchResults(state),
     showAboutPage: store.showAboutPage(state),
     wikiUri: store.wikiUri(state),
@@ -149,7 +153,7 @@ const App = connect(
     cachePerson: (subjectId, person) => dispatch(store.cachePerson(subjectId, person)),
     focusOnPerson: subjectId => dispatch(store.focusOnPerson(subjectId)),
     goHome: () => dispatch(store.setAboutPage(false)),
-    saveSearchResults: results => dispatch(store.saveSearchResults(results)),
+    saveSearchResults: (str, results) => dispatch(store.saveSearchResults(str, results)),
     setWikiUri: uri => dispatch(store.setWikiUri(uri)),
     toggleAboutPage: () => dispatch(store.toggleAboutPage()),
   }),
