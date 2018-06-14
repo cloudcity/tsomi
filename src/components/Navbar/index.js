@@ -11,10 +11,12 @@ type NavbarState = {
 }
 
 type NavbarProps = {
+  closeSearch: () => void,
   focusPerson: PersonAbstract => void,
   goHome: () => void,
   toggleAbout: () => void,
   submitSearch: string => void,
+  searchString: ?string,
   searchResults: Array<PersonAbstract>,
 }
 
@@ -26,10 +28,12 @@ class Navbar extends React.Component<NavbarProps, NavbarState> {
 
   render() {
     const {
+      closeSearch,
       focusPerson,
       goHome,
       submitSearch,
       searchResults,
+      searchString,
       toggleAbout,
     } = this.props
 
@@ -49,8 +53,10 @@ class Navbar extends React.Component<NavbarProps, NavbarState> {
     )
 
     const search = React.createElement(Search, {
+      closeSearch,
       focusPerson,
       submitSearch,
+      searchString,
       searchResults,
     })
 
