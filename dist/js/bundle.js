@@ -49249,7 +49249,9 @@ var _types = __webpack_require__(30);
 
 var _DBpedia = __webpack_require__(715);
 
-var _DBpedia2 = _interopRequireDefault(_DBpedia);
+var dbpedia = _interopRequireWildcard(_DBpedia);
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -49300,7 +49302,7 @@ var App_ = function (_React$Component) {
     value: function getAndCachePerson(n) {
       var _this3 = this;
 
-      return _DBpedia2.default.getPerson(n).then(function (person) {
+      return dbpedia.getPerson(n).then(function (person) {
         return new Promise(function (res, rej) {
           if (person === null || person === undefined) {
             rej();
@@ -49341,7 +49343,7 @@ var App_ = function (_React$Component) {
       var _this5 = this;
 
       this.props.setSearchInProgress(true);
-      _DBpedia2.default.searchForPeople(name).then(function (people) {
+      dbpedia.searchForPeople(name).then(function (people) {
         return _this5.props.saveSearchResults(name, people);
       }).catch(function (err) {
         _this5.props.setSearchInProgress(false);
@@ -49515,12 +49517,12 @@ var _require2 = __webpack_require__(332),
     CHARGE_RANDOM = _require2.CHARGE_RANDOM,
     DEFAULT_ANIMATION_DURATION = _require2.DEFAULT_ANIMATION_DURATION,
     GRAVITY = _require2.GRAVITY,
-    HEAD_ANGLE = _require2.HEAD_ANGLE,
     IMAGE_SIZE = _require2.IMAGE_SIZE,
     LINK_MIN_OFFSET = _require2.LINK_MIN_OFFSET,
     LINK_RANDOM = _require2.LINK_RANDOM,
     LINK_STRENGTH = _require2.LINK_STRENGTH,
     MARGIN = _require2.MARGIN,
+    MAX_SCREEN_NODES = _require2.MAX_SCREEN_NODES,
     NODE_SIZE = _require2.NODE_SIZE,
     TIMELINE_Y = _require2.TIMELINE_Y;
 
@@ -49818,11 +49820,19 @@ var calculateTimeRange = function calculateTimeRange(people) {
   return [minDate, maxDate];
 };
 
-var updateInfluenceGraph = function updateInfluenceGraph(graph, focus, people) {
+var updateInfluenceGraph = function updateInfluenceGraph(graph, focus, people, maxNodes) {
+  var influenceLimit = fp.compose(function (arr) {
+    return new Set(arr);
+  }, fp.take(maxNodes), fp.reverse, fp.sortBy(function (p) {
+    return p.influencedByCount + p.influencedBy;
+  }), function (s) {
+    return Array.from(s);
+  });
+
   var influencedBy = new Set(focus.influencedBy);
   var influenced = new Set(focus.influenced);
   var currentIds = (0, _Set.union)(new Set([focus.id]), influencedBy, influenced);
-  var currentPeople = new Set(fp.compose(fp.filter(function (p) {
+  var currentPeople = new Set(fp.compose(influenceLimit, fp.filter(function (p) {
     return p != null;
   }), fp.map(function (id) {
     return people[id.asString()];
@@ -49966,7 +49976,7 @@ var InfluenceCanvas = function () {
       this.focus = focus;
       this.people = people;
 
-      updateInfluenceGraph(this.graph, this.focus, people);
+      updateInfluenceGraph(this.graph, this.focus, people, MAX_SCREEN_NODES);
 
       this.lifelinesElem.select('#' + convertToSafeDOMId(oldFocus.id.asString())).transition().attr('style', 'opacity: 0.03;');
 
@@ -76946,6 +76956,11 @@ return jQuery;
 "use strict";
 
 
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.searchForPeople = exports.getPerson = undefined;
+
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 
 var _fp = __webpack_require__(42);
@@ -76964,112 +76979,16 @@ var _util = __webpack_require__(108);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
 __webpack_require__(718);
-
-var ParseError = function ParseError(message) {
-  _classCallCheck(this, ParseError);
-
-  this.message = message;
-
-  for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-    args[_key - 1] = arguments[_key];
-  }
-
-  this.args = args;
-};
 
 // Handle a variety of different date format issues. Dates, especially in the
 // distant past, are somewhat uncertain and DBpedia returns dates in a few
 // different formats.
-
-
 var parseDBpediaDate = function parseDBpediaDate(str) {
   if (str.endsWith('-0-0')) {
     return (0, _util.parseDate)(str.slice(0, -4) + '-01-01', 'YYYY');
   }
   return (0, _util.parseDate)(str, 'YYYY-M-D');
-};
-
-/* eslint no-multi-str: off */
-var queryPersonAbstract = 'SELECT ?person ?thumbnail ?wikipediaUri ?name ?birthPlace ?birthDate ?deathDate COUNT(DISTINCT ?influencedBy) as ?influencedByCount COUNT(DISTINCT ?influenced) as ?influencedCount ?abstract \
-WHERE { \
-  ?person a foaf:Person. \
-  ?person foaf:name ?name. \
-  OPTIONAL { ?person dbo:abstract ?abstract. } \
-  OPTIONAL { ?person dbo:birthPlace ?birthPlace. } \
-  OPTIONAL { ?person dbo:birthDate ?birthDate. } \
-  OPTIONAL { ?person dbo:deathDate ?deathDate. } \
-  OPTIONAL { ?person foaf:isPrimaryTopicOf ?wikipediaUri. } \
-  OPTIONAL { ?person dbo:thumbnail ?thumbnail. } \
-  OPTIONAL { ?person dbpedia-owl:influencedBy ?influencedBy. } \
-  OPTIONAL { ?person dbpedia-owl:influenced ?influenced. } \
-  filter( regex(str(?name), "%search_query%", "i") ) \
-  filter( lang(?abstract) = "en" ). \
-}';
-
-var personAbstractFromJS = function personAbstractFromJS(js) {
-  if (js.person.type !== 'uri') {
-    throw new ParseError('Unexpected person uri type:', js.person.type);
-  }
-  if (js.name.type !== 'literal') {
-    throw new ParseError('Unexpected name type:', js.name.type);
-  }
-  if (js.abstract && js.abstract.type !== 'literal') {
-    throw new ParseError('Unexpected abstract type:', js.abstract.type);
-  }
-
-  if (js.birthPlace && js.birthPlace.type !== 'uri') {
-    throw new ParseError('Unexpected birthPlace type:', js.birthPlace.type);
-  }
-
-  if (js.thumbnail && js.thumbnail.type !== 'uri') {
-    throw new ParseError('Unexpected thumbnail uri type:', js.thumbnail.type);
-  }
-
-  if (js.wikipediaUri && js.wikipediaUri.type !== 'uri') {
-    throw new ParseError('Unexpected wikipedia uri type:', js.wikipediaUri.type);
-  }
-
-  if (js.birthDate && (js.birthDate.type !== 'typed-literal' || js.birthDate.datatype !== 'http://www.w3.org/2001/XMLSchema#date')) {
-    throw new ParseError('Unexpected birthDate type:', js.birthDate.type, js.birthDate.datatype);
-  }
-
-  if (js.deathDate && (js.deathDate.type !== 'typed-literal' || js.deathDate.datatype !== 'http://www.w3.org/2001/XMLSchema#date')) {
-    throw new ParseError('Unexpected deathDate type:', js.deathDate.type, js.deathDate.datatype);
-  }
-
-  if (js.influencedByCount && (js.influencedByCount.type !== 'typed-literal' || js.influencedByCount.datatype !== 'http://www.w3.org/2001/XMLSchema#integer')) {
-    throw new ParseError('Unexpected influencedByCount type:', js.influencedByCount.type, js.influencedByCount.datatype);
-  }
-
-  if (js.influencedCount && (js.influencedCount.type !== 'typed-literal' || js.influencedCount.datatype !== 'http://www.w3.org/2001/XMLSchema#integer')) {
-    throw new ParseError('Unexpected influencedCount type:', js.influencedCount.type, js.influencedCount.datatype);
-  }
-
-  return {
-    type: 'PersonAbstract',
-    id: (0, _types.mkSubjectFromDBpediaUri)(js.person.value),
-    thumbnail: js.thumbnail ? js.thumbnail.value : undefined,
-    uri: js.person.value,
-    wikipediaUri: js.wikipediaUri ? js.wikipediaUri.value : undefined,
-    name: js.name.value,
-    abstract: js.abstract.value,
-    birthPlace: js.birthPlace ? js.birthPlace.value : undefined,
-    birthDate: js.birthDate ? parseDBpediaDate(js.birthDate.value) : undefined,
-    deathDate: js.deathDate ? parseDBpediaDate(js.deathDate.value) : undefined,
-    influencedByCount: js.influencedByCount ? parseInt(js.influencedByCount.value, 10) : 0,
-    influencedCount: js.influencedCount ? parseInt(js.influencedCount.value, 10) : 0
-  };
-};
-
-var searchForPeople = function searchForPeople(name) {
-  return (0, _Sparql.runSparqlQuery)(queryPersonAbstract, { search_query: name.trim() }).then(function (js) {
-    return (0, _util.uniqueBy)(function (i) {
-      return i.uri;
-    }, js.results.bindings.map(personAbstractFromJS));
-  });
 };
 
 var mkDataUrl = function mkDataUrl(s) {
@@ -77094,7 +77013,7 @@ var findByRelationship = function findByRelationship(relationship, target) {
   }));
 };
 
-var getPerson = function getPerson(s) {
+var getPerson = exports.getPerson = function getPerson(s) {
   var dataUrl = mkDataUrl(s);
 
   return fetch(dataUrl).then(function (r) {
@@ -77108,13 +77027,13 @@ var getPerson = function getPerson(s) {
       return (0, _types.mkSubjectFromDBpediaUri)(i.value);
     }) : [];
     var influenced__ = findByRelationship('http://dbpedia.org/ontology/influenced', s)(Object.entries(r));
-    var influenced = new Set(influenced_.concat(influenced__));
+    var influenced = Array.from(new Set(influenced_.concat(influenced__)));
 
     var influencedBy_ = person.influencedBy ? person.influencedBy.map(function (i) {
       return (0, _types.mkSubjectFromDBpediaUri)(i.value);
     }) : [];
     var influencedBy__ = findByRelationship('http://dbpedia.org/ontology/influencedBy', s)(Object.entries(r));
-    var influencedBy = new Set(influencedBy_.concat(influencedBy__));
+    var influencedBy = Array.from(new Set(influencedBy_.concat(influencedBy__)));
 
     var wikipediaUri = person.isPrimaryTopicOf ? person.isPrimaryTopicOf[0].value : null;
 
@@ -77129,19 +77048,40 @@ var getPerson = function getPerson(s) {
       abstract: person.abstract.filter(function (i) {
         return i.lang === 'en';
       })[0].value,
-      birthPlace: person.birthPlace[0].value,
+      birthPlace: person.birthPlace ? person.birthPlace[0].value : null,
       birthDate: person.birthDate ? parseDBpediaDate(person.birthDate[0].value) : null,
       deathDate: person.deathDate ? parseDBpediaDate(person.deathDate[0].value) : null,
-      influencedBy: Array.from(influencedBy),
-      influenced: Array.from(influenced),
+      influencedBy: influencedBy,
+      influenced: influenced,
+      influencedByCount: influencedBy.length,
+      influencedCount: influenced.length,
       thumbnail: thumbnail
     };
+  }).catch(function (err) {
+    return console.log('[getPerson failed]', s, err);
   });
 };
 
-module.exports = {
-  getPerson: getPerson,
-  searchForPeople: searchForPeople
+/* eslint no-multi-str: off */
+var queryByName = 'SELECT ?person \
+WHERE { ?person a foaf:Person. \
+        ?person foaf:name ?name. \
+        filter( regex(str(?name), "%search_query%", "i") ) \
+}\
+';
+
+var searchByName = function searchByName(name) {
+  return (0, _Sparql.runSparqlQuery)(queryByName, { search_query: name.trim() }).then(function (js) {
+    return Array.from(new Set(_fp2.default.map(function (j) {
+      return (0, _types.mkSubjectFromDBpediaUri)(j.person.value);
+    })(js.results.bindings)));
+  });
+};
+
+var searchForPeople = exports.searchForPeople = function searchForPeople(name) {
+  return searchByName(name).then(function (lst) {
+    return Promise.all(_fp2.default.map(getPerson)(lst));
+  });
 };
 
 /***/ }),
