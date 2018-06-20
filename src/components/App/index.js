@@ -106,7 +106,7 @@ class App_ extends React.Component<AppProps, AppState> {
 
     const influenceChart = React.createElement(InfluenceChart, {
       label: 'influencechart',
-      selectPerson: n => this.focusPerson(n),
+      selectPerson: (n: SubjectId): void => this.focusPerson(n),
     })
     const chartDiv = React.createElement(
       'div',

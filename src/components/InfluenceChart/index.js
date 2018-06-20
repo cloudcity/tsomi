@@ -514,7 +514,7 @@ class InfluenceCanvas {
   fdl: ForceSimulation
   fdlLinks: LinkForces
 
-  selectNode: (PersonDetail) => void
+  selectNode: (SubjectId) => void
 
   highlight: ?PersonNode
 
@@ -523,7 +523,7 @@ class InfluenceCanvas {
     dimensions: Dimensions,
     focus: PersonDetail,
     people: store.PeopleCache,
-    selectNode: (PersonDetail) => void,
+    selectNode: (SubjectId) => void,
   ) {
     this.topElem = topElem
     this.dimensions = dimensions
@@ -666,7 +666,7 @@ class InfluenceCanvas {
       .data(this.graph.getVisibleNodes(), (n: PersonNode): ?string => (n ? n.getId() : null))
     renderPeople(
       nodeSel.enter(),
-      n => this.selectNode(n.person),
+      n => this.selectNode(n.person.id),
       (n, over) => focusHighlight(this.nodesElem, this.lifelinesElem, this.focus, n, over),
     )
     nodeSel.exit().remove()
@@ -695,7 +695,7 @@ type InfluenceChartProps = {
   label: string,
   focusedId: SubjectId,
   people: store.PeopleCache,
-  selectPerson: (PersonDetail) => void,
+  selectPerson: (SubjectId) => void,
   wikiDivHidden: bool,
 }
 
