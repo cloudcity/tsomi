@@ -311,7 +311,7 @@ const renderPeople = (
     .attr('clip-path', 'url(#image-clip)')
 
   canvas.append('circle')
-    .classed('backdrop', true)
+    .classed('node-backdrop', true)
     .attr('r', IMAGE_SIZE / 2)
 
   canvas.append('image')
@@ -345,10 +345,9 @@ const renderPeople = (
 const renderLinks = (container: Selection, graph: TGraph): Selection => {
   const path = container.append('path')
 
-  path.classed('link', true)
+  path.classed('influence-link', true)
     .classed('from', (link: TLink): bool => link.source.getId() === graph.focus.getId())
     .classed('to', (link: TLink): bool => link.target.getId() === graph.focus.getId())
-    .style('stroke-width', ARROW_WIDTH)
     .attr('visibity', 'visible')
     .attr('d', (link: TLink): string => calculateLinkPath(link, graph.focus))
     .attr('id', (link: TLink): string => `${link.source.getId()}-${link.target.getId()}`)
@@ -515,7 +514,7 @@ class InfluenceCanvas {
   fdl: ForceSimulation
   fdlLinks: LinkForces
 
-  selectNode: (PersonDetail) => void
+  selectNode: (SubjectId) => void
 
   highlight: ?PersonNode
 
@@ -524,7 +523,7 @@ class InfluenceCanvas {
     dimensions: Dimensions,
     focus: PersonDetail,
     people: store.PeopleCache,
-    selectNode: (PersonDetail) => void,
+    selectNode: (SubjectId) => void,
   ) {
     this.topElem = topElem
     this.dimensions = dimensions
@@ -532,6 +531,8 @@ class InfluenceCanvas {
     this.people = people
     this.graph = new TGraph(focus)
     this.selectNode = selectNode
+
+    updateInfluenceGraph(this.graph, this.focus, this.people, MAX_SCREEN_NODES)
 
     // create clip path for image
     this.definitions = this.topElem.append('defs')
@@ -556,8 +557,7 @@ class InfluenceCanvas {
     this.timeline = createTimeline(this.dimensions.width, minYear, maxYear)
     this.timelineAxis = topElem
       .append('g')
-      .classed('axies', true)
-      .attr('class', 'axis')
+      .classed('timeline-axis', true)
       .attr('transform', `translate(0, ${TIMELINE_Y(dimensions.height)})`)
       .call(this.timeline.axis)
 
@@ -578,6 +578,8 @@ class InfluenceCanvas {
 
     this.fdl.alpha(ALPHA)
     this.fdl.on('tick', () => this.animate())
+
+    this.refreshCanvas()
   }
 
   animate(): void {
@@ -664,7 +666,7 @@ class InfluenceCanvas {
       .data(this.graph.getVisibleNodes(), (n: PersonNode): ?string => (n ? n.getId() : null))
     renderPeople(
       nodeSel.enter(),
-      n => this.selectNode(n.person),
+      n => this.selectNode(n.person.id),
       (n, over) => focusHighlight(this.nodesElem, this.lifelinesElem, this.focus, n, over),
     )
     nodeSel.exit().remove()
@@ -693,7 +695,8 @@ type InfluenceChartProps = {
   label: string,
   focusedId: SubjectId,
   people: store.PeopleCache,
-  selectPerson: (PersonDetail) => void,
+  selectPerson: (SubjectId) => void,
+  wikiDivHidden: bool,
 }
 
 type InfluenceChartState = {
@@ -710,18 +713,21 @@ class InfluenceChart_ extends React.Component<InfluenceChartProps, InfluenceChar
     const { focusedId } = newProps
     const focus = newProps.people[focusedId.asString()]
 
+    const { d3Elem, domElem } = prevState
+
     if (focus != null && focus.type === 'PersonDetail') {
-      if (prevState.domElem != null && prevState.d3Elem != null) {
+      if (domElem != null && d3Elem != null) {
         const canvas = prevState.canvas
           ? prevState.canvas
           : new InfluenceCanvas(
-            prevState.d3Elem,
-            prevState.domElem.getBoundingClientRect(),
+            d3Elem,
+            domElem.getBoundingClientRect(),
             focus,
             newProps.people,
             newProps.selectPerson,
           )
         canvas.setFocused(focus, newProps.people)
+
         return { ...prevState, canvas, focusedId }
       }
       return { ...prevState, focusedId }
@@ -759,9 +765,16 @@ class InfluenceChart_ extends React.Component<InfluenceChartProps, InfluenceChar
       if (this.state.domElem != null && this.state.canvas != null) {
         const { domElem } = this.state
         this.state.canvas.setDimensions(domElem.getBoundingClientRect())
-        this.forceUpdate()
       }
     })
+  }
+
+  componentDidUpdate() {
+    const { domElem, canvas } = this.state
+    if (domElem != null && canvas != null ) {
+      console.log('[componentDidUpdate]', domElem.getBoundingClientRect())
+      canvas.setDimensions(domElem.getBoundingClientRect())
+    }
   }
 
   render() {
@@ -773,6 +786,7 @@ const InfluenceChart = connect(
   state => ({
     focusedId: store.focusedSubject(state),
     people: store.people(state),
+    wikiDivHidden: store.wikiDivHidden(state),
   }),
   dispatch => ({}),
 )(InfluenceChart_)

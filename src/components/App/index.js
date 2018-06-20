@@ -1,6 +1,8 @@
 // @flow
 
 import InfluenceChart from '../InfluenceChart'
+import Navbar from '../Navbar/'
+import WikiCollapse from '../WikiCollapse'
 import { type Uri, type SubjectId, type PersonDetail, wikipediaMobileUri } from '../../types'
 import * as dbpedia from '../../clients/DBpedia'
 
@@ -8,7 +10,6 @@ const React = require('react')
 const { connect } = require('react-redux')
 
 const { WikiDiv } = require('../Wikidiv/')
-const { Navbar } = require('../Navbar/')
 const { About } = require('../About/')
 
 const store = require('../../store')
@@ -36,7 +37,7 @@ type AppState = { }
 class App_ extends React.Component<AppProps, AppState> {
   componentDidMount() {
     this.getAndCachePerson(this.props.focusedSubject).then((person: PersonDetail) => {
-      this.focusPerson(person)
+      this.focusPerson(person.id)
     })
   }
 
@@ -52,12 +53,12 @@ class App_ extends React.Component<AppProps, AppState> {
       }))
   }
 
-  focusPerson(n: PersonDetail): void {
-    this.getAndCachePerson(n.id).then((person: PersonDetail) => {
+  focusPerson(n: SubjectId): void {
+    this.getAndCachePerson(n).then((person: PersonDetail) => {
       window.history.pushState(
         '',
-        n.id,
-        `${location.origin}${location.pathname}?subject=${n.id.asString()}`,
+        n,
+        `${location.origin}${location.pathname}?subject=${n.asString()}`,
       )
       if (person.wikipediaUri) {
         const uri = person.wikipediaUri
@@ -70,7 +71,7 @@ class App_ extends React.Component<AppProps, AppState> {
         person.influenced.map(i => this.getAndCachePerson(i)),
       ])
     }).then(() => {
-      this.props.focusOnPerson(n.id)
+      this.props.focusOnPerson(n)
     }).catch((err) => {
       console.log('Getting a person failed with an error: ', err)
     })
@@ -100,16 +101,24 @@ class App_ extends React.Component<AppProps, AppState> {
     const about = React.createElement(About, {
       key: 'about',
       goBack: () => this.props.toggleAboutPage(),
+      focusPerson: n => this.focusPerson(n),
     })
 
     const influenceChart = React.createElement(InfluenceChart, {
       label: 'influencechart',
-      selectPerson: n => this.focusPerson(n),
+      selectPerson: (n: SubjectId): void => this.focusPerson(n),
     })
-    const chartDiv = React.createElement('div', {
-      key: 'chartdiv',
-      id: 'chartdiv',
-    }, influenceChart)
+    const chartDiv = React.createElement(
+      'div',
+      {
+        key: 'chartdiv',
+        id: 'chartdiv',
+        className: this.props.wikiDivHidden ? 'chart-div-expanded' : 'chart-div-normal',
+      },
+      influenceChart,
+    )
+
+    const wikiCollapse = React.createElement(WikiCollapse, { })
 
     const wikiDiv = React.createElement(WikiDiv, {
       hidden: this.props.wikiDivHidden,
@@ -120,23 +129,37 @@ class App_ extends React.Component<AppProps, AppState> {
 
     if (this.props.showAboutPage) {
       return React.createElement(
-        React.Fragment,
+        'div',
+        {},
+        about,
+      )
+    }
+
+    if (this.props.wikiDivHidden) {
+      return React.createElement(
+        'div',
         {},
         navbar,
         React.createElement(
           'div',
-          { className: 'container-wrapper' },
-          about,
+          { id: 'main-content' },
           chartDiv,
-          wikiDiv,
+          wikiCollapse,
         ),
       )
     }
+
     return React.createElement(
-      React.Fragment,
+      'div',
       {},
       navbar,
-      React.createElement('div', { className: 'container-wrapper' }, chartDiv, wikiDiv),
+      React.createElement(
+        'div',
+        { id: 'main-content' },
+        chartDiv,
+        wikiCollapse,
+        wikiDiv,
+      ),
     )
   }
 }
@@ -145,6 +168,7 @@ const App = connect(
   state => ({
     focusedSubject: store.focusedSubject(state),
     showAboutPage: store.showAboutPage(state),
+    wikiDivHidden: store.wikiDivHidden(state),
     wikiUri: store.wikiUri(state),
   }),
   dispatch => ({
@@ -153,6 +177,7 @@ const App = connect(
     goHome: () => dispatch(store.setAboutPage(false)),
     saveSearchResults: (str: ?string, results: Array<PersonDetail>): void => dispatch(store.saveSearchResults(str, results)),
     setSearchInProgress: (status) => dispatch(store.setSearchInProgress(status)),
+    setWikiDivHidden: (status) => dispatch(store.setWikiDivHidden(status)),
     setWikiUri: uri => dispatch(store.setWikiUri(uri)),
     toggleAboutPage: () => dispatch(store.toggleAboutPage()),
   }),

@@ -4,7 +4,7 @@ import fp from 'lodash/fp'
 import React from 'react'
 import { type Element } from 'react'
 
-import type { PersonDetail } from '../../types'
+import { type PersonDetail, SubjectId } from '../../types'
 import CloseButton from '../../components/CloseButton'
 
 require('./main.css')
@@ -18,7 +18,7 @@ const summarize = (msg: string, skipNWords: number, maxlength: number): string =
   return res.concat('...')
 }
 
-const ListItem = (selectPerson: PersonDetail => void) => (person: PersonDetail) => {
+const ListItem = (selectPerson: SubjectId => void) => (person: PersonDetail) => {
   const {
     name,
     birthDate,
@@ -35,11 +35,15 @@ const ListItem = (selectPerson: PersonDetail => void) => (person: PersonDetail) 
   const imgContainer = React.createElement('div', { className: 'search-thumbnail' }, img)
   const nodeName = React.createElement(
     'h3',
-    {
-      onClick: () => selectPerson(person),
-      className: 'link',
-    },
-    name,
+    {},
+    React.createElement(
+      'a',
+      {
+        onClick: () => selectPerson(person.id),
+        className: 'link',
+      },
+      name,
+    ),
   )
   const dates = birthDate
     ? React.createElement('p', {}, `${birthDate.format('YYYY-MM-DD')} - ${deathDate ? deathDate.format('YYYY-MM-DD') : ''}`)
@@ -61,7 +65,14 @@ const ListItem = (selectPerson: PersonDetail => void) => (person: PersonDetail) 
     ? React.createElement('p', {}, summarize(abstract, 10, 80))
     : null
 
-  const link = React.createElement('a', { href: wikipediaUri || uri }, 'Go to Wikipedia Entry')
+  const link = React.createElement(
+    'a',
+    {
+      href: wikipediaUri || uri,
+      className: 'wikipedia-link',
+    },
+    'Go to Wikipedia Entry',
+  )
 
   return React.createElement(
     'div',
@@ -139,7 +150,7 @@ const ResultSummary = (props: ResultSummaryProps): Element<'div'> =>
 type SearchResultProps = {
   searchString: string,
   searchResults: Array<PersonDetail>,
-  selectPerson: PersonDetail => void,
+  selectPerson: SubjectId => void,
   closeSearch: () => void,
 }
 
