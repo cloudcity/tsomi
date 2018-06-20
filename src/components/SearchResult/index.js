@@ -65,7 +65,14 @@ const ListItem = (selectPerson: SubjectId => void) => (person: PersonDetail) => 
     ? React.createElement('p', {}, summarize(abstract, 10, 80))
     : null
 
-  const link = React.createElement('a', { href: wikipediaUri || uri }, 'Go to Wikipedia Entry')
+  const link = React.createElement(
+    'a',
+    {
+      href: wikipediaUri || uri,
+      className: 'wikipedia-link',
+    },
+    'Go to Wikipedia Entry',
+  )
 
   return React.createElement(
     'div',
