@@ -48,11 +48,14 @@ class Navbar extends React.Component<NavbarProps, NavbarState> {
       React.createElement('div', { className: 'right' }, about),
     )
 
-    const search = React.createElement(Search, {
-      closeSearch,
-      focusPerson,
-      submitSearch,
-    })
+    const search = React.createElement(
+      Search,
+      {
+        closeSearch,
+        focusPerson,
+        submitSearch,
+      },
+    )
 
     return React.createElement(
       React.Fragment,
@@ -63,5 +66,5 @@ class Navbar extends React.Component<NavbarProps, NavbarState> {
   }
 }
 
-module.exports = { Navbar }
+export default Navbar
 

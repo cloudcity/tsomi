@@ -1,6 +1,7 @@
 // @flow
 
 import InfluenceChart from '../InfluenceChart'
+import Navbar from '../Navbar/'
 import WikiCollapse from '../WikiCollapse'
 import { type Uri, type SubjectId, type PersonDetail, wikipediaMobileUri } from '../../types'
 import * as dbpedia from '../../clients/DBpedia'
@@ -9,7 +10,6 @@ const React = require('react')
 const { connect } = require('react-redux')
 
 const { WikiDiv } = require('../Wikidiv/')
-const { Navbar } = require('../Navbar/')
 const { About } = require('../About/')
 
 const store = require('../../store')

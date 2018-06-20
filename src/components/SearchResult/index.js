@@ -4,7 +4,7 @@ import fp from 'lodash/fp'
 import React from 'react'
 import { type Element } from 'react'
 
-import type { PersonDetail } from '../../types'
+import { type PersonDetail, SubjectId } from '../../types'
 import CloseButton from '../../components/CloseButton'
 
 require('./main.css')
@@ -18,7 +18,7 @@ const summarize = (msg: string, skipNWords: number, maxlength: number): string =
   return res.concat('...')
 }
 
-const ListItem = (selectPerson: PersonDetail => void) => (person: PersonDetail) => {
+const ListItem = (selectPerson: SubjectId => void) => (person: PersonDetail) => {
   const {
     name,
     birthDate,
@@ -39,7 +39,7 @@ const ListItem = (selectPerson: PersonDetail => void) => (person: PersonDetail) 
     React.createElement(
       'a',
       {
-        onClick: () => selectPerson(person),
+        onClick: () => selectPerson(person.id),
         className: 'link',
       },
       name,
@@ -143,7 +143,7 @@ const ResultSummary = (props: ResultSummaryProps): Element<'div'> =>
 type SearchResultProps = {
   searchString: string,
   searchResults: Array<PersonDetail>,
-  selectPerson: PersonDetail => void,
+  selectPerson: SubjectId => void,
   closeSearch: () => void,
 }
 
