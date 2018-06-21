@@ -35,7 +35,6 @@ const {
 
 const {
   ALPHA,
-  ARROW_WIDTH,
   BANNER_X,
   BANNER_Y,
   CHARGE_BASE,
@@ -152,12 +151,16 @@ class TGraph {
     delete this.nodes[personId.asString()]
 
     const removeLinks = fp.filter(
-      (l: TLink): bool => l.source.getId() === personId.asString() || l.target.getId() === personId.asString(),
+      (l: TLink): bool =>
+        l.source.getId() === personId.asString()
+        || l.target.getId() === personId.asString(),
       this.links,
     )
 
     this.links = fp.filter(
-      (l: TLink): bool => l.source.getId() !== personId.asString() && l.target.getId() !== personId.asString(),
+      (l: TLink): bool =>
+        l.source.getId() !== personId.asString()
+        && l.target.getId() !== personId.asString(),
       this.links,
     )
 
@@ -557,7 +560,24 @@ const updateInfluenceGraph = (
  * This is a conceptual object around the D3 drawing interface. It is highly
  * stateful and directly manipulates DOM elements in keeping with D3.
  * InfluenceChart provides the React component that makes this behave well in
- * React applications. */
+ * React applications.
+ *
+ * The data types provide some guidance on what data is necessary. A more
+ * refined version of this module would define interfaces that have the desired
+ * data. However, here is the explanation.
+ *
+ * Most data in PersonData gets used for rendering the person or for search
+ * results.
+ *
+ * The graph links work entirely on the `influencedBy` and `influenced` fields
+ * in each PersonDetail. Those fields list IDs of influences. Various parts of
+ * the InfluenceCanvas use those IDs to try to retrieve the relevant people
+ * from the graph. Knowing that any lookup may fail, all of the modules handle
+ * both successful and failed lookups.
+ *
+ * The timeline depends entirely on the birth and death dates of the visible
+ * nodes.
+ */
 class InfluenceCanvas {
   focus: PersonDetail
   people: store.PeopleCache
@@ -854,7 +874,12 @@ class InfluenceChart_ extends React.Component<InfluenceChartProps, InfluenceChar
     }
   }
 
-  /* This gets called The drawing area needs to know its dimensions and the real DOM element and D3 selection in which it will work. That information is not available in the `render` method on first render.
+  /* This gets called The drawing area needs to know its dimensions and the
+   * real DOM element and D3 selection in which it will work. That information
+   * is not available in the `render` method on first render, but
+   * `componentDidMount` is always called after all of the DOM elements are
+   * present on the page. So, this is the perfect place to initially create the
+   * canvas and to attach the window resize listener.
    */
   componentDidMount() {
     this.state.domElem = document.getElementById(this.props.label)
@@ -880,10 +905,13 @@ class InfluenceChart_ extends React.Component<InfluenceChartProps, InfluenceChar
     })
   }
 
+  /* This gets called any time the component's properties get modified. In this
+   * case, I use it to ensure that I know when an expand tag gets added or
+   * removed, since that means a layout change and thus a change of dimensions.
+   * */
   componentDidUpdate() {
     const { domElem, canvas } = this.state
-    if (domElem != null && canvas != null ) {
-      console.log('[componentDidUpdate]', domElem.getBoundingClientRect())
+    if (domElem != null && canvas != null) {
       canvas.setDimensions(domElem.getBoundingClientRect())
     }
   }
@@ -893,13 +921,10 @@ class InfluenceChart_ extends React.Component<InfluenceChartProps, InfluenceChar
   }
 }
 
-const InfluenceChart = connect(
-  state => ({
-    focusedId: store.focusedSubject(state),
-    people: store.people(state),
-  }),
-  dispatch => ({}),
-)(InfluenceChart_)
+const InfluenceChart = connect(state => ({
+  focusedId: store.focusedSubject(state),
+  people: store.people(state),
+}))(InfluenceChart_)
 
 
 export default InfluenceChart
