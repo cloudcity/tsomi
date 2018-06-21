@@ -17,6 +17,7 @@ export type Selection = {|
   enter: () => Selection,
   exit: () => Selection,
   filter: Function => Selection,
+  node: () => any,
   on: (string, (any, ...any) => void) => Selection,
   remove: () => Selection,
   select: string => Selection,
