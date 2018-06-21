@@ -9,6 +9,7 @@ import React from 'react'
 import { connect } from 'react-redux'
 
 import * as store from '../../store'
+import * as D3Types from '../../d3-types'
 import {
   type Dimensions,
   type PersonDetail,
@@ -46,48 +47,8 @@ const {
 } = require('../../constants')
 
 
-type LinkSegment = {
-  source: any,
-  target: any,
-}
-
-
-type Selection = {
-  append: any => Selection,
-  attr: (string, ?string | ?number | ?Function) => Selection,
-  call: (Function | Selection) => Selection,
-  classed: (string, bool | Function) => Selection,
-  data: (Array<any>, ?(any => any)) => Selection,
-  duration: number => Selection,
-  ease: number => Selection,
-  enter: () => Selection,
-  exit: () => Selection,
-  filter: Function => Selection,
-  on: (string, (any, number) => void) => Selection,
-  remove: () => Selection,
-  select: string => Selection,
-  selectAll: string => Selection,
-  style: (string, string) => Selection,
-  text: (string | Function) => Selection,
-  transition: (?number) => Selection,
-}
-
-type D3Scale<D, R> = {|
-  (D): D,
-  domain: Array<D> => void,
-  range: Array<R> => void,
-|}
-
-type ForceSimulation = {|
-  alpha: (?number) => number,
-  force: (string, any) => ForceSimulation,
-  nodes: Array<InvisibleNode | PersonNode> => ForceSimulation,
-  on: (string, () => void) => ForceSimulation,
-  restart: () => void,
-|}
-
 type LinkForces = {
-  links: Array<LinkSegment> => LinkForces,
+  links: Array<D3Types.LinkSegment> => LinkForces,
   strength: number => LinkForces,
 }
 
@@ -217,7 +178,7 @@ class TGraph {
     return this.links
   }
 
-  getLinkSegments(): Array<LinkSegment> {
+  getLinkSegments(): Array<D3Types.LinkSegment> {
     return fp.flatten(fp.map(link => [
       { source: link.source, target: link.middle },
       { source: link.middle, target: link.target },
@@ -229,7 +190,7 @@ class TGraph {
 /* A timeline class represents the time-based axis that appears somewhere
  * towards the bottom of the page.
  */
-type Timeline = { scale: D3Scale<moment, number>, axis: Selection }
+type Timeline = { scale: D3Types.D3Scale<moment, number>, axis: D3Types.Selection }
 
 const createTimeline = (width: number, startDate: moment, endDate: moment): Timeline => {
   const scale = d3.scaleTime()
@@ -295,7 +256,7 @@ const calculateLifelinePath = (
 
 
 const renderPeople = (
-  sel: Selection,
+  sel: D3Types.Selection,
   selectNode: PersonNode => void,
   mouseOver: (PersonNode, bool) => void,
 ) => {
@@ -342,7 +303,7 @@ const renderPeople = (
 }
 
 
-const renderLinks = (container: Selection, graph: TGraph): Selection => {
+const renderLinks = (container: D3Types.Selection, graph: TGraph): D3Types.Selection => {
   const path = container.append('path')
 
   path.classed('influence-link', true)
@@ -357,10 +318,10 @@ const renderLinks = (container: Selection, graph: TGraph): Selection => {
 
 
 const renderLifelines = (
-  container: Selection,
+  container: D3Types.Selection,
   dimensions: Dimensions,
   timeline: Timeline,
-): Selection => {
+): D3Types.Selection => {
   const path = container.append('path')
 
   path.classed('timeline', true)
@@ -373,8 +334,8 @@ const renderLifelines = (
 
 
 const focusHighlight = (
-  nodesElem: Selection,
-  lifelinesElem: Selection,
+  nodesElem: D3Types.Selection,
+  lifelinesElem: D3Types.Selection,
   focus: PersonDetail,
   n: PersonNode,
   over: bool,
@@ -383,6 +344,8 @@ const focusHighlight = (
     return
   }
   if (over) {
+    nodesElem.append(() => nodesElem.select(`#${convertToSafeDOMId(n.getId())}`).remove().node())
+
     nodesElem.select(`#${convertToSafeDOMId(n.getId())} .scale`)
       .transition()
       .attr('transform', 'scale(0.75)')
@@ -396,6 +359,8 @@ const focusHighlight = (
     lifelinesElem.select(`#${convertToSafeDOMId(n.getId())}`)
       .transition()
       .attr('style', 'opacity: 0.03;')
+
+    nodesElem.append(() => nodesElem.select(`#${convertToSafeDOMId(focus.id.asString())}`).remove().node())
   }
 }
 
@@ -504,14 +469,14 @@ class InfluenceCanvas {
   dimensions: Dimensions
   graph: TGraph
 
-  topElem: Selection
-  definitions: Selection
-  nodesElem: Selection
-  linksElem: Selection
-  lifelinesElem: Selection
+  topElem: D3Types.Selection
+  definitions: D3Types.Selection
+  nodesElem: D3Types.Selection
+  linksElem: D3Types.Selection
+  lifelinesElem: D3Types.Selection
 
-  timelineAxis: Selection
-  fdl: ForceSimulation
+  timelineAxis: D3Types.Selection
+  fdl: D3Types.ForceSimulation<InvisibleNode | PersonNode>
   fdlLinks: LinkForces
 
   selectNode: (SubjectId) => void
@@ -519,7 +484,7 @@ class InfluenceCanvas {
   highlight: ?PersonNode
 
   constructor(
-    topElem: Selection,
+    topElem: D3Types.Selection,
     dimensions: Dimensions,
     focus: PersonDetail,
     people: store.PeopleCache,
@@ -687,6 +652,34 @@ class InfluenceCanvas {
 
     this.fdl.alpha(ALPHA)
     this.fdl.restart()
+
+    /* TODO: this block is meant to move the focus node to the top of the
+     * stack. This can happen if a lot of data is already loaded when this node
+     * gets created. Problem is, it fails intermittently with the error
+     * `Uncaught TypeError: Failed to execute 'appendChild' on 'Node':
+     * parameter 1 is not of type 'Node'.`. This is a problem given that
+     * according to the diagnostics below, `rm.node()` actually is a DOM
+     * element and it is being returned. So, I've commented this out and we
+     * will have an intermittent visual artifact until somebody can make this
+     * logic work. */
+    /*
+    const elem = this.nodesElem.select(`#${convertToSafeDOMId(this.focus.id.asString())}`)
+    console.log('[About to remove]', elem.node())
+    this.nodesElem.append(() => {
+      if (this.focus != null) {
+        const elem = this.nodesElem.select(`#${convertToSafeDOMId(this.focus.id.asString())}`)
+        console.log('[move focus forward]', elem)
+        const rm = elem.remove()
+        console.log('[move focus forward, removed]', rm)
+        console.log('[move focus forward, removed node]', rm.node(), typeof rm.node())
+        if (!rm.node()) {
+          return null
+        }
+        return elem.node()
+      }
+      return null
+    })
+    */
   }
 }
 
@@ -701,7 +694,7 @@ type InfluenceChartProps = {
 
 type InfluenceChartState = {
   domElem: ?HTMLElement,
-  d3Elem: ?Selection,
+  d3Elem: ?D3Types.Selection,
   canvas: ?InfluenceCanvas,
 }
 

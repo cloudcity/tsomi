@@ -5824,7 +5824,7 @@ var singleton = null;
 var	singletonCounter = 0;
 var	stylesInsertedAtTop = [];
 
-var	fixUrls = __webpack_require__(721);
+var	fixUrls = __webpack_require__(722);
 
 module.exports = function(list, options) {
 	if (typeof DEBUG !== "undefined" && DEBUG) {
@@ -28538,7 +28538,7 @@ module.exports = function(module) {
 "use strict";
 
 
-var $ = __webpack_require__(714);
+var $ = __webpack_require__(715);
 
 var _require = __webpack_require__(108),
     getViewportDimensions = _require.getViewportDimensions;
@@ -49256,17 +49256,17 @@ var _InfluenceChart = __webpack_require__(374);
 
 var _InfluenceChart2 = _interopRequireDefault(_InfluenceChart);
 
-var _Navbar = __webpack_require__(715);
+var _Navbar = __webpack_require__(716);
 
 var _Navbar2 = _interopRequireDefault(_Navbar);
 
-var _WikiCollapse = __webpack_require__(732);
+var _WikiCollapse = __webpack_require__(733);
 
 var _WikiCollapse2 = _interopRequireDefault(_WikiCollapse);
 
 var _types = __webpack_require__(19);
 
-var _DBpedia = __webpack_require__(735);
+var _DBpedia = __webpack_require__(736);
 
 var dbpedia = _interopRequireWildcard(_DBpedia);
 
@@ -49285,15 +49285,15 @@ var React = __webpack_require__(7);
 var _require = __webpack_require__(33),
     connect = _require.connect;
 
-var _require2 = __webpack_require__(740),
+var _require2 = __webpack_require__(741),
     WikiDiv = _require2.WikiDiv;
 
-var _require3 = __webpack_require__(743),
+var _require3 = __webpack_require__(744),
     About = _require3.About;
 
 var store = __webpack_require__(44);
 
-__webpack_require__(746);
+__webpack_require__(747);
 
 var App_ = function (_React$Component) {
   _inherits(App_, _React$Component);
@@ -49516,9 +49516,13 @@ var _store = __webpack_require__(44);
 
 var store = _interopRequireWildcard(_store);
 
+var _d3Types = __webpack_require__(713);
+
+var D3Types = _interopRequireWildcard(_d3Types);
+
 var _types = __webpack_require__(19);
 
-var _Set = __webpack_require__(713);
+var _Set = __webpack_require__(714);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -49794,11 +49798,19 @@ var focusHighlight = function focusHighlight(nodesElem, lifelinesElem, focus, n,
     return;
   }
   if (over) {
+    nodesElem.append(function () {
+      return nodesElem.select('#' + convertToSafeDOMId(n.getId())).remove().node();
+    });
+
     nodesElem.select('#' + convertToSafeDOMId(n.getId()) + ' .scale').transition().attr('transform', 'scale(0.75)');
     lifelinesElem.select('#' + convertToSafeDOMId(n.getId())).transition().attr('style', 'opacity: 0.5;');
   } else {
     nodesElem.select('#' + convertToSafeDOMId(n.getId()) + ' .scale').transition().attr('transform', 'scale(0.5)');
     lifelinesElem.select('#' + convertToSafeDOMId(n.getId())).transition().attr('style', 'opacity: 0.03;');
+
+    nodesElem.append(function () {
+      return nodesElem.select('#' + convertToSafeDOMId(focus.id.asString())).remove().node();
+    });
   }
 };
 
@@ -50061,6 +50073,34 @@ var InfluenceCanvas = function () {
 
       this.fdl.alpha(ALPHA);
       this.fdl.restart();
+
+      /* TODO: this block is meant to move the focus node to the top of the
+       * stack. This can happen if a lot of data is already loaded when this node
+       * gets created. Problem is, it fails intermittently with the error
+       * `Uncaught TypeError: Failed to execute 'appendChild' on 'Node':
+       * parameter 1 is not of type 'Node'.`. This is a problem given that
+       * according to the diagnostics below, `rm.node()` actually is a DOM
+       * element and it is being returned. So, I've commented this out and we
+       * will have an intermittent visual artifact until somebody can make this
+       * logic work. */
+      /*
+      const elem = this.nodesElem.select(`#${convertToSafeDOMId(this.focus.id.asString())}`)
+      console.log('[About to remove]', elem.node())
+      this.nodesElem.append(() => {
+        if (this.focus != null) {
+          const elem = this.nodesElem.select(`#${convertToSafeDOMId(this.focus.id.asString())}`)
+          console.log('[move focus forward]', elem)
+          const rm = elem.remove()
+          console.log('[move focus forward, removed]', rm)
+          console.log('[move focus forward, removed node]', rm.node(), typeof rm.node())
+          if (!rm.node()) {
+            return null
+          }
+          return elem.node()
+        }
+        return null
+      })
+      */
     }
   }]);
 
@@ -66546,6 +66586,13 @@ module.exports = function (encodedURI) {
 "use strict";
 
 
+/***/ }),
+/* 714 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -66631,7 +66678,7 @@ var eqSet = exports.eqSet = function eqSet(s1, s2) {
 };
 
 /***/ }),
-/* 714 */
+/* 715 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
@@ -77002,7 +77049,7 @@ return jQuery;
 
 
 /***/ }),
-/* 715 */
+/* 716 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -77020,7 +77067,7 @@ var React = _interopRequireWildcard(_react);
 
 __webpack_require__(19);
 
-var _Search = __webpack_require__(716);
+var _Search = __webpack_require__(717);
 
 var _Search2 = _interopRequireDefault(_Search);
 
@@ -77034,7 +77081,7 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-__webpack_require__(730);
+__webpack_require__(731);
 
 var Navbar = function (_React$Component) {
   _inherits(Navbar, _React$Component);
@@ -77080,7 +77127,7 @@ var Navbar = function (_React$Component) {
 exports.default = Navbar;
 
 /***/ }),
-/* 716 */
+/* 717 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -77098,7 +77145,7 @@ var _react2 = _interopRequireDefault(_react);
 
 var _reactRedux = __webpack_require__(33);
 
-var _eventtypes = __webpack_require__(717);
+var _eventtypes = __webpack_require__(718);
 
 var _store = __webpack_require__(44);
 
@@ -77106,11 +77153,11 @@ var store = _interopRequireWildcard(_store);
 
 var _types = __webpack_require__(19);
 
-var _Spinner = __webpack_require__(718);
+var _Spinner = __webpack_require__(719);
 
 var _Spinner2 = _interopRequireDefault(_Spinner);
 
-var _SearchResult = __webpack_require__(722);
+var _SearchResult = __webpack_require__(723);
 
 var _SearchResult2 = _interopRequireDefault(_SearchResult);
 
@@ -77124,7 +77171,7 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-__webpack_require__(728);
+__webpack_require__(729);
 
 var Search_ = function (_React$Component) {
   _inherits(Search_, _React$Component);
@@ -77203,7 +77250,7 @@ var Search = (0, _reactRedux.connect)(function (state) {
 exports.default = Search;
 
 /***/ }),
-/* 717 */
+/* 718 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -77216,7 +77263,7 @@ var inputElement = function inputElement(e) {
 module.exports = { inputElement: inputElement };
 
 /***/ }),
-/* 718 */
+/* 719 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -77232,7 +77279,7 @@ var _react2 = _interopRequireDefault(_react);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-__webpack_require__(719);
+__webpack_require__(720);
 
 var Spinner = function Spinner(props) {
   return _react2.default.createElement('div', { className: 'spinner ' + props.className });
@@ -77241,11 +77288,11 @@ var Spinner = function Spinner(props) {
 exports.default = Spinner;
 
 /***/ }),
-/* 719 */
+/* 720 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
-var content = __webpack_require__(720);
+var content = __webpack_require__(721);
 
 if(typeof content === 'string') content = [[module.i, content, '']];
 
@@ -77291,7 +77338,7 @@ if(false) {
 }
 
 /***/ }),
-/* 720 */
+/* 721 */
 /***/ (function(module, exports, __webpack_require__) {
 
 exports = module.exports = __webpack_require__(15)(false);
@@ -77305,7 +77352,7 @@ exports.push([module.i, ".spinner {\n  border-radius: 50%;\n  -webkit-animation:
 
 
 /***/ }),
-/* 721 */
+/* 722 */
 /***/ (function(module, exports) {
 
 
@@ -77400,7 +77447,7 @@ module.exports = function (css) {
 
 
 /***/ }),
-/* 722 */
+/* 723 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -77420,7 +77467,7 @@ var _react2 = _interopRequireDefault(_react);
 
 var _types = __webpack_require__(19);
 
-var _CloseButton = __webpack_require__(723);
+var _CloseButton = __webpack_require__(724);
 
 var _CloseButton2 = _interopRequireDefault(_CloseButton);
 
@@ -77428,7 +77475,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
-__webpack_require__(726);
+__webpack_require__(727);
 
 var summarize = function summarize(msg, skipNWords, maxlength) {
   var res = '...';
@@ -77505,7 +77552,7 @@ var SearchResult = function SearchResult(props) {
 exports.default = SearchResult;
 
 /***/ }),
-/* 723 */
+/* 724 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -77521,7 +77568,7 @@ var _react2 = _interopRequireDefault(_react);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-__webpack_require__(724);
+__webpack_require__(725);
 
 var Icon = function Icon() {
   return _react2.default.createElement('img', {
@@ -77542,11 +77589,11 @@ var CloseButton = function CloseButton(props) {
 exports.default = CloseButton;
 
 /***/ }),
-/* 724 */
+/* 725 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
-var content = __webpack_require__(725);
+var content = __webpack_require__(726);
 
 if(typeof content === 'string') content = [[module.i, content, '']];
 
@@ -77592,7 +77639,7 @@ if(false) {
 }
 
 /***/ }),
-/* 725 */
+/* 726 */
 /***/ (function(module, exports, __webpack_require__) {
 
 exports = module.exports = __webpack_require__(15)(false);
@@ -77606,11 +77653,11 @@ exports.push([module.i, ".close-button {\n  display: flex;\n  align-items: cente
 
 
 /***/ }),
-/* 726 */
+/* 727 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
-var content = __webpack_require__(727);
+var content = __webpack_require__(728);
 
 if(typeof content === 'string') content = [[module.i, content, '']];
 
@@ -77656,7 +77703,7 @@ if(false) {
 }
 
 /***/ }),
-/* 727 */
+/* 728 */
 /***/ (function(module, exports, __webpack_require__) {
 
 exports = module.exports = __webpack_require__(15)(false);
@@ -77670,11 +77717,11 @@ exports.push([module.i, ".search-results {\n  overflow-y: scroll;\n  position: f
 
 
 /***/ }),
-/* 728 */
+/* 729 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
-var content = __webpack_require__(729);
+var content = __webpack_require__(730);
 
 if(typeof content === 'string') content = [[module.i, content, '']];
 
@@ -77720,7 +77767,7 @@ if(false) {
 }
 
 /***/ }),
-/* 729 */
+/* 730 */
 /***/ (function(module, exports, __webpack_require__) {
 
 exports = module.exports = __webpack_require__(15)(false);
@@ -77734,11 +77781,11 @@ exports.push([module.i, "div.search {\n  position: absolute;\n  top: 60px;\n  le
 
 
 /***/ }),
-/* 730 */
+/* 731 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
-var content = __webpack_require__(731);
+var content = __webpack_require__(732);
 
 if(typeof content === 'string') content = [[module.i, content, '']];
 
@@ -77784,7 +77831,7 @@ if(false) {
 }
 
 /***/ }),
-/* 731 */
+/* 732 */
 /***/ (function(module, exports, __webpack_require__) {
 
 exports = module.exports = __webpack_require__(15)(false);
@@ -77798,7 +77845,7 @@ exports.push([module.i, "nav {\n  position: absolute;\n  top: 0;\n  left: 0;\n  
 
 
 /***/ }),
-/* 732 */
+/* 733 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -77822,7 +77869,7 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-__webpack_require__(733);
+__webpack_require__(734);
 
 var WikiCollapse_ = function WikiCollapse_(_ref) {
   var collapsed = _ref.collapsed,
@@ -77851,11 +77898,11 @@ var WikiCollapse = (0, _reactRedux.connect)(function (state) {
 exports.default = WikiCollapse;
 
 /***/ }),
-/* 733 */
+/* 734 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
-var content = __webpack_require__(734);
+var content = __webpack_require__(735);
 
 if(typeof content === 'string') content = [[module.i, content, '']];
 
@@ -77901,7 +77948,7 @@ if(false) {
 }
 
 /***/ }),
-/* 734 */
+/* 735 */
 /***/ (function(module, exports, __webpack_require__) {
 
 exports = module.exports = __webpack_require__(15)(false);
@@ -77915,7 +77962,7 @@ exports.push([module.i, ".vertical-divider {\n  position: relative;\n  width: 31
 
 
 /***/ }),
-/* 735 */
+/* 736 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -77936,7 +77983,7 @@ var _moment = __webpack_require__(0);
 
 var _moment2 = _interopRequireDefault(_moment);
 
-var _Sparql = __webpack_require__(736);
+var _Sparql = __webpack_require__(737);
 
 var _types = __webpack_require__(19);
 
@@ -77944,7 +77991,7 @@ var _util = __webpack_require__(108);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-__webpack_require__(738);
+__webpack_require__(739);
 
 // Handle a variety of different date format issues. Dates, especially in the
 // distant past, are somewhat uncertain and DBpedia returns dates in a few
@@ -78050,7 +78097,7 @@ var searchForPeople = exports.searchForPeople = function searchForPeople(name) {
 };
 
 /***/ }),
-/* 736 */
+/* 737 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -78065,7 +78112,7 @@ var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = [
  * be merged into the DBpedia client.
  */
 
-var _require = __webpack_require__(737),
+var _require = __webpack_require__(738),
     encodeFormBody = _require.encodeFormBody,
     fetchWithTimeout = _require.fetchWithTimeout,
     httpErrorPromise = _require.httpErrorPromise;
@@ -78117,7 +78164,7 @@ var runSparqlQuery = function runSparqlQuery(template, variables) {
 module.exports = { runSparqlQuery: runSparqlQuery };
 
 /***/ }),
-/* 737 */
+/* 738 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -78181,19 +78228,19 @@ module.exports = {
 };
 
 /***/ }),
-/* 738 */
+/* 739 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // the whatwg-fetch polyfill installs the fetch() function
 // on the global object (window or self)
 //
 // Return that as the export for use in Webpack, Browserify etc.
-__webpack_require__(739);
+__webpack_require__(740);
 module.exports = self.fetch.bind(self);
 
 
 /***/ }),
-/* 739 */
+/* 740 */
 /***/ (function(module, exports) {
 
 (function(self) {
@@ -78665,14 +78712,14 @@ module.exports = self.fetch.bind(self);
 
 
 /***/ }),
-/* 740 */
+/* 741 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 var React = __webpack_require__(7);
-__webpack_require__(741);
+__webpack_require__(742);
 
 var WikiDiv = function WikiDiv(_ref) {
   var url = _ref.url,
@@ -78692,11 +78739,11 @@ var WikiDiv = function WikiDiv(_ref) {
 module.exports = { WikiDiv: WikiDiv };
 
 /***/ }),
-/* 741 */
+/* 742 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
-var content = __webpack_require__(742);
+var content = __webpack_require__(743);
 
 if(typeof content === 'string') content = [[module.i, content, '']];
 
@@ -78742,7 +78789,7 @@ if(false) {
 }
 
 /***/ }),
-/* 742 */
+/* 743 */
 /***/ (function(module, exports, __webpack_require__) {
 
 exports = module.exports = __webpack_require__(15)(false);
@@ -78756,7 +78803,7 @@ exports.push([module.i, "#wikiframe {\n  width: 100%;\n  height: 100%;\n}\n\n.co
 
 
 /***/ }),
-/* 743 */
+/* 744 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -78778,7 +78825,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
-__webpack_require__(744);
+__webpack_require__(745);
 
 var About = function About(_ref) {
   var goBack = _ref.goBack,
@@ -78834,11 +78881,11 @@ var About = function About(_ref) {
 module.exports = { About: About };
 
 /***/ }),
-/* 744 */
+/* 745 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
-var content = __webpack_require__(745);
+var content = __webpack_require__(746);
 
 if(typeof content === 'string') content = [[module.i, content, '']];
 
@@ -78884,7 +78931,7 @@ if(false) {
 }
 
 /***/ }),
-/* 745 */
+/* 746 */
 /***/ (function(module, exports, __webpack_require__) {
 
 exports = module.exports = __webpack_require__(15)(false);
@@ -78898,11 +78945,11 @@ exports.push([module.i, "div.about-container {\n  position: absolute;\n  z-index
 
 
 /***/ }),
-/* 746 */
+/* 747 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
-var content = __webpack_require__(747);
+var content = __webpack_require__(748);
 
 if(typeof content === 'string') content = [[module.i, content, '']];
 
@@ -78948,7 +78995,7 @@ if(false) {
 }
 
 /***/ }),
-/* 747 */
+/* 748 */
 /***/ (function(module, exports, __webpack_require__) {
 
 exports = module.exports = __webpack_require__(15)(false);
