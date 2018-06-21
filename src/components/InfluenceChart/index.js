@@ -1,5 +1,12 @@
 // @flow
 
+/* InfluenceCanvas provides the D3 canvas that draws the influences for the
+ * currently focused person in a diagram.
+ *
+ * InfluenceChart creates a React element that connects the stateful
+ * InfluenceCanvas/D3 system into the quasi-stateless React/Redux world.
+ */
+
 /* eslint no-param-assign: off, no-param-reassign: off */
 
 import * as d3 from 'd3'
@@ -53,6 +60,8 @@ type LinkForces = {
 }
 
 
+/* InvisibleNodes help by providing an invisible extra anchor for the physics
+ * model, which grants a curve to the influence links. */
 type InvisibleNode = {|
   type: 'InvisibleNode',
   x: number,
@@ -62,6 +71,10 @@ type InvisibleNode = {|
   getId: () => string,
 |}
 
+
+/* PersonNode represents the location of a node on the influence canvas. It is
+ * a virtual object that the force engine uses to position and move objects
+ * around the field. */
 type PersonNode = {|
   type: 'PersonNode',
   x: number,
@@ -73,6 +86,7 @@ type PersonNode = {|
 |}
 
 
+/* Represent links between two PersonNodes and the InvisibleNode between them. */
 type TLink = {
   source: PersonNode,
   middle: InvisibleNode,
@@ -80,6 +94,10 @@ type TLink = {
 }
 
 
+/* TGraph is a virtual graph that stores and manages all of the nodes and links.
+ *
+ * The graph stores virtual InvisibleNodes and PersonNodes. Several API
+ * endpoints allow access by way of related data types. */
 class TGraph {
   nodes: { [string]: InvisibleNode | PersonNode }
   links: Array<TLink>
@@ -92,16 +110,22 @@ class TGraph {
     this.setFocus(focus)
   }
 
+  /* Set the focus on the graph. The provided person will be added to the graph
+   * if it is not already present. */
   setFocus(person: PersonDetail): PersonNode {
     const node = this.addPerson(person)
     this.focus = node && node.type === 'PersonNode' ? node : this.focus
     return node
   }
 
+  /* Add a PersonNode to the graph. */
   addNode(pn: PersonNode): void {
     this.nodes[pn.getId()] = pn
   }
 
+  /* Add a PersonDetail to the graph. This has the effect of creating a
+   * PersonNode. This function will return without doing anything if a node
+   * with a matching ID is already present. */
   addPerson(person: PersonDetail): PersonNode {
     const p = this.nodes[person.id.asString()]
     if (p != null && p.type === 'PersonNode' && p.person.type === person.type) {
@@ -121,6 +145,7 @@ class TGraph {
     return node
   }
 
+  /* Remove a person from the graph by way of the subject ID. */
   removePersonById(personId: SubjectId): void {
     /* remove the person, all links going to or leaving that person, and the
      * middle nodes for thos e links */
@@ -141,10 +166,13 @@ class TGraph {
     })
   }
 
+  /* Remove a person from the graph by the PersonDetail object. */
   removePerson(person: PersonDetail): void {
     this.removePersonById(person.id)
   }
 
+  /* Create a link beween two people. Both will be added to the graph if they
+   * are not already present. */
   createLink(source: PersonDetail, target: PersonDetail): ?TLink {
     if (source === target) {
       return null
@@ -178,6 +206,12 @@ class TGraph {
     return this.links
   }
 
+  /* Get a list virtual links between both Invisible and Visible nodes.
+   *
+   * Link segments are distinct from Links in that they have only a source and
+   * a middle. The physics engine needs these in order to do calculations on
+   * the connections between source links, target links, and their midpoints.
+   * */
   getLinkSegments(): Array<D3Types.LinkSegment> {
     return fp.flatten(fp.map(link => [
       { source: link.source, target: link.middle },
@@ -204,9 +238,13 @@ const createTimeline = (width: number, startDate: moment, endDate: moment): Time
 }
 
 
+/* Calculate how much a node should be scaled by from information such as the
+ * whether the node is the focus and whether the mouse is currently hovering
+ * over the node. */
 const calculateNodeScale = (node: PersonNode, centerNode: PersonNode, isMouseOver: bool): number =>
   (node.getId() === centerNode.getId() || isMouseOver ? 1.0 : 0.5)
 
+/* Given a full link, calculate the visual path that the link should take. */
 const calculateLinkPath = (link: TLink, center: PersonNode): string => {
   const s = link.source
   const m = link.middle
@@ -224,6 +262,7 @@ const calculateLinkPath = (link: TLink, center: PersonNode): string => {
 }
 
 
+/* Calculate the visual connection between a node and its start and end dates on the timeline. */
 const calculateLifelinePath = (
   dimensions: Dimensions,
   timeline: Timeline,
@@ -255,6 +294,17 @@ const calculateLifelinePath = (
 }
 
 
+/* Render all of the people in a selection.
+ *
+ * This is an odd D3-ism, in that this function will be performed on an entire
+ * selection and the relevant people are already attached to the nodes in the
+ * selection even before they nodes technically get created. Trust in this, as
+ * odd as it is, it still works.
+ *
+ * Generally the caller should be passing an Entry selection:
+ *
+ *   renderPeople(sel.data(...).enter(), ...)
+ */
 const renderPeople = (
   sel: D3Types.Selection,
   selectNode: PersonNode => void,
@@ -303,6 +353,12 @@ const renderPeople = (
 }
 
 
+/* Render all of the links in the selection.
+ *
+ * This works in exactly the same way as renderPeople and should be called as such:
+ *
+ *   renderLinks(sel.enter(), ...)
+ */
 const renderLinks = (container: D3Types.Selection, graph: TGraph): D3Types.Selection => {
   const path = container.append('path')
 
@@ -317,6 +373,12 @@ const renderLinks = (container: D3Types.Selection, graph: TGraph): D3Types.Selec
 }
 
 
+/* Render all of lifespan connections
+ *
+ * This works in exactly the same way as renderPeople and should be called as such:
+ *
+ *   renderLifelines(sel.enter(), ...)
+ */
 const renderLifelines = (
   container: D3Types.Selection,
   dimensions: Dimensions,
@@ -333,6 +395,10 @@ const renderLifelines = (
 }
 
 
+/* Highlight a node by making it larger and increasing the opacity of its
+ * lifeline, or unhighlight it. The `over` parameter should be set to `true` if
+ * the node should be highlighted and set to `false` if not. This function will
+ * skip any operation on the focus node. */
 const focusHighlight = (
   nodesElem: D3Types.Selection,
   lifelinesElem: D3Types.Selection,
@@ -365,6 +431,7 @@ const focusHighlight = (
 }
 
 
+/* Get a list of all the people in the graph. */
 const listOfPeopleInGraph = (
   graph: TGraph,
   people: store.PeopleCache,
@@ -373,6 +440,11 @@ const listOfPeopleInGraph = (
 )
 
 
+/* Calculate the time range that should be on the axis, using the minimum birth
+ * date and maximum death date of everyone provided in the list of `people`.
+ * Include "today" as the default maximum date if anyone lacks a death date,
+ * and include 100 years before the maximum date if everyone lacks a birth
+ * date. */
 const calculateTimeRange = (people: Array<PersonDetail>): [moment, moment] => {
   let minDate = null
   let maxDate = null
@@ -415,6 +487,9 @@ const calculateTimeRange = (people: Array<PersonDetail>): [moment, moment] => {
 }
 
 
+/* Given the current dictionary of people, the curren focus, and the current
+ * maximum number of displayable nodes, update the nodes and links in the
+ * influence graph. */
 const updateInfluenceGraph = (
   graph: TGraph,
   focus: PersonDetail,
@@ -431,12 +506,15 @@ const updateInfluenceGraph = (
 
   const influencedBy = new Set(focus.influencedBy)
   const influenced = new Set(focus.influenced)
-  const currentIds = union(new Set([focus.id]), influencedBy, influenced)
-  const currentPeople = new Set(fp.compose(
-    influenceLimit,
-    fp.filter(p => p != null),
-    fp.map(id => people[id.asString()]),
-  )(Array.from(currentIds.values())))
+  const currentIds = union(influencedBy, influenced)
+  const currentPeople = union(
+    new Set([focus]),
+    new Set(fp.compose(
+      influenceLimit,
+      fp.filter(p => p != null),
+      fp.map(id => people[id.asString()]),
+    )(Array.from(currentIds.values()))),
+  )
   const oldPeople = new Set(fp.map(n => n.person)(graph.getVisibleNodes()))
 
   const incomingPeople = difference(currentPeople, oldPeople)
@@ -461,6 +539,25 @@ const updateInfluenceGraph = (
 }
 
 
+/* InfluenceCanvas draws the graph of influences between the focused person and
+ * all of their influencers.
+ *
+ * This object needs to know the D3 selection in which it is permitted to work,
+ * the dimensions of the area it is allowed to work within, the focus person,
+ * the cache of people, and an action for what to do when somebody selects a
+ * node.
+ *
+ * The constructor sets up the base SVG drawing area, all of the top-level SVG
+ * elements, and the force simulation, ultimately calling `refreshCanvas` to
+ * ensure that the influence graph gets updated and all available nodes drawn.
+ *
+ * None of these fields are optional, and so this object cannot be instantiated
+ * until at least the focus person and the drawing area exists.
+ *
+ * This is a conceptual object around the D3 drawing interface. It is highly
+ * stateful and directly manipulates DOM elements in keeping with D3.
+ * InfluenceChart provides the React component that makes this behave well in
+ * React applications. */
 class InfluenceCanvas {
   focus: PersonDetail
   people: store.PeopleCache
@@ -547,6 +644,7 @@ class InfluenceCanvas {
     this.refreshCanvas()
   }
 
+  /* Run one frame of the force animation. This is not a public function. */
   animate(): void {
     const { width, height } = this.dimensions
     const k = 0.5 * this.fdl.alpha()
@@ -582,6 +680,7 @@ class InfluenceCanvas {
       .attr('d', (node: PersonNode): string => calculateLifelinePath(this.dimensions, this.timeline, node))
   }
 
+  /* Set the current dimensions of the drawing area. This will restart the animation. */
   setDimensions(dimensions: Dimensions) {
     this.dimensions = dimensions
 
@@ -596,6 +695,7 @@ class InfluenceCanvas {
     this.fdl.restart()
   }
 
+  /* Set the currently focused person. This will restart the animation. */
   setFocused(focus: PersonDetail, people: store.PeopleCache) {
     const oldFocus = this.focus
 
@@ -615,6 +715,8 @@ class InfluenceCanvas {
     this.refreshCanvas()
   }
 
+  /* This function is a generic trigger to update the drawn data after an
+   * unspecified state change. */
   refreshCanvas() {
     const [minYear, maxYear] = calculateTimeRange(listOfPeopleInGraph(this.graph, this.people))
     this.timeline.scale.domain([minYear, maxYear])
@@ -689,7 +791,6 @@ type InfluenceChartProps = {
   focusedId: SubjectId,
   people: store.PeopleCache,
   selectPerson: (SubjectId) => void,
-  wikiDivHidden: bool,
 }
 
 type InfluenceChartState = {
@@ -698,7 +799,22 @@ type InfluenceChartState = {
   canvas: ?InfluenceCanvas,
 }
 
+/* InfluenceChart provides the React interface that lets the InfluenceCanvas
+ * work well in a react application.
+ *
+ * This object needs to know the `label` for this widget (which will become the
+ * ID of the top-level element), the ID of the focused person, the current
+ * cache of people, and the action to perform when somebody gets selected.
+ *
+ * About the label: normal React methods involve creating objects and returning
+ * them to their parent. However, that cannot be done so easily with the D3
+ * world, and so this label is necessary in order to create an object that can
+ * then be retrieved as a D3 selection.
+ */
 class InfluenceChart_ extends React.Component<InfluenceChartProps, InfluenceChartState> {
+  /* React property or redux state changes will trigger this function, which is
+   * a natural place to convert those changes into underlying canvas changes.
+   * */
   static getDerivedStateFromProps(
     newProps: InfluenceChartProps,
     prevState: InfluenceChartState,
@@ -738,6 +854,8 @@ class InfluenceChart_ extends React.Component<InfluenceChartProps, InfluenceChar
     }
   }
 
+  /* This gets called The drawing area needs to know its dimensions and the real DOM element and D3 selection in which it will work. That information is not available in the `render` method on first render.
+   */
   componentDidMount() {
     this.state.domElem = document.getElementById(this.props.label)
     this.state.d3Elem = d3.select(`#${this.props.label}`)
@@ -779,7 +897,6 @@ const InfluenceChart = connect(
   state => ({
     focusedId: store.focusedSubject(state),
     people: store.people(state),
-    wikiDivHidden: store.wikiDivHidden(state),
   }),
   dispatch => ({}),
 )(InfluenceChart_)

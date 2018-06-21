@@ -116,6 +116,6 @@ const searchByName = (name: string): Promise<Array<SubjectId>> =>
       Array.from(new Set(fp.map(j =>
         mkSubjectFromDBpediaUri(j.person.value))(js.results.bindings))))
 
-export const searchForPeople = (name: string): Promise<Array<PersonDetail>> =>
+export const searchForPeople = (name: string): Promise<Array<?PersonDetail>> =>
   searchByName(name).then(lst => Promise.all(fp.map(getPerson)(lst)))
 

@@ -1,5 +1,7 @@
 // @flow
 
+import * as fp from 'lodash/fp'
+
 import InfluenceChart from '../InfluenceChart'
 import Navbar from '../Navbar/'
 import WikiCollapse from '../WikiCollapse'
@@ -80,7 +82,8 @@ class App_ extends React.Component<AppProps, AppState> {
   submitSearch(name: string) {
     this.props.setSearchInProgress(true)
     dbpedia.searchForPeople(name)
-      .then(people => this.props.saveSearchResults(name, people))
+      .then((people: Array<?PersonDetail>): void =>
+        this.props.saveSearchResults(name, fp.filter(p => p != null)(people)))
       .catch((err) => {
         this.props.setSearchInProgress(false)
         console.log('Searching failed with an error: ', err)
