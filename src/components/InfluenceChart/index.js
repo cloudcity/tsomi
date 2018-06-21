@@ -506,12 +506,15 @@ const updateInfluenceGraph = (
 
   const influencedBy = new Set(focus.influencedBy)
   const influenced = new Set(focus.influenced)
-  const currentIds = union(new Set([focus.id]), influencedBy, influenced)
-  const currentPeople = new Set(fp.compose(
-    influenceLimit,
-    fp.filter(p => p != null),
-    fp.map(id => people[id.asString()]),
-  )(Array.from(currentIds.values())))
+  const currentIds = union(influencedBy, influenced)
+  const currentPeople = union(
+    new Set([focus]),
+    new Set(fp.compose(
+      influenceLimit,
+      fp.filter(p => p != null),
+      fp.map(id => people[id.asString()]),
+    )(Array.from(currentIds.values()))),
+  )
   const oldPeople = new Set(fp.map(n => n.person)(graph.getVisibleNodes()))
 
   const incomingPeople = difference(currentPeople, oldPeople)
