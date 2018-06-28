@@ -1,4 +1,5 @@
 // @flow
+/* eslint no-restricted-globals: off, no-console: off, no-underscore-dangle: off */
 
 import * as fp from 'lodash/fp'
 
@@ -30,6 +31,7 @@ type AppProps = {
   focusOnPerson: SubjectId => void,
   goHome: void => void,
   saveSearchResults: (?string, Array<PersonDetail>) => void,
+  setLoadInProgress: ?SubjectId => void,
   setSearchInProgress: bool => void,
   setWikiUri: Uri => void,
   toggleAboutPage: void => void,
@@ -38,12 +40,12 @@ type AppState = { }
 
 class App_ extends React.Component<AppProps, AppState> {
   componentDidMount() {
-    this.getAndCachePerson(this.props.focusedSubject).then((person: PersonDetail) => {
+    this.getAndCachePerson_(this.props.focusedSubject).then((person: PersonDetail) => {
       this.focusPerson(person.id)
     })
   }
 
-  getAndCachePerson(n: SubjectId): Promise<PersonDetail> {
+  getAndCachePerson_(n: SubjectId): Promise<PersonDetail> {
     return dbpedia.getPerson(n).then((person: ?PersonDetail) =>
       new Promise((res, rej) => {
         if (person === null || person === undefined) {
@@ -56,7 +58,8 @@ class App_ extends React.Component<AppProps, AppState> {
   }
 
   focusPerson(n: SubjectId): void {
-    this.getAndCachePerson(n).then((person: PersonDetail) => {
+    this.props.setLoadInProgress(n)
+    this.getAndCachePerson_(n).then((person: PersonDetail) => {
       window.history.pushState(
         '',
         n,
@@ -69,11 +72,12 @@ class App_ extends React.Component<AppProps, AppState> {
       }
       this.props.saveSearchResults(null, [])
       return Promise.all([
-        person.influencedBy.map(i => this.getAndCachePerson(i)),
-        person.influenced.map(i => this.getAndCachePerson(i)),
+        ...(person.influencedBy.map(i => this.getAndCachePerson_(i))),
+        ...(person.influenced.map(i => this.getAndCachePerson_(i))),
       ])
     }).then(() => {
       this.props.focusOnPerson(n)
+      this.props.setLoadInProgress(null)
     }).catch((err) => {
       console.log('Getting a person failed with an error: ', err)
     })
@@ -170,6 +174,7 @@ class App_ extends React.Component<AppProps, AppState> {
 const App = connect(
   state => ({
     focusedSubject: store.focusedSubject(state),
+    loadInProgress: store.loadInProgress(state),
     showAboutPage: store.showAboutPage(state),
     wikiDivHidden: store.wikiDivHidden(state),
     wikiUri: store.wikiUri(state),
@@ -178,9 +183,11 @@ const App = connect(
     cachePerson: (subjectId, person) => dispatch(store.cachePerson(subjectId, person)),
     focusOnPerson: subjectId => dispatch(store.focusOnPerson(subjectId)),
     goHome: () => dispatch(store.setAboutPage(false)),
-    saveSearchResults: (str: ?string, results: Array<PersonDetail>): void => dispatch(store.saveSearchResults(str, results)),
-    setSearchInProgress: (status) => dispatch(store.setSearchInProgress(status)),
-    setWikiDivHidden: (status) => dispatch(store.setWikiDivHidden(status)),
+    setLoadInProgress: (subject: ?SubjectId) => dispatch(store.setLoadInProgress(subject)),
+    saveSearchResults: (str: ?string, results: Array<PersonDetail>): void =>
+      dispatch(store.saveSearchResults(str, results)),
+    setSearchInProgress: (status: bool) => dispatch(store.setSearchInProgress(status)),
+    setWikiDivHidden: (status: bool) => dispatch(store.setWikiDivHidden(status)),
     setWikiUri: uri => dispatch(store.setWikiUri(uri)),
     toggleAboutPage: () => dispatch(store.toggleAboutPage()),
   }),

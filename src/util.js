@@ -120,6 +120,15 @@ type RequestParameters = {
   method: string
 }
 
+const maybe = <A, B>(def: B): ((A => B) => ?A => B) =>
+  <A>(f: A => B): (?A => B) =>
+    (val: ?A): B =>
+      val == null ? def : f(val)
+
+const maybe_ = <A, B>(f: A => B): (?A => ?B) =>
+  (val: ?A): ?B =>
+    maybe(null)(f)(val)
+
 module.exports = {
   angleRadians,
   convertSpaces,
@@ -130,6 +139,8 @@ module.exports = {
   largest,
   last,
   mapObjKeys,
+  maybe,
+  maybe_,
   parseDate,
   populatePath,
   smallest,

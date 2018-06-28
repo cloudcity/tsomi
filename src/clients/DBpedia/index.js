@@ -5,7 +5,7 @@ import moment from 'moment'
 
 import { runSparqlQuery } from '../Sparql'
 import { type PersonDetail, SubjectId, mkSubjectFromDBpediaUri } from '../../types'
-import { last, mapObjKeys, parseDate } from '../../util'
+import { last, mapObjKeys, maybe, maybe_, parseDate } from '../../util'
 
 require('isomorphic-fetch')
 
@@ -30,14 +30,27 @@ type SearchResultJSON = {
   }
 }
 
+type RDFTriple = {
+  type: string,
+  value: any,
+  datatype: string,
+}
+
 // Handle a variety of different date format issues. Dates, especially in the
 // distant past, are somewhat uncertain and DBpedia returns dates in a few
 // different formats.
-const parseDBpediaDate = (str: string): ?moment => {
-  if (str.endsWith('-0-0')) {
-    return parseDate(`${str.slice(0, -4)}-01-01`, 'YYYY')
+const parseDBpediaDate = (triple: RDFTriple): ?moment => {
+  if (triple.datatype === 'http://www.w3.org/2001/XMLSchema#integer') {
+    return moment({ year: triple.value })
   }
-  return parseDate(str, 'YYYY-M-D')
+  if (triple.datatype === 'http://www.w3.org/2001/XMLSchema#date') {
+    if (triple.value.endsWith('-0-0')) {
+      return parseDate(`${triple.value.slice(0, -4)}-01-01`, 'YYYY')
+    }
+    return parseDate(triple.value, 'YYYY-M-D')
+  }
+
+  throw Error(`unexpected RDF triple type: ${triple.datatype}`)
 }
 
 
@@ -61,6 +74,7 @@ export const getPerson = (s: SubjectId): Promise<?PersonDetail> => {
   return fetch(dataUrl).then(r => r.json())
     .then((r) => {
       const person = mapObjKeys(i => last(i.split('/')), r[mkResourceUrl(s)])
+
       /* eslint no-underscore-dangle: off */
       const influenced_ = person.influenced
         ? person.influenced.map(i => mkSubjectFromDBpediaUri(i.value))
@@ -87,11 +101,15 @@ export const getPerson = (s: SubjectId): Promise<?PersonDetail> => {
         id: s,
         uri: mkResourceUrl(s),
         wikipediaUri,
-        name: person.name[0].value,
-        abstract: person.abstract.filter(i => i.lang === 'en')[0].value,
-        birthPlace: person.birthPlace ? person.birthPlace[0].value : null,
-        birthDate: person.birthDate ? parseDBpediaDate(person.birthDate[0].value) : null,
-        deathDate: person.deathDate ? parseDBpediaDate(person.deathDate[0].value) : null,
+        name: (maybe('')(n => n.value)(fp.head(person.name)): string),
+        abstract: fp.compose(
+          maybe_(n => n.value),
+          fp.head,
+          fp.filter(js => js.lang === 'en'),
+        )(person.abstract),
+        birthPlace: (maybe_(n => n.value)(fp.head(person.birthPlace)): ?string),
+        birthDate: maybe_(n => parseDBpediaDate(n))(fp.head(person.birthDate)),
+        deathDate: maybe_(n => parseDBpediaDate(n))(fp.head(person.deathDate)),
         influencedBy,
         influenced,
         influencedByCount: influencedBy.length,
