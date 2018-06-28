@@ -21,6 +21,7 @@ import {
   type Dimensions,
   type PersonDetail,
   SubjectId,
+  dimensionsEq,
 } from '../../types'
 import { difference, union } from '../../utils/Set'
 
@@ -49,8 +50,11 @@ const {
   MARGIN,
   MAX_SCREEN_NODES,
   NODE_SIZE,
+  RIM_SIZE,
   TIMELINE_Y,
 } = require('../../constants')
+
+require('./main.css')
 
 
 type LinkForces = {
@@ -80,6 +84,7 @@ type PersonNode = {|
   y: number,
   vx: number,
   vy: number,
+  isLoading: bool,
   person: PersonDetail,
   getId: () => string,
 |}
@@ -138,6 +143,7 @@ class TGraph {
       vx: 0,
       vy: 0,
       person,
+      isLoading: false,
       getId: () => person.id.asString(),
     }
     this.addNode(node)
@@ -312,6 +318,7 @@ const renderPeople = (
   sel: D3Types.Selection,
   selectNode: PersonNode => void,
   mouseOver: (PersonNode, bool) => void,
+  dim: Dimensions,
 ) => {
   const circle = sel.append('g')
     .on('click', n => selectNode(n))
@@ -320,6 +327,7 @@ const renderPeople = (
 
   const canvas = circle.classed('translate', true)
     .attr('id', (node: PersonNode): string => convertToSafeDOMId(node.person.id.asString()))
+    .attr('transform', `translate(${dim.width / 2}, ${dim.height / 2})`)
     .append('g')
     .classed('scale', true)
     .attr('clip-path', 'url(#image-clip)')
@@ -335,6 +343,14 @@ const renderPeople = (
     .attr('width', IMAGE_SIZE)
     .attr('x', -IMAGE_SIZE / 2)
     .attr('y', -IMAGE_SIZE / 2)
+
+  canvas.append('circle')
+    .classed('loading-circle', true)
+    .attr('fill', 'none')
+    .attr('visibility', (node: PersonNode) => (node.isLoading ? 'visible' : 'hidden'))
+    .attr('stroke', 'url(#loading-gradient)')
+    .attr('stroke-width', RIM_SIZE)
+    .attr('r', ((IMAGE_SIZE - RIM_SIZE) / 2) - (RIM_SIZE / 2))
 
   canvas.append('path')
     .attr('class', 'banner')
@@ -498,6 +514,7 @@ const updateInfluenceGraph = (
   focus: PersonDetail,
   people: store.PeopleCache,
   maxNodes: number,
+  dim: Dimensions,
 ) => {
   const influenceLimit: Set<PersonDetail> => Set<PersonDetail> = fp.compose(
     arr => new Set(arr),
@@ -523,22 +540,42 @@ const updateInfluenceGraph = (
   const incomingPeople = difference(currentPeople, oldPeople)
   const outgoingPeople = difference(oldPeople, currentPeople)
 
-  graph.setFocus(focus)
+  outgoingPeople.forEach((p) => {
+    graph.removePerson(p)
+  })
+
   incomingPeople.forEach((p) => {
     if (p === focus) {
       return
     }
-    graph.addPerson(p)
+    const node = graph.addPerson(p)
+    node.x = dim.width / 2
+    node.y = dim.height / 2
     if (influencedBy.has(p.id)) {
-      graph.createLink(p, focus)
+      const link = graph.createLink(p, focus)
+      if (link) {
+        link.middle.x = (link.target.x + link.source.x) / 2
+        link.middle.y = (link.target.y + link.source.y) / 2
+      }
     } else {
-      graph.createLink(focus, p)
+      const link = graph.createLink(focus, p)
+      if (link) {
+        link.middle.x = (link.target.x + link.source.x) / 2
+        link.middle.y = (link.target.y + link.source.y) / 2
+      }
     }
   })
 
-  outgoingPeople.forEach((p) => {
-    graph.removePerson(p)
-  })
+  const node = graph.setFocus(focus)
+  node.x = dim.width / 2
+  node.y = dim.height / 2
+}
+
+
+const clamp = (min: number, max: number): (number => number) => (val: number): number => {
+  if (val < min) { return min }
+  if (val > max) { return max }
+  return val
 }
 
 
@@ -614,7 +651,7 @@ class InfluenceCanvas {
     this.graph = new TGraph(focus)
     this.selectNode = selectNode
 
-    updateInfluenceGraph(this.graph, this.focus, this.people, MAX_SCREEN_NODES)
+    updateInfluenceGraph(this.graph, this.focus, this.people, MAX_SCREEN_NODES, this.dimensions)
 
     // create clip path for image
     this.definitions = this.topElem.append('defs')
@@ -625,6 +662,27 @@ class InfluenceCanvas {
       .attr('cx', 0)
       .attr('cy', 0)
       .attr('r', IMAGE_SIZE / 2)
+
+    this.definitions.append('svg:linearGradient')
+      .attr('id', 'loading-gradient')
+      .attr('x1', '0%')
+      .attr('y1', '0%')
+      .attr('x2', '100%')
+      .attr('y2', '0%')
+      .call((gradient) => {
+        gradient.append('svg:stop')
+          .attr('offset', '0%')
+          .style('stop-color', 'white')
+          .style('stop-opacity', '1')
+        gradient.append('svg:stop')
+          .attr('offset', '50%')
+          .style('stop-color', 'white')
+          .style('stop-opacity', '0')
+        gradient.append('svg:stop')
+          .attr('offset', '100%')
+          .style('stop-color', 'white')
+          .style('stop-opacity', '0')
+      })
 
     /* I've put these here so that I can force them to be rendered in a
      * particular order. If all of the links appear in one container, and all
@@ -667,23 +725,26 @@ class InfluenceCanvas {
   /* Run one frame of the force animation. This is not a public function. */
   animate(): void {
     const { width, height } = this.dimensions
-    const k = 0.5 * this.fdl.alpha()
+    const [minX, minY] = [MARGIN, MARGIN]
+    const [maxX, maxY] = [width - MARGIN, height - MARGIN]
+    const k = 0.1 * this.fdl.alpha()
     const k2 = 15 * this.fdl.alpha()
 
     const center = { x: width / 2, y: height / 2 }
     this.graph.focus.x += (center.x - this.graph.focus.x) * k
     this.graph.focus.y += (center.y - this.graph.focus.y) * k
+    this.graph.focus.x = clamp(0, maxX)(this.graph.focus.x)
+    this.graph.focus.y = clamp(0, maxY)(this.graph.focus.y)
 
     this.graph.getLinks().forEach((link) => {
       if (link.source === this.graph.focus) {
-        link.target.x += k2
+        link.middle.x = clamp(0, maxX)(link.middle.x + k2)
+        link.target.x = clamp(0, maxX)(link.target.x + k2)
       } else if (link.target === this.graph.focus) {
-        link.source.x -= k2
+        link.middle.x = clamp(0, maxX)(link.middle.x - k2)
+        link.source.x = clamp(0, maxX)(link.source.x - k2)
       }
     })
-
-    const [minX, minY] = [MARGIN, MARGIN]
-    const [maxX, maxY] = [width - MARGIN, height - MARGIN]
 
     this.nodesElem
       .selectAll('.translate')
@@ -702,6 +763,9 @@ class InfluenceCanvas {
 
   /* Set the current dimensions of the drawing area. This will restart the animation. */
   setDimensions(dimensions: Dimensions) {
+    if (dimensionsEq(dimensions, this.dimensions)) {
+      return
+    }
     this.dimensions = dimensions
 
     // calculateTimeRange here
@@ -715,6 +779,16 @@ class InfluenceCanvas {
     this.fdl.restart()
   }
 
+  setLoadInProgress(subject: ?SubjectId) {
+    console.log('[setLoadInProgress]', subject)
+    this.graph.getVisibleNodes().forEach((n: PersonNode) => {
+      n.isLoading = subject ? subject.asString() === n.getId() : false
+      this.nodesElem.select(`#${convertToSafeDOMId(n.getId())} .loading-circle`)
+        .transition()
+        .attr('visibility', n.isLoading ? 'visible' : 'hidden')
+    })
+  }
+
   /* Set the currently focused person. This will restart the animation. */
   setFocused(focus: PersonDetail, people: store.PeopleCache) {
     const oldFocus = this.focus
@@ -722,7 +796,7 @@ class InfluenceCanvas {
     this.focus = focus
     this.people = people
 
-    updateInfluenceGraph(this.graph, this.focus, people, MAX_SCREEN_NODES)
+    updateInfluenceGraph(this.graph, this.focus, people, MAX_SCREEN_NODES, this.dimensions)
 
     this.lifelinesElem.select(`#${convertToSafeDOMId(oldFocus.id.asString())}`)
       .transition()
@@ -755,6 +829,7 @@ class InfluenceCanvas {
       nodeSel.enter(),
       n => this.selectNode(n.person.id),
       (n, over) => focusHighlight(this.nodesElem, this.lifelinesElem, this.focus, n, over),
+      this.dimensions,
     )
     nodeSel.exit().remove()
 
@@ -809,6 +884,7 @@ class InfluenceCanvas {
 type InfluenceChartProps = {
   label: string,
   focusedId: SubjectId,
+  loadInProgress: ?SubjectId,
   people: store.PeopleCache,
   selectPerson: (SubjectId) => void,
 }
@@ -855,7 +931,12 @@ class InfluenceChart_ extends React.Component<InfluenceChartProps, InfluenceChar
             newProps.people,
             newProps.selectPerson,
           )
-        canvas.setFocused(focus, newProps.people)
+
+        canvas.setLoadInProgress(newProps.loadInProgress)
+
+        if (!newProps.loadInProgress) {
+          canvas.setFocused(focus, newProps.people)
+        }
 
         return { ...prevState, canvas, focusedId }
       }
@@ -923,6 +1004,7 @@ class InfluenceChart_ extends React.Component<InfluenceChartProps, InfluenceChar
 
 const InfluenceChart = connect(state => ({
   focusedId: store.focusedSubject(state),
+  loadInProgress: store.loadInProgress(state),
   people: store.people(state),
 }))(InfluenceChart_)
 
