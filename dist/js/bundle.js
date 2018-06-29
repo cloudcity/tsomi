@@ -28672,8 +28672,8 @@ var connectToWiki = function connectToWiki() {
   return window.open(d3.select('#wikiframe').attr('src').replace(_constants.PRINTABLE_PARAM, ''), '_blank');
 };
 
-var store = (0, _redux.createStore)(_store.runState, (0, _redux.applyMiddleware)(_reduxLogger.logger));
-//const store = createStore(runState)
+//const store = createStore(runState, applyMiddleware(logger))
+var store = (0, _redux.createStore)(_store.runState);
 
 _reactDom2.default.render(_react2.default.createElement(_reactRedux.Provider, { store: store }, _react2.default.createElement(_App2.default)), document.getElementById('container'));
 
@@ -51285,7 +51285,6 @@ var InfluenceCanvas = function () {
     value: function setLoadInProgress(subject) {
       var _this4 = this;
 
-      console.log('[setLoadInProgress]', subject);
       this.graph.getVisibleNodes().forEach(function (n) {
         n.isLoading = subject ? subject.asString() === n.getId() : false;
         _this4.nodesElem.select('#' + convertToSafeDOMId(n.getId()) + ' .loading-circle').transition().attr('visibility', n.isLoading ? 'visible' : 'hidden');
@@ -68000,8 +67999,12 @@ WHERE { ?person a foaf:Person. \
 }\
 ';
 
+var regexName = function regexName(name) {
+  return name.trim().split(' ').join('.*');
+};
+
 var searchByName = function searchByName(name) {
-  return (0, _Sparql.runSparqlQuery)(queryByName, { search_query: name.trim() }).then(function (js) {
+  return (0, _Sparql.runSparqlQuery)(queryByName, { search_query: regexName(name) }).then(function (js) {
     return Array.from(new Set(_fp2.default.map(function (j) {
       return (0, _types.mkSubjectFromDBpediaUri)(j.person.value);
     })(js.results.bindings)));
@@ -68011,6 +68014,12 @@ var searchByName = function searchByName(name) {
 var searchForPeople = exports.searchForPeople = function searchForPeople(name) {
   return searchByName(name).then(function (lst) {
     return Promise.all(_fp2.default.map(getPerson)(lst));
+  }).then(function (lst) {
+    return (0, _util.uniqueBy)(function (l) {
+      return l.id.asString();
+    }, _fp2.default.filter(function (l) {
+      return l;
+    })(lst));
   });
 };
 
@@ -68073,7 +68082,7 @@ var runSparqlQuery = function runSparqlQuery(template, variables) {
 
   var uri = DBPEDIA_URL + '?' + encodeFormBody(params);
 
-  return fetchWithTimeout(uri, { method: 'GET' }, 15000).then(function (resp) {
+  return fetchWithTimeout(uri, { method: 'GET' }, 20000).then(function (resp) {
     if (!resp.ok) return httpErrorPromise(resp);
     return resp.json();
   });
