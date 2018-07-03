@@ -5,7 +5,8 @@ import moment from 'moment'
 
 import { runSparqlQuery } from '../Sparql'
 import { type PersonDetail, SubjectId, mkSubjectFromDBpediaUri } from '../../types'
-import { last, mapObjKeys, maybe, maybe_, parseDate, uniqueBy } from '../../util'
+import { mapObjKeys, parseDate } from '../../util'
+import { last, maybe, maybe_, uniqueBy } from '../../utils/fp'
 
 require('isomorphic-fetch')
 
@@ -71,7 +72,8 @@ const findByRelationship = (relationship: string, target: SubjectId): (any => [S
 export const getPerson = (s: SubjectId): Promise<?PersonDetail> => {
   const dataUrl = mkDataUrl(s)
 
-  return fetch(dataUrl).then(r => r.json())
+  return fetch(dataUrl)
+    .then(r => r.json())
     .then((r) => {
       const person = mapObjKeys(i => last(i.split('/')), r[mkResourceUrl(s)])
 
@@ -96,12 +98,17 @@ export const getPerson = (s: SubjectId): Promise<?PersonDetail> => {
         ? person.thumbnail[0].value
         : null
 
+      const name = fp.head(person.name)
+      if (name === undefined) {
+        return null
+      }
+
       return {
         type: 'PersonDetail',
         id: s,
         uri: mkResourceUrl(s),
         wikipediaUri,
-        name: (maybe('')(n => n.value)(fp.head(person.name)): string),
+        name: name.value,
         abstract: fp.compose(
           maybe_(n => n.value),
           fp.head,
@@ -116,7 +123,8 @@ export const getPerson = (s: SubjectId): Promise<?PersonDetail> => {
         influencedCount: influenced.length,
         thumbnail,
       }
-    }).catch(err => console.log('[getPerson failed]', s, err))
+    })
+    .catch(err => console.log('[getPerson failed]', s, err))
 }
 
 

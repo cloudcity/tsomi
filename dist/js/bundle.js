@@ -28397,7 +28397,14 @@ function transform(node) {
 "use strict";
 
 
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.populatePath = exports.mapObjKeys = exports.getURLParameter = exports.queryParamsToHash = exports.largest = exports.smallest = exports.radial = exports.angleRadians = exports.convertToSafeDOMId = exports.parseDate = undefined;
+
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
+/* eslint no-underscore-dangle: off */
 
 var _moment = __webpack_require__(0);
 
@@ -28409,21 +28416,11 @@ var _fp2 = _interopRequireDefault(_fp);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-/*
-const getViewportDimensions = (): Viewport => ({
-  // the navbar is 60px tall, so we subtract 60 from the height we report here.
-  height: $('#chart').height(),
-  width:  $('#chart').width()
-})
-*/
+function _toArray(arr) { return Array.isArray(arr) ? arr : Array.from(arr); }
 
-var parseDate = function parseDate(dateString, fmt) {
+var parseDate = exports.parseDate = function parseDate(dateString, fmt) {
   var res = fmt ? (0, _moment2.default)(dateString, fmt) : (0, _moment2.default)(dateString);
   return res.isValid() ? res : null;
-};
-
-var convertSpaces = function convertSpaces(element) {
-  return element.replace(/(%20| )/g, '_');
 };
 
 var toHex = function toHex(c) {
@@ -28441,7 +28438,7 @@ sub toBareword {
     return $string;
 }
 */
-var convertToSafeDOMId = function convertToSafeDOMId(str) {
+var convertToSafeDOMId = exports.convertToSafeDOMId = function convertToSafeDOMId(str) {
   return str.replace(/_/g, '__').replace(/0/g, '00').replace(/([0-9]+)/g, function (match, p1) {
     return '_' + p1;
   }).replace(/([^a-zA-Z0-9_]+)/g, function (match, p1) {
@@ -28451,40 +28448,26 @@ var convertToSafeDOMId = function convertToSafeDOMId(str) {
   });
 };
 
-var angleRadians = function angleRadians(p1, p2) {
+var angleRadians = exports.angleRadians = function angleRadians(p1, p2) {
   return Math.atan2(p2.y - p1.y, p2.x - p1.x);
 };
 
-var uniqueBy = function uniqueBy(f, c) {
-  var lookup = c.reduce(function (acc, item) {
-    var id = f(item);
-    if (!acc[id]) acc[id] = item;
-    return acc;
-  }, {});
-
-  return Object.values(lookup);
-};
-
-var radial = function radial(point, radius, radians) {
+var radial = exports.radial = function radial(point, radius, radians) {
   return {
     x: Math.cos(radians) * radius + point.x,
     y: Math.sin(radians) * radius + point.y
   };
 };
 
-var smallest = function smallest(a, b) {
+var smallest = exports.smallest = function smallest(a, b) {
   return a < b ? a : b;
 };
-var largest = function largest(a, b) {
+var largest = exports.largest = function largest(a, b) {
   return a > b ? a : b;
 };
 
-var last = function last(arr) {
-  return arr[arr.length - 1];
-};
-
 // ?a=foo&b=bar -> { a: foo, b: bar }
-var queryParamsToHash = function queryParamsToHash(str) {
+var queryParamsToHash = exports.queryParamsToHash = function queryParamsToHash(str) {
   return str.replace('?', '').split('&').reduce(function (acc, obj) {
     var _obj$split = obj.split('='),
         _obj$split2 = _slicedToArray(_obj$split, 2),
@@ -28496,17 +28479,12 @@ var queryParamsToHash = function queryParamsToHash(str) {
   }, {});
 };
 
-var getURLParameter = function getURLParameter(name) {
+var getURLParameter = exports.getURLParameter = function getURLParameter(name) {
   var params = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : window.location.search;
   return queryParamsToHash(params)[name];
 };
 
-var getURLElement = function getURLElement(name) {
-  return (/\/tsomi\/(.*)/.test(name) ? decodeURI(last(name.split('/'))) : 'null'
-  );
-};
-
-var mapObjKeys = function mapObjKeys(f, o) {
+var mapObjKeys = exports.mapObjKeys = function mapObjKeys(f, o) {
   var newObj = {};
   Object.keys(o).forEach(function (k) {
     newObj[f(k)] = o[k];
@@ -28514,54 +28492,24 @@ var mapObjKeys = function mapObjKeys(f, o) {
   return newObj;
 };
 
-/* TODO: why is Flow allowing points with undefined x or y values through without comment? I'm having trouble reproducing this, but it's a big issue. */
-var populatePath = function populatePath(path, points) {
-  points.forEach(function (point, index) {
-    if (isNaN(point.x) || isNaN(point.y)) {
-      debugger;
-    }
-    path = path.replace('X' + index, point.x.toString()).replace('Y' + index, point.y.toString());
-  });
-  return path;
-};
+var populatePath = exports.populatePath = function populatePath(path, points) {
+  var populatePath_ = function populatePath_(pathElems, pts) {
+    var _pathElems = _toArray(pathElems),
+        pe = _pathElems[0],
+        elems = _pathElems.slice(1);
 
-var isAboutPage = function isAboutPage() {
-  var href = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : window.location.href;
-  return last(href.split('/')) === 'about';
-};
+    var _pts = _toArray(pts),
+        p = _pts[0],
+        pts_ = _pts.slice(1);
 
-var maybe = function maybe(def) {
-  return function (f) {
-    return function (val) {
-      return val == null ? def : f(val);
-    };
+    if (pe === null || pe === undefined) return [];
+    if (p === null || pe === undefined) return pathElems;
+    if (pe.startsWith('X') || pe.startsWith('Y')) return [p.toString()].concat(populatePath_(elems, pts_));
+    return [pe].concat(populatePath_(elems, pts));
   };
-};
-
-var maybe_ = function maybe_(f) {
-  return function (val) {
-    return maybe(null)(f)(val);
-  };
-};
-
-module.exports = {
-  angleRadians: angleRadians,
-  convertSpaces: convertSpaces,
-  convertToSafeDOMId: convertToSafeDOMId,
-  getURLElement: getURLElement,
-  getURLParameter: getURLParameter,
-  isAboutPage: isAboutPage,
-  largest: largest,
-  last: last,
-  mapObjKeys: mapObjKeys,
-  maybe: maybe,
-  maybe_: maybe_,
-  parseDate: parseDate,
-  populatePath: populatePath,
-  smallest: smallest,
-  radial: radial,
-  queryParamsToHash: queryParamsToHash,
-  uniqueBy: uniqueBy
+  return populatePath_(path.split(' '), _fp2.default.flatten(_fp2.default.map(function (p) {
+    return [p.x, p.y];
+  })(points))).join(' ');
 };
 
 /***/ }),
@@ -28571,70 +28519,28 @@ module.exports = {
 "use strict";
 
 
-var ALPHA = 1;
-var BANNER_SIZE = 25;
-var BANNER_X = 180;
-var BANNER_Y = 52;
-var CHARGE_BASE = 200;
-var CHARGE_HIDDEN = 25;
-var CHARGE_RANDOM = 1;
-var DEFAULT_ANIMATION_DURATION = 1000;
-var GRAVITY = 1;
-var HEAD_ANGLE = Math.PI / 6;
-var IMAGE_SIZE = 180;
-var LINK_BASE = 40;
-var LINK_MIN_OFFSET = 25;
-var LINK_RANDOM = 100;
-var LINK_STRENGTH = 0.3;
-var MAX_SCREEN_NODES = 25;
-var MARGIN = 100;
-var NODE_SIZE = 150;
-var PRINTABLE = true;
-var PRINTABLE_PARAM = '?printable=yes';
-var QUERY_URL = 'http://dbpedia.org/sparql?default-graph-uri=http%3A%2F%2Fdbpedia.org&format=json&query=';
-var RIM_SIZE = 15;
-var STOCK_EASE = 'elastic';
-var TIMELINE_OPACITY = 0.03;
-var TIMELINE_HIGHLIGHT_OPACITY = 0.4;
-var TIMELINE_MARGIN = 50;
-var TIMELINE_Y = function TIMELINE_Y(height) {
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+var ALPHA = exports.ALPHA = 1;
+var BANNER_SIZE = exports.BANNER_SIZE = 25;
+var BANNER_X = exports.BANNER_X = 180;
+var BANNER_Y = exports.BANNER_Y = 52;
+var CHARGE_BASE = exports.CHARGE_BASE = 200;
+var CHARGE_HIDDEN = exports.CHARGE_HIDDEN = 25;
+var CHARGE_RANDOM = exports.CHARGE_RANDOM = 1;
+var DEFAULT_ANIMATION_DURATION = exports.DEFAULT_ANIMATION_DURATION = 1000;
+var GRAVITY = exports.GRAVITY = 1;
+var IMAGE_SIZE = exports.IMAGE_SIZE = 180;
+var LINK_MIN_OFFSET = exports.LINK_MIN_OFFSET = 25;
+var LINK_RANDOM = exports.LINK_RANDOM = 100;
+var LINK_STRENGTH = exports.LINK_STRENGTH = 0.3;
+var MARGIN = exports.MARGIN = 100;
+var MAX_SCREEN_NODES = exports.MAX_SCREEN_NODES = 25;
+var NODE_SIZE = exports.NODE_SIZE = 150;
+var RIM_SIZE = exports.RIM_SIZE = 15;
+var TIMELINE_Y = exports.TIMELINE_Y = function TIMELINE_Y(height) {
   return height - 30;
-};
-var UNKNOWN_PERSON = 'static/images/unknown.png';
-var WIKI_LOGO = 'static/images/Wikipedia-logo.png';
-var WIKI_ICON_WIDTH = 30;
-
-module.exports = {
-  ALPHA: ALPHA,
-  BANNER_X: BANNER_X,
-  BANNER_Y: BANNER_Y,
-  BANNER_SIZE: BANNER_SIZE,
-  CHARGE_BASE: CHARGE_BASE,
-  CHARGE_HIDDEN: CHARGE_HIDDEN,
-  CHARGE_RANDOM: CHARGE_RANDOM,
-  DEFAULT_ANIMATION_DURATION: DEFAULT_ANIMATION_DURATION,
-  GRAVITY: GRAVITY,
-  HEAD_ANGLE: HEAD_ANGLE,
-  IMAGE_SIZE: IMAGE_SIZE,
-  LINK_BASE: LINK_BASE,
-  LINK_MIN_OFFSET: LINK_MIN_OFFSET,
-  LINK_RANDOM: LINK_RANDOM,
-  LINK_STRENGTH: LINK_STRENGTH,
-  MAX_SCREEN_NODES: MAX_SCREEN_NODES,
-  MARGIN: MARGIN,
-  NODE_SIZE: NODE_SIZE,
-  PRINTABLE: PRINTABLE,
-  PRINTABLE_PARAM: PRINTABLE_PARAM,
-  QUERY_URL: QUERY_URL,
-  RIM_SIZE: RIM_SIZE,
-  STOCK_EASE: STOCK_EASE,
-  TIMELINE_OPACITY: TIMELINE_OPACITY,
-  TIMELINE_HIGHLIGHT_OPACITY: TIMELINE_HIGHLIGHT_OPACITY,
-  TIMELINE_MARGIN: TIMELINE_MARGIN,
-  TIMELINE_Y: TIMELINE_Y,
-  UNKNOWN_PERSON: UNKNOWN_PERSON,
-  WIKI_LOGO: WIKI_LOGO,
-  WIKI_ICON_WIDTH: WIKI_ICON_WIDTH
 };
 
 /***/ }),
@@ -49254,15 +49160,15 @@ var React = __webpack_require__(7);
 var _require = __webpack_require__(33),
     connect = _require.connect;
 
-var _require2 = __webpack_require__(742),
+var _require2 = __webpack_require__(743),
     WikiDiv = _require2.WikiDiv;
 
-var _require3 = __webpack_require__(745),
+var _require3 = __webpack_require__(746),
     About = _require3.About;
 
 var store = __webpack_require__(44);
 
-__webpack_require__(748);
+__webpack_require__(749);
 
 var App_ = function (_React$Component) {
   _inherits(App_, _React$Component);
@@ -49279,7 +49185,9 @@ var App_ = function (_React$Component) {
       var _this2 = this;
 
       this.getAndCachePerson_(this.props.focusedSubject).then(function (person) {
-        _this2.focusPerson(person.id);
+        if (person !== null && person !== undefined) {
+          _this2.focusPerson(person.id);
+        }
       });
     }
   }, {
@@ -49296,6 +49204,8 @@ var App_ = function (_React$Component) {
             res(person);
           }
         });
+      }).catch(function (err) {
+        return console.log('[getAndCachePerson_ handler]', err);
       });
     }
   }, {
@@ -49305,6 +49215,8 @@ var App_ = function (_React$Component) {
 
       this.props.setLoadInProgress(n);
       this.getAndCachePerson_(n).then(function (person) {
+        if (person === null || person === undefined) return;
+
         window.history.pushState('', n, '' + location.origin + location.pathname + '?subject=' + n.asString());
         if (person.wikipediaUri) {
           var uri = person.wikipediaUri;
@@ -50637,6 +50549,7 @@ var _require = __webpack_require__(331),
 
 var _require2 = __webpack_require__(332),
     ALPHA = _require2.ALPHA,
+    BANNER_SIZE = _require2.BANNER_SIZE,
     BANNER_X = _require2.BANNER_X,
     BANNER_Y = _require2.BANNER_Y,
     CHARGE_BASE = _require2.CHARGE_BASE,
@@ -50917,7 +50830,7 @@ var renderPeople = function renderPeople(sel, selectNode, mouseOver, dim) {
     return node.isLoading ? 'visible' : 'hidden';
   }).attr('stroke', 'url(#loading-gradient)').attr('stroke-width', RIM_SIZE).attr('r', (IMAGE_SIZE - RIM_SIZE) / 2 - RIM_SIZE / 2);
 
-  canvas.append('path').attr('class', 'banner').attr('style', 'stroke-width: 25;').attr('d', populatePath('M X0 Y0 L X1 Y1', [{ x: -BANNER_X, y: BANNER_Y }, { x: +BANNER_X, y: BANNER_Y }]));
+  canvas.append('path').attr('class', 'banner').attr('style', 'stroke-width: ' + BANNER_SIZE).attr('d', populatePath('M X0 Y0 L X1 Y1', [{ x: -BANNER_X, y: BANNER_Y }, { x: +BANNER_X, y: BANNER_Y }]));
 
   canvas.append('text').attr('class', 'name').attr('text-anchor', 'middle').attr('y', BANNER_Y).attr('dy', '0.3em').text(function (node) {
     return node.person.name;
@@ -67888,9 +67801,11 @@ var _types = __webpack_require__(19);
 
 var _util = __webpack_require__(331);
 
+var _fp3 = __webpack_require__(740);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-__webpack_require__(740);
+__webpack_require__(741);
 
 // Handle a variety of different date format issues. Dates, especially in the
 // distant past, are somewhat uncertain and DBpedia returns dates in a few
@@ -67938,7 +67853,7 @@ var getPerson = exports.getPerson = function getPerson(s) {
     return r.json();
   }).then(function (r) {
     var person = (0, _util.mapObjKeys)(function (i) {
-      return (0, _util.last)(i.split('/'));
+      return (0, _fp3.last)(i.split('/'));
     }, r[mkResourceUrl(s)]);
 
     /* eslint no-underscore-dangle: off */
@@ -67958,26 +67873,29 @@ var getPerson = exports.getPerson = function getPerson(s) {
 
     var thumbnail = person.thumbnail ? person.thumbnail[0].value : null;
 
+    var name = _fp2.default.head(person.name);
+    if (name === undefined) {
+      return null;
+    }
+
     return {
       type: 'PersonDetail',
       id: s,
       uri: mkResourceUrl(s),
       wikipediaUri: wikipediaUri,
-      name: (0, _util.maybe)('')(function (n) {
-        return n.value;
-      })(_fp2.default.head(person.name)),
-      abstract: _fp2.default.compose((0, _util.maybe_)(function (n) {
+      name: name.value,
+      abstract: _fp2.default.compose((0, _fp3.maybe_)(function (n) {
         return n.value;
       }), _fp2.default.head, _fp2.default.filter(function (js) {
         return js.lang === 'en';
       }))(person.abstract),
-      birthPlace: (0, _util.maybe_)(function (n) {
+      birthPlace: (0, _fp3.maybe_)(function (n) {
         return n.value;
       })(_fp2.default.head(person.birthPlace)),
-      birthDate: (0, _util.maybe_)(function (n) {
+      birthDate: (0, _fp3.maybe_)(function (n) {
         return parseDBpediaDate(n);
       })(_fp2.default.head(person.birthDate)),
-      deathDate: (0, _util.maybe_)(function (n) {
+      deathDate: (0, _fp3.maybe_)(function (n) {
         return parseDBpediaDate(n);
       })(_fp2.default.head(person.deathDate)),
       influencedBy: influencedBy,
@@ -68015,7 +67933,7 @@ var searchForPeople = exports.searchForPeople = function searchForPeople(name) {
   return searchByName(name).then(function (lst) {
     return Promise.all(_fp2.default.map(getPerson)(lst));
   }).then(function (lst) {
-    return (0, _util.uniqueBy)(function (l) {
+    return (0, _fp3.uniqueBy)(function (l) {
       return l.id.asString();
     }, _fp2.default.filter(function (l) {
       return l;
@@ -68158,16 +68076,58 @@ module.exports = {
 /* 740 */
 /***/ (function(module, exports, __webpack_require__) {
 
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+
+/* eslint no-underscore-dangle: off */
+
+var last = exports.last = function last(arr) {
+  return arr[arr.length - 1];
+};
+
+var maybe = exports.maybe = function maybe(def) {
+  return function (f) {
+    return function (val) {
+      return val == null ? def : f(val);
+    };
+  };
+};
+
+var maybe_ = exports.maybe_ = function maybe_(f) {
+  return function (val) {
+    return maybe(null)(f)(val);
+  };
+};
+
+var uniqueBy = exports.uniqueBy = function uniqueBy(f, c) {
+  var lookup = c.reduce(function (acc, item) {
+    var id = f(item);
+    if (!acc[id]) acc[id] = item;
+    return acc;
+  }, {});
+
+  return Object.values(lookup);
+};
+
+/***/ }),
+/* 741 */
+/***/ (function(module, exports, __webpack_require__) {
+
 // the whatwg-fetch polyfill installs the fetch() function
 // on the global object (window or self)
 //
 // Return that as the export for use in Webpack, Browserify etc.
-__webpack_require__(741);
+__webpack_require__(742);
 module.exports = self.fetch.bind(self);
 
 
 /***/ }),
-/* 741 */
+/* 742 */
 /***/ (function(module, exports) {
 
 (function(self) {
@@ -68639,14 +68599,14 @@ module.exports = self.fetch.bind(self);
 
 
 /***/ }),
-/* 742 */
+/* 743 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 var React = __webpack_require__(7);
-__webpack_require__(743);
+__webpack_require__(744);
 
 var WikiDiv = function WikiDiv(_ref) {
   var url = _ref.url,
@@ -68666,11 +68626,11 @@ var WikiDiv = function WikiDiv(_ref) {
 module.exports = { WikiDiv: WikiDiv };
 
 /***/ }),
-/* 743 */
+/* 744 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
-var content = __webpack_require__(744);
+var content = __webpack_require__(745);
 
 if(typeof content === 'string') content = [[module.i, content, '']];
 
@@ -68716,7 +68676,7 @@ if(false) {
 }
 
 /***/ }),
-/* 744 */
+/* 745 */
 /***/ (function(module, exports, __webpack_require__) {
 
 exports = module.exports = __webpack_require__(14)(false);
@@ -68730,7 +68690,7 @@ exports.push([module.i, "#wikiframe {\n  width: 100%;\n  height: 100%;\n}\n\n.co
 
 
 /***/ }),
-/* 745 */
+/* 746 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -68752,7 +68712,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
-__webpack_require__(746);
+__webpack_require__(747);
 
 var About = function About(_ref) {
   var goBack = _ref.goBack,
@@ -68808,11 +68768,11 @@ var About = function About(_ref) {
 module.exports = { About: About };
 
 /***/ }),
-/* 746 */
+/* 747 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
-var content = __webpack_require__(747);
+var content = __webpack_require__(748);
 
 if(typeof content === 'string') content = [[module.i, content, '']];
 
@@ -68858,7 +68818,7 @@ if(false) {
 }
 
 /***/ }),
-/* 747 */
+/* 748 */
 /***/ (function(module, exports, __webpack_require__) {
 
 exports = module.exports = __webpack_require__(14)(false);
@@ -68872,11 +68832,11 @@ exports.push([module.i, "div.about-container {\n  position: absolute;\n  z-index
 
 
 /***/ }),
-/* 748 */
+/* 749 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
-var content = __webpack_require__(749);
+var content = __webpack_require__(750);
 
 if(typeof content === 'string') content = [[module.i, content, '']];
 
@@ -68922,7 +68882,7 @@ if(false) {
 }
 
 /***/ }),
-/* 749 */
+/* 750 */
 /***/ (function(module, exports, __webpack_require__) {
 
 exports = module.exports = __webpack_require__(14)(false);
