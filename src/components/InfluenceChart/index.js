@@ -338,6 +338,17 @@ const renderPeople = (
     .attr('r', IMAGE_SIZE / 2)
 
   canvas.append('image')
+    .on(
+      'error',
+      (err, cnt, imageLst) => {
+        if (imageLst != null) {
+          const image = imageLst[cnt]
+          if (image != null) {
+            image.setAttribute('href', 'static/default-icon.svg')
+          }
+        }
+      },
+    )
     .attr('href', (node: PersonNode): string => (node.person.thumbnail ? node.person.thumbnail : ''))
     .attr('preserveAspectRatio', 'xMidYMin slice')
     .attr('height', IMAGE_SIZE)
