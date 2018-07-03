@@ -141,5 +141,19 @@ describe('precise dbpedia gets', () => {
       done()
     })
   })
+
+  it('handles the birth and death dates of St. Augustine', (done) => {
+    getPerson(new SubjectId('Augustine_of_Hippo')).then(person => {
+      expect(person.uri).toEqual('http://dbpedia.org/resource/Augustine_of_Hippo')
+      expect(person.name).toEqual('Saint Augustine')
+      expect(person.birthDate.isSame(moment('354-11-13', 'YYYY-M-D'))).toBe(true)
+      expect(person.deathDate.isSame(moment('430-08-28', 'YYYY-M-D'))).toBe(true)
+      done()
+    }).catch(err => {
+      console.log('exception:', err)
+      expect(false).toEqual(true)
+      done()
+    })
+  })
 })
 

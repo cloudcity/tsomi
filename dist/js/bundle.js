@@ -50822,7 +50822,14 @@ var renderPeople = function renderPeople(sel, selectNode, mouseOver, dim) {
 
   canvas.append('circle').classed('node-backdrop', true).attr('r', IMAGE_SIZE / 2);
 
-  canvas.append('image').attr('href', function (node) {
+  canvas.append('image').on('error', function (err, cnt, imageLst) {
+    if (imageLst != null) {
+      var image = imageLst[cnt];
+      if (image != null) {
+        image.setAttribute('href', 'static/default-icon.svg');
+      }
+    }
+  }).attr('href', function (node) {
     return node.person.thumbnail ? node.person.thumbnail : '';
   }).attr('preserveAspectRatio', 'xMidYMin slice').attr('height', IMAGE_SIZE).attr('width', IMAGE_SIZE).attr('x', -IMAGE_SIZE / 2).attr('y', -IMAGE_SIZE / 2);
 
