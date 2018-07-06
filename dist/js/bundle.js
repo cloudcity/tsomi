@@ -49217,7 +49217,11 @@ var App_ = function (_React$Component) {
       this.getAndCachePerson_(n).then(function (person) {
         if (person === null || person === undefined) return;
 
-        window.history.pushState('', n, '' + location.origin + location.pathname + '?subject=' + n.asString());
+        try {
+          window.history.pushState('', n, '' + location.origin + location.pathname + '?subject=' + n.asString());
+        } catch (error) {
+          console.error('Cannot modify window history: ', error);
+        }
         if (person.wikipediaUri) {
           var uri = person.wikipediaUri;
           var muri = (0, _types.wikipediaMobileUri)(uri);
@@ -50833,9 +50837,15 @@ var renderPeople = function renderPeople(sel, selectNode, mouseOver, dim) {
     return node.person.thumbnail ? node.person.thumbnail : '';
   }).attr('preserveAspectRatio', 'xMidYMin slice').attr('height', IMAGE_SIZE).attr('width', IMAGE_SIZE).attr('x', -IMAGE_SIZE / 2).attr('y', -IMAGE_SIZE / 2);
 
-  canvas.append('circle').classed('loading-circle', true).attr('fill', 'none').attr('visibility', function (node) {
-    return node.isLoading ? 'visible' : 'hidden';
-  }).attr('stroke', 'url(#loading-gradient)').attr('stroke-width', RIM_SIZE).attr('r', (IMAGE_SIZE - RIM_SIZE) / 2 - RIM_SIZE / 2);
+  /*
+  canvas.append('circle')
+    .classed('loading-circle', true)
+    .attr('fill', 'none')
+    .attr('visibility', (node: PersonNode) => (node.isLoading ? 'visible' : 'hidden'))
+    .attr('stroke', 'url(#loading-gradient)')
+    .attr('stroke-width', RIM_SIZE)
+    .attr('r', ((IMAGE_SIZE - RIM_SIZE) / 2) - (RIM_SIZE / 2))
+    */
 
   canvas.append('path').attr('class', 'banner').attr('style', 'stroke-width: ' + BANNER_SIZE).attr('d', populatePath('M X0 Y0 L X1 Y1', [{ x: -BANNER_X, y: BANNER_Y }, { x: +BANNER_X, y: BANNER_Y }]));
 
@@ -51208,7 +51218,11 @@ var InfluenceCanvas = function () {
 
       this.graph.getVisibleNodes().forEach(function (n) {
         n.isLoading = subject ? subject.asString() === n.getId() : false;
-        _this4.nodesElem.select('#' + convertToSafeDOMId(n.getId()) + ' .loading-circle').transition().attr('visibility', n.isLoading ? 'visible' : 'hidden');
+        if (n.isLoading) {
+          _this4.nodesElem.select('#' + convertToSafeDOMId(n.getId()) + ' .scale').append('circle').classed('loading-circle', true).attr('fill', 'none').attr('visibility', 'visible').attr('stroke', 'url(#loading-gradient)').attr('stroke-width', RIM_SIZE).attr('r', (IMAGE_SIZE - RIM_SIZE) / 2 - RIM_SIZE / 2);
+        } else {
+          _this4.nodesElem.select('#' + convertToSafeDOMId(n.getId()) + ' .loading-circle').remove();
+        }
       });
     }
 
@@ -51344,13 +51358,15 @@ var InfluenceChart_ = function (_React$Component) {
         if (domElem != null && d3Elem != null) {
           var _canvas = prevState.canvas ? prevState.canvas : new InfluenceCanvas(d3Elem, domElem.getBoundingClientRect(), focus, newProps.people, newProps.selectPerson);
 
-          _canvas.setLoadInProgress(newProps.loadInProgress);
+          if (prevState.loadInProgress !== newProps.loadInProgress) {
+            _canvas.setLoadInProgress(newProps.loadInProgress);
+          }
 
           if (!newProps.loadInProgress) {
             _canvas.setFocused(focus, newProps.people);
           }
 
-          return _extends({}, prevState, { canvas: _canvas, focusedId: focusedId });
+          return _extends({}, prevState, { canvas: _canvas, focusedId: focusedId, loadInProgress: newProps.loadInProgress });
         }
         return _extends({}, prevState, { focusedId: focusedId });
       }
@@ -51366,7 +51382,8 @@ var InfluenceChart_ = function (_React$Component) {
     _this6.state = {
       domElem: null,
       d3Elem: null,
-      canvas: null
+      canvas: null,
+      loadInProgress: null
     };
     return _this6;
   }

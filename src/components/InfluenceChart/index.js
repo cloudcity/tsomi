@@ -356,6 +356,7 @@ const renderPeople = (
     .attr('x', -IMAGE_SIZE / 2)
     .attr('y', -IMAGE_SIZE / 2)
 
+  /*
   canvas.append('circle')
     .classed('loading-circle', true)
     .attr('fill', 'none')
@@ -363,6 +364,7 @@ const renderPeople = (
     .attr('stroke', 'url(#loading-gradient)')
     .attr('stroke-width', RIM_SIZE)
     .attr('r', ((IMAGE_SIZE - RIM_SIZE) / 2) - (RIM_SIZE / 2))
+    */
 
   canvas.append('path')
     .attr('class', 'banner')
@@ -795,9 +797,18 @@ class InfluenceCanvas {
   setLoadInProgress(subject: ?SubjectId) {
     this.graph.getVisibleNodes().forEach((n: PersonNode) => {
       n.isLoading = subject ? subject.asString() === n.getId() : false
-      this.nodesElem.select(`#${convertToSafeDOMId(n.getId())} .loading-circle`)
-        .transition()
-        .attr('visibility', n.isLoading ? 'visible' : 'hidden')
+      if (n.isLoading) {
+        this.nodesElem.select(`#${convertToSafeDOMId(n.getId())} .scale`)
+          .append('circle')
+          .classed('loading-circle', true)
+          .attr('fill', 'none')
+          .attr('visibility', 'visible')
+          .attr('stroke', 'url(#loading-gradient)')
+          .attr('stroke-width', RIM_SIZE)
+          .attr('r', ((IMAGE_SIZE - RIM_SIZE) / 2) - (RIM_SIZE / 2))
+      } else {
+        this.nodesElem.select(`#${convertToSafeDOMId(n.getId())} .loading-circle`).remove()
+      }
     })
   }
 
@@ -905,6 +916,7 @@ type InfluenceChartState = {
   domElem: ?HTMLElement,
   d3Elem: ?D3Types.Selection,
   canvas: ?InfluenceCanvas,
+  loadInProgress: ?SubjectId,
 }
 
 /* InfluenceChart provides the React interface that lets the InfluenceCanvas
@@ -944,13 +956,15 @@ class InfluenceChart_ extends React.Component<InfluenceChartProps, InfluenceChar
             newProps.selectPerson,
           )
 
-        canvas.setLoadInProgress(newProps.loadInProgress)
+        if (prevState.loadInProgress !== newProps.loadInProgress) {
+          canvas.setLoadInProgress(newProps.loadInProgress)
+        }
 
         if (!newProps.loadInProgress) {
           canvas.setFocused(focus, newProps.people)
         }
 
-        return { ...prevState, canvas, focusedId }
+        return { ...prevState, canvas, focusedId, loadInProgress: newProps.loadInProgress }
       }
       return { ...prevState, focusedId }
     }
@@ -964,6 +978,7 @@ class InfluenceChart_ extends React.Component<InfluenceChartProps, InfluenceChar
       domElem: null,
       d3Elem: null,
       canvas: null,
+      loadInProgress: null,
     }
   }
 
