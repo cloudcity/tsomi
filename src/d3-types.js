@@ -39,6 +39,8 @@ export type ForceSimulation<T> = {|
   nodes: Array<T> => ForceSimulation<T>,
   on: (string, () => void) => ForceSimulation<T>,
   restart: () => void,
+  start: () => void,
+  stop: () => void,
 |}
 
 

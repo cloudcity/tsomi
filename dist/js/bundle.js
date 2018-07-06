@@ -28528,12 +28528,12 @@ var BANNER_X = exports.BANNER_X = 180;
 var BANNER_Y = exports.BANNER_Y = 52;
 var CHARGE_BASE = exports.CHARGE_BASE = 200;
 var CHARGE_HIDDEN = exports.CHARGE_HIDDEN = 25;
-var CHARGE_RANDOM = exports.CHARGE_RANDOM = 1;
+var CHARGE_RANDOM = exports.CHARGE_RANDOM = 25;
 var DEFAULT_ANIMATION_DURATION = exports.DEFAULT_ANIMATION_DURATION = 1000;
 var GRAVITY = exports.GRAVITY = 1;
 var IMAGE_SIZE = exports.IMAGE_SIZE = 180;
 var LINK_MIN_OFFSET = exports.LINK_MIN_OFFSET = 25;
-var LINK_RANDOM = exports.LINK_RANDOM = 100;
+var LINK_RANDOM = exports.LINK_RANDOM = 25;
 var LINK_STRENGTH = exports.LINK_STRENGTH = 0.3;
 var MARGIN = exports.MARGIN = 100;
 var MAX_SCREEN_NODES = exports.MAX_SCREEN_NODES = 25;
@@ -51141,6 +51141,7 @@ var InfluenceCanvas = function () {
     value: function animate() {
       var _this3 = this;
 
+      if (this.fdl.alpha() < 0.01) this.fdl.stop();
       var _dimensions = this.dimensions,
           width = _dimensions.width,
           height = _dimensions.height;

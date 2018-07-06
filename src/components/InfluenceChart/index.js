@@ -736,6 +736,7 @@ class InfluenceCanvas {
 
   /* Run one frame of the force animation. This is not a public function. */
   animate(): void {
+    if (this.fdl.alpha() < 0.01) this.fdl.stop()
     const { width, height } = this.dimensions
     const [minX, minY] = [MARGIN, MARGIN]
     const [maxX, maxY] = [width - MARGIN, height - MARGIN]
