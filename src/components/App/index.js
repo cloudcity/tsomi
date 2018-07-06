@@ -66,11 +66,15 @@ class App_ extends React.Component<AppProps, AppState> {
     this.getAndCachePerson_(n).then((person: ?PersonDetail) => {
       if (person === null || person === undefined) return
 
-      window.history.pushState(
-        '',
-        n,
-        `${location.origin}${location.pathname}?subject=${n.asString()}`,
-      )
+      try {
+        window.history.pushState(
+          '',
+          n,
+          `${location.origin}${location.pathname}?subject=${n.asString()}`,
+        )
+      } catch(error) {
+        console.error('Cannot modify window history: ', error)
+      }
       if (person.wikipediaUri) {
         const uri = person.wikipediaUri
         const muri = wikipediaMobileUri(uri)
