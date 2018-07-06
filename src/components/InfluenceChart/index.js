@@ -344,12 +344,12 @@ const renderPeople = (
         if (imageLst != null) {
           const image = imageLst[cnt]
           if (image != null) {
-            image.setAttribute('href', 'static/default-icon.svg')
+            image.setAttribute('xlink:href', 'static/default-icon.svg')
           }
         }
       },
     )
-    .attr('href', (node: PersonNode): string => (node.person.thumbnail ? node.person.thumbnail : ''))
+    .attr('xlink:href', (node: PersonNode): string => (node.person.thumbnail ? node.person.thumbnail : ''))
     .attr('preserveAspectRatio', 'xMidYMin slice')
     .attr('height', IMAGE_SIZE)
     .attr('width', IMAGE_SIZE)
@@ -996,9 +996,10 @@ class InfluenceChart_ extends React.Component<InfluenceChartProps, InfluenceChar
     const focus = this.props.people[this.props.focusedId.asString()]
     if (focus != null && focus.type === 'PersonDetail'
       && this.state.domElem != null && this.state.d3Elem != null) {
+      const { d3Elem, domElem } = this.state
       this.state.canvas = new InfluenceCanvas(
-        this.state.d3Elem,
-        this.state.domElem.getBoundingClientRect(),
+        d3Elem,
+        domElem.getBoundingClientRect(),
         focus,
         this.props.people,
         this.props.selectPerson,
@@ -1007,8 +1008,8 @@ class InfluenceChart_ extends React.Component<InfluenceChartProps, InfluenceChar
 
     window.addEventListener('resize', () => {
       if (this.state.domElem != null && this.state.canvas != null) {
-        const { domElem } = this.state
-        this.state.canvas.setDimensions(domElem.getBoundingClientRect())
+        const { domElem, canvas } = this.state
+        canvas.setDimensions(domElem.getBoundingClientRect())
       }
     })
   }
@@ -1025,7 +1026,15 @@ class InfluenceChart_ extends React.Component<InfluenceChartProps, InfluenceChar
   }
 
   render() {
-    return React.createElement('svg', { id: `${this.props.label}`, style: { height: '100%', width: '100%' } }, [])
+    return React.createElement(
+      'svg',
+      {
+        id: `${this.props.label}`,
+        style: { height: '100%', width: '100%' },
+        xmlns: 'http://www.w3.org/2000/svg',
+        'xmlns:xlink': 'http://www.w3.org/1999/xlink',
+      },
+      [])
   }
 }
 

@@ -50830,10 +50830,10 @@ var renderPeople = function renderPeople(sel, selectNode, mouseOver, dim) {
     if (imageLst != null) {
       var image = imageLst[cnt];
       if (image != null) {
-        image.setAttribute('href', 'static/default-icon.svg');
+        image.setAttribute('xlink:href', 'static/default-icon.svg');
       }
     }
-  }).attr('href', function (node) {
+  }).attr('xlink:href', function (node) {
     return node.person.thumbnail ? node.person.thumbnail : '';
   }).attr('preserveAspectRatio', 'xMidYMin slice').attr('height', IMAGE_SIZE).attr('width', IMAGE_SIZE).attr('x', -IMAGE_SIZE / 2).attr('y', -IMAGE_SIZE / 2);
 
@@ -51407,14 +51407,20 @@ var InfluenceChart_ = function (_React$Component) {
 
       var focus = this.props.people[this.props.focusedId.asString()];
       if (focus != null && focus.type === 'PersonDetail' && this.state.domElem != null && this.state.d3Elem != null) {
-        this.state.canvas = new InfluenceCanvas(this.state.d3Elem, this.state.domElem.getBoundingClientRect(), focus, this.props.people, this.props.selectPerson);
+        var _state = this.state,
+            _d3Elem = _state.d3Elem,
+            _domElem = _state.domElem;
+
+        this.state.canvas = new InfluenceCanvas(_d3Elem, _domElem.getBoundingClientRect(), focus, this.props.people, this.props.selectPerson);
       }
 
       window.addEventListener('resize', function () {
         if (_this7.state.domElem != null && _this7.state.canvas != null) {
-          var _domElem = _this7.state.domElem;
+          var _state2 = _this7.state,
+              _domElem2 = _state2.domElem,
+              _canvas2 = _state2.canvas;
 
-          _this7.state.canvas.setDimensions(_domElem.getBoundingClientRect());
+          _canvas2.setDimensions(_domElem2.getBoundingClientRect());
         }
       });
     }
@@ -51427,9 +51433,9 @@ var InfluenceChart_ = function (_React$Component) {
   }, {
     key: 'componentDidUpdate',
     value: function componentDidUpdate() {
-      var _state = this.state,
-          domElem = _state.domElem,
-          canvas = _state.canvas;
+      var _state3 = this.state,
+          domElem = _state3.domElem,
+          canvas = _state3.canvas;
 
       if (domElem != null && canvas != null) {
         canvas.setDimensions(domElem.getBoundingClientRect());
@@ -51438,7 +51444,12 @@ var InfluenceChart_ = function (_React$Component) {
   }, {
     key: 'render',
     value: function render() {
-      return _react2.default.createElement('svg', { id: '' + this.props.label, style: { height: '100%', width: '100%' } }, []);
+      return _react2.default.createElement('svg', {
+        id: '' + this.props.label,
+        style: { height: '100%', width: '100%' },
+        xmlns: 'http://www.w3.org/2000/svg',
+        'xmlns:xlink': 'http://www.w3.org/1999/xlink'
+      }, []);
     }
   }]);
 
