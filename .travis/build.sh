@@ -12,4 +12,5 @@ mkdir -p dist/
 npm run build
 cp index.html dist/
 cp -r static dist/
+cp -r js dist/
 
