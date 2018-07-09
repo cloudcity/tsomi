@@ -3,7 +3,7 @@ language: node_js
 node_js:
   - "node"
 
-script: bash ./travis/build.sh
+script: bash .travis/build.sh
 
 deploy:
   - provider: pages
