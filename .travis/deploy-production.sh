@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ ! -e cloudcity.io ]; then
-  git clone git@github.com:cloudcity/cloudcity.io.git
+  git clone https://savannidgerinel:${GITHUB_TOKEN}@github.com:cloudcity/cloudcity.io.git
 fi
 mkdir -p cloudcity.io/tsomi
 cd cloudcity.io/tsomi
@@ -13,5 +13,7 @@ git add *
 # git commit -m "deploy tsomi to production"
 # git push --set-upstream origin savanni
 
+pwd
 ls -l
+git status
 

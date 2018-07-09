@@ -16,6 +16,7 @@ deploy:
 
   - provider: script
     script: bash .travis/deploy-production.sh
+    skip-cleanup: true
     on:
       branch: master
 
