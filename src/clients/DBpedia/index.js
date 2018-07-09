@@ -55,17 +55,11 @@ const parseDBpediaDate = (triple: RDFTriple): ?moment => {
 }
 
 
-const mkDataUrl = (s: SubjectId, secure: bool): string => (
-  secure
-    ? `https://dbpedia.org/data/${s.asString()}.json`
-    : `http://dbpedia.org/data/${s.asString()}.json`
-)
+const mkDataUrl = (s: SubjectId): string =>
+  `http://dbpedia.org/data/${s.asString()}.json`
 
-const mkResourceUrl = (s: SubjectId, secure: bool): string => (
-  secure
-    ? `https://dbpedia.org/resource/${s.asString()}`
-    : `http://dbpedia.org/resource/${s.asString()}`
-)
+const mkResourceUrl = (s: SubjectId): string =>
+  `http://dbpedia.org/resource/${s.asString()}`
 
 const findByRelationship = (relationship: string, target: SubjectId): (any => [SubjectId]) =>
   fp.compose(
@@ -75,13 +69,13 @@ const findByRelationship = (relationship: string, target: SubjectId): (any => [S
   )
 
 
-export const getPerson = (s: SubjectId, secure: bool): Promise<?PersonDetail> => {
-  const dataUrl = mkDataUrl(s, secure)
+export const getPerson = (s: SubjectId): Promise<?PersonDetail> => {
+  const dataUrl = mkDataUrl(s)
 
   return fetch(dataUrl)
     .then(r => r.json())
     .then((r) => {
-      const person = mapObjKeys(i => last(i.split('/')), r[mkResourceUrl(s, secure)])
+      const person = mapObjKeys(i => last(i.split('/')), r[mkResourceUrl(s)])
 
       /* eslint no-underscore-dangle: off */
       const influenced_ = person.influenced
@@ -112,7 +106,7 @@ export const getPerson = (s: SubjectId, secure: bool): Promise<?PersonDetail> =>
       return {
         type: 'PersonDetail',
         id: s,
-        uri: mkResourceUrl(s, secure),
+        uri: mkResourceUrl(s),
         wikipediaUri,
         name: name.value,
         abstract: fp.compose(
@@ -150,7 +144,7 @@ const searchByName = (name: string): Promise<Array<SubjectId>> =>
       Array.from(new Set(fp.map(j =>
         mkSubjectFromDBpediaUri(j.person.value))(js.results.bindings))))
 
-export const searchForPeople = (name: string, secure: bool): Promise<Array<?PersonDetail>> =>
-  searchByName(name).then(lst => Promise.all(fp.map(sid => getPerson(sid, secure))(lst)))
+export const searchForPeople = (name: string): Promise<Array<?PersonDetail>> =>
+  searchByName(name).then(lst => Promise.all(fp.map(getPerson)(lst)))
     .then(lst => uniqueBy(l => l.id.asString(), fp.filter(l => l)(lst)))
 

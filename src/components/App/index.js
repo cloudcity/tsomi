@@ -3,7 +3,6 @@
 
 import * as fp from 'lodash/fp'
 
-import config from '../../config'
 import InfluenceChart from '../InfluenceChart'
 import Navbar from '../Navbar/'
 import WikiCollapse from '../WikiCollapse'
@@ -49,7 +48,7 @@ class App_ extends React.Component<AppProps, AppState> {
   }
 
   getAndCachePerson_(n: SubjectId): Promise<?PersonDetail> {
-    return dbpedia.getPerson(n, config.secure)
+    return dbpedia.getPerson(n)
       .then((person: ?PersonDetail): Promise<PersonDetail> =>
         new Promise((res, rej) => {
           if (person === null || person === undefined) {
@@ -96,7 +95,7 @@ class App_ extends React.Component<AppProps, AppState> {
 
   submitSearch(name: string) {
     this.props.setSearchInProgress(true)
-    dbpedia.searchForPeople(name, config.secure)
+    dbpedia.searchForPeople(name)
       .then((people: Array<?PersonDetail>): void =>
         this.props.saveSearchResults(name, fp.filter(p => p != null)(people)))
       .catch((err) => {
