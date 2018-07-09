@@ -345,7 +345,9 @@ const renderPeople = (
         if (imageLst != null) {
           const image = imageLst[cnt]
           if (image != null) {
-            image.setAttribute('xlink:href', `${config.basepath}/static/default-icon.svg`)
+            /* I have no idea why, but using xlink:href here actually causes
+             * the default image to not load. */
+            image.setAttribute('href', `${config.basepath}/static/default-icon.svg`)
           }
         }
       },
@@ -1033,7 +1035,7 @@ class InfluenceChart_ extends React.Component<InfluenceChartProps, InfluenceChar
         id: `${this.props.label}`,
         style: { height: '100%', width: '100%' },
         xmlns: 'http://www.w3.org/2000/svg',
-        'xmlnsXlink': 'http://www.w3.org/1999/xlink',
+        xmlnsXlink: 'http://www.w3.org/1999/xlink',
       },
       [],
     )
