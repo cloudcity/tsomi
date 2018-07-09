@@ -14,9 +14,10 @@ deploy:
     on:
       branch: staging
 
-  - provider: script
-    script: bash .travis/deploy-production.sh
-    skip-cleanup: true
-    on:
-      branch: master
+  # Disabled until we can figure out HTTP vs. HTTPS deployments.
+  #- provider: script
+    #script: bash .travis/deploy-production.sh
+    #skip-cleanup: true
+    #on:
+      #branch: master
 
