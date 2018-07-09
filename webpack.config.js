@@ -7,8 +7,8 @@ module.exports = {
   entry: './src/tsomi.js',
   devtool: 'source-map',
   output: {
-    path: path.resolve(__dirname, 'dist'),
-    filename: 'js/bundle.js'
+    path: path.resolve(__dirname, 'js'),
+    filename: 'bundle.js'
   },
   devServer: {
     contentBase: path.join(__dirname, ""),
