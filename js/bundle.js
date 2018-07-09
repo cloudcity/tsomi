@@ -50857,7 +50857,9 @@ var renderPeople = function renderPeople(sel, selectNode, mouseOver, dim) {
     if (imageLst != null) {
       var image = imageLst[cnt];
       if (image != null) {
-        image.setAttribute('xlink:href', _config2.default.basepath + '/static/default-icon.svg');
+        /* I have no idea why, but using xlink:href here actually causes
+         * the default image to not load. */
+        image.setAttribute('href', _config2.default.basepath + '/static/default-icon.svg');
       }
     }
   }).attr('xlink:href', function (node) {
@@ -51475,7 +51477,7 @@ var InfluenceChart_ = function (_React$Component) {
         id: '' + this.props.label,
         style: { height: '100%', width: '100%' },
         xmlns: 'http://www.w3.org/2000/svg',
-        'xmlnsXlink': 'http://www.w3.org/1999/xlink'
+        xmlnsXlink: 'http://www.w3.org/1999/xlink'
       }, []);
     }
   }]);
