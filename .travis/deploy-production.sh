@@ -10,10 +10,11 @@ cp -r ../../static .
 cp -r ../../js .
 git checkout -b savanni
 git add *
-# git commit -m "deploy tsomi to production"
-# git push --set-upstream origin savanni
 
 pwd
 ls -l
 git status
+
+git commit -m "deploy tsomi to production"
+git push --set-upstream origin savanni
 
