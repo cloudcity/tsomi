@@ -8,6 +8,7 @@ else
   export CONFIG_FILE=dev.js
 fi
 
+mkdir -p dist/
 npm run build
 cp index.html dist/
 cp -r static dist/
