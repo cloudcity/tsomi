@@ -5,7 +5,7 @@ if [ ! -e cloudcity.io ]; then
 fi
 mkdir -p cloudcity.io/tsomi
 cd cloudcity.io/tsomi
-cp ../../index.html .
+cat ../../index.html | sed 's/static\/tsomi.css/\/tsomi\/static\/tsomi.css/' | sed 's/js\/bundle.js/\/tsomi\/js\/bundle.js/' > index.html
 cp -r ../../static .
 cp -r ../../dist/js .
 # git add *
