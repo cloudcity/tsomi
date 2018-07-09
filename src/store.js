@@ -3,6 +3,7 @@
 
 import queryString from 'query-string'
 
+import config from './config'
 import { type PersonDetail, SubjectId, type Uri } from './types'
 
 export type PeopleCache = { [string]: PersonDetail }
@@ -20,6 +21,7 @@ export type Store = {
 }
 
 export const initialState = (): Store => {
+  console.log('[initialState config]', config)
   const params = queryString.parse(location.search)
   return {
     showAboutPage: false,

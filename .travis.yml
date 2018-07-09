@@ -3,10 +3,7 @@ language: node_js
 node_js:
   - "node"
 
-script:
-  - npm run build
-  - cp index.html dist/
-  - cp -r static dist/
+script: bash .travis/build.sh
 
 deploy:
   - provider: pages
@@ -18,7 +15,7 @@ deploy:
       branch: staging
 
   - provider: script
-    script: bash deploy-production.sh
+    script: bash .travis/deploy-production.sh
     on:
       branch: master
 
