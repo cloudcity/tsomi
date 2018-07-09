@@ -12,12 +12,10 @@ deploy:
     github-token: $GITHUB_TOKEN  # Set in travis-ci.org dashboard, marked secure
     keep-history: true
     on:
-      branch:
-        only: staging
+      branch: staging
 
   - provider: script
     script: bash .travis/deploy-production.sh
     on:
-      branch:
-        only: master
+      branch: master
 
