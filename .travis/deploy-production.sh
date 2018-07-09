@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ ! -e cloudcity.io ]; then
-  git clone https://savannidgerinel:${GITHUB_TOKEN}@github.com:cloudcity/cloudcity.io.git
+  git clone https://savannidgerinel:${GITHUB_TOKEN}@github.com/cloudcity/cloudcity.io.git
 fi
 mkdir -p cloudcity.io/tsomi
 cd cloudcity.io/tsomi
