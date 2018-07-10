@@ -1,4 +1,4 @@
 export default {
   debug: false,
-  basepath: '/tsomi',
+  basepath: 'http://tsomi.cloudcity.io/',
 }
