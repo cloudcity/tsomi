@@ -14,3 +14,5 @@ cp index.html dist/
 cp -r static dist/
 cp -r js dist/
 
+echo tsomi.cloudcity.io > dist/CNAME
+
