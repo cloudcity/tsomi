@@ -6418,8 +6418,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = {
-  debug: true,
-  basepath: 'http://tsomi.cloudcity.io'
+  debug: false,
+  basepath: 'http://tsomi.cloudcity.io/'
 };
 
 /***/ }),
