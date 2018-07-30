@@ -217,6 +217,10 @@ class TGraph {
     return link
   }
 
+  removeLinks() {
+    this.links = []
+  }
+
   getNodes(): Array<InvisibleNode | PersonNode> {
     return fp.values(this.nodes)
   }
@@ -562,8 +566,7 @@ const updateInfluenceGraph = (
 
   const currentPeople: HashSet<PersonDetail> =
     new HashSet(focus).union(
-      new HashSet(...influenceLimit(influences.values()))
-    )
+      new HashSet(...influenceLimit(influences.values())))
 
   const oldPeople: HashSet<PersonDetail> =
     new HashSet(...fp.map(n => n.person)(graph.getVisibleNodes()))
@@ -571,7 +574,27 @@ const updateInfluenceGraph = (
   const incomingPeople: HashSet<PersonDetail> = currentPeople.difference(oldPeople)
   const outgoingPeople: HashSet<PersonDetail> = oldPeople.difference(currentPeople)
 
+  graph.removeLinks()
   outgoingPeople.values().forEach((p: PersonDetail) => graph.removePerson(p))
+
+  const remainingNodes = graph.getVisibleNodes()
+  remainingNodes.forEach((n) => {
+    if (!n.person.id.equals(focus.id)) {
+      if (influencedBy.has(n.person.id)) {
+        const link = graph.createLink(n.person, focus)
+        if (link != null) {
+          link.middle.x = (link.target.x + link.source.x) / 2
+          link.middle.y = (link.target.y + link.source.y) / 2
+        }
+      } else {
+        const link = graph.createLink(focus, n.person)
+        if (link != null) {
+          link.middle.x = (link.target.x + link.source.x) / 2
+          link.middle.y = (link.target.y + link.source.y) / 2
+        }
+      }
+    }
+  })
 
   incomingPeople.values().forEach((p: PersonDetail) => {
     if (p !== focus) {
