@@ -255,6 +255,7 @@ const createTimeline = (width: number, startDate: moment, endDate: moment): Time
     .domain([startDate, endDate])
 
   const axis = d3.axisBottom(scale)
+    .tickFormat(d3.timeFormat("%Y"))
     .ticks(10)
 
   return { scale, axis }
