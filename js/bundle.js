@@ -59263,6 +59263,7 @@ var InfluenceCanvas = function () {
           minYear = _calculateTimeRange4[0],
           maxYear = _calculateTimeRange4[1];
 
+      this.timeline.scale.range([0, this.dimensions.width - 1]);
       this.timeline.scale.domain([minYear, maxYear]);
       this.timelineAxis.transition().duration(DEFAULT_ANIMATION_DURATION).attr('transform', 'translate(0, ' + TIMELINE_Y(this.dimensions.height) + ')').call(this.timeline.axis);
 
@@ -75140,9 +75141,12 @@ var Search_ = function (_React$Component) {
     value: function keyUp(e) {
       if (e.keyCode === 13) {
         this.submit();
-      } else {
-        this.setState({ name: (0, _eventtypes.inputElement)(e.target).value });
       }
+    }
+  }, {
+    key: 'handleChange',
+    value: function handleChange(e) {
+      this.setState({ name: e.target.value });
     }
   }, {
     key: 'render',
@@ -75154,6 +75158,12 @@ var Search_ = function (_React$Component) {
       var input = _react2.default.createElement('input', {
         onKeyUp: function onKeyUp(e) {
           return _this2.keyUp(e);
+        },
+        onChange: function onChange(e) {
+          return _this2.handleChange(e);
+        },
+        onSubmit: function onSubmit() {
+          return _this2.submit();
         },
         placeholder: 'Search...',
         type: 'text'
@@ -75870,7 +75880,8 @@ var parseDBpediaDate = function parseDBpediaDate(triple) {
 };
 
 var mkDataUrl = function mkDataUrl(s) {
-  return 'http://dbpedia.org/data/' + s.asString() + '.json';
+  var subStr = encodeURIComponent(s.asString());
+  return 'http://dbpedia.org/data/' + subStr + '.json';
 };
 
 var mkResourceUrl = function mkResourceUrl(s) {
@@ -75954,7 +75965,7 @@ var getPerson = exports.getPerson = function getPerson(s) {
 var searchByName = exports.searchByName = function searchByName(name) {
   var queryParams = {
     QueryClass: 'person',
-    QueryString: name
+    QueryString: name.normalize('NFC')
   };
   return (0, _http.fetchWithTimeout)('http://lookup.dbpedia.org/api/search/KeywordSearch?' + (0, _http.encodeFormBody)(queryParams), { method: 'GET' }, 5000).then(function (res) {
     return res.text();
@@ -75963,7 +75974,7 @@ var searchByName = exports.searchByName = function searchByName(name) {
     (0, _xml2js.parseString)(text, function (err, xml) {
       var subjectIds = _fp2.default.flatten(_fp2.default.map(function (result) {
         return _fp2.default.map(function (uri) {
-          return (0, _types.mkSubjectFromDBpediaUri)(uri);
+          return (0, _types.mkSubjectFromDBpediaUri)(decodeURIComponent(uri));
         })(result.URI);
       })(xml.ArrayOfResult.Result));
       res = res.concat(subjectIds);
