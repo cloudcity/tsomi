@@ -35,6 +35,37 @@ describe('DBpedia searches', () => {
     })
   })
 
+  it('retrieves a person with both composed and uncomposed characters in their names', (done) => {
+    /* latin small letter e with diaeresis */
+    searchForPeople('Charlotte Brontë').then(lst => {
+      expect(lst.length).toEqual(1)
+      done()
+    }).catch(err => {
+      if (err.message.startsWith('request timed out')) {
+        console.log('***** WARNING: request timed out *****')
+        done()
+        return
+      }
+      console.log('ERROR: ', err)
+      expect(false).toEqual(true)
+      done()
+    })
+    /* e followed by combining diaeresis */
+    searchForPeople('Charlotte Brontë').then(lst => {
+      expect(lst.length).toEqual(1)
+      done()
+    }).catch(err => {
+      if (err.message.startsWith('request timed out')) {
+        console.log('***** WARNING: request timed out *****')
+        done()
+        return
+      }
+      console.log('ERROR: ', err)
+      expect(false).toEqual(true)
+      done()
+    })
+  })
+
   it('retrieves list of people with searchForPeople', (done) => {
     searchForPeople('William Gibson').then(lst => {
       expect(lst.length).toEqual(2)

@@ -48,8 +48,10 @@ const parseDBpediaDate = (triple: RDFTriple): ?moment => {
 }
 
 
-const mkDataUrl = (s: SubjectId): string =>
-  `http://dbpedia.org/data/${s.asString()}.json`
+const mkDataUrl = (s: SubjectId): string => {
+  const subStr = encodeURIComponent(s.asString())
+  return `http://dbpedia.org/data/${subStr}.json`
+}
 
 const mkResourceUrl = (s: SubjectId): string =>
   `http://dbpedia.org/resource/${s.asString()}`
@@ -129,7 +131,7 @@ type LookupXMLResult = {
 export const searchByName = (name: string): Promise<Array<SubjectId>> => {
   const queryParams = {
     QueryClass: 'person',
-    QueryString: name,
+    QueryString: name.normalize('NFC'),
   }
   return fetchWithTimeout(
     `http://lookup.dbpedia.org/api/search/KeywordSearch?${encodeFormBody(queryParams)}`,
@@ -142,7 +144,7 @@ export const searchByName = (name: string): Promise<Array<SubjectId>> => {
         const subjectIds: Array<SubjectId> =
           fp.flatten(fp.map(result =>
             fp.map(uri =>
-              mkSubjectFromDBpediaUri(uri))(result.URI))(xml.ArrayOfResult.Result))
+              mkSubjectFromDBpediaUri(decodeURIComponent(uri)))(result.URI))(xml.ArrayOfResult.Result))
         res = res.concat(subjectIds)
       })
       return res
