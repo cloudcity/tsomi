@@ -36,7 +36,8 @@ export class SubjectId implements Hashable {
   }
 }
 
-export const mkSubjectFromDBpediaUri = (url: Uri): SubjectId => new SubjectId(url.trim().split('/').reverse()[0])
+export const mkSubjectFromDBpediaUri = (url: Uri): SubjectId =>
+  new SubjectId(url.trim().split('/').reverse()[0])
 
 type PersonDetailParams = {
   id: SubjectId,

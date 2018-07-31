@@ -916,6 +916,7 @@ class InfluenceCanvas {
    * unspecified state change. */
   refreshCanvas() {
     const [minYear, maxYear] = calculateTimeRange(listOfPeopleInGraph(this.graph, this.people))
+    this.timeline.scale.range([0, this.dimensions.width - 1])
     this.timeline.scale.domain([minYear, maxYear])
     this.timelineAxis.transition()
       .duration(DEFAULT_ANIMATION_DURATION)

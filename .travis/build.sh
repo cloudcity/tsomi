@@ -11,6 +11,7 @@ fi
 mkdir -p dist/
 npm run build
 cp index.html dist/
+cp static/favicon.ico dist/
 cp -r static dist/
 cp -r js dist/
 

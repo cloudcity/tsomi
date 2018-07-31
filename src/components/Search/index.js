@@ -38,12 +38,12 @@ class Search_ extends React.Component<SearchProps, SearchState> {
     this.props.submitSearch(this.state.name)
   }
 
-  keyUp(e: KeyboardEvent): void {
-    if (e.keyCode === 13) {
-      this.submit()
-    } else {
-      this.setState({ name: inputElement(e.target).value })
-    }
+  keyUp(e) {
+    if (e.keyCode === 13) { this.submit() }
+  }
+
+  handleChange(e) {
+    this.setState({ name: e.target.value })
   }
 
   render() {
@@ -51,6 +51,8 @@ class Search_ extends React.Component<SearchProps, SearchState> {
 
     const input = React.createElement('input', {
       onKeyUp: e => this.keyUp(e),
+      onChange: e => this.handleChange(e),
+      onSubmit: () => this.submit(),
       placeholder: 'Search...',
       type: 'text',
     })
