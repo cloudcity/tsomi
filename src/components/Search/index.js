@@ -52,7 +52,7 @@ class Search_ extends React.Component<SearchProps, SearchState> {
     const input = React.createElement('input', {
       onKeyUp: e => this.keyUp(e),
       onChange: e => this.handleChange(e),
-      onSubmit: _ => this.submit(),
+      onSubmit: () => this.submit(),
       placeholder: 'Search...',
       type: 'text',
     })
