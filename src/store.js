@@ -7,6 +7,9 @@ import { type PersonDetail, SubjectId, type Uri } from './types'
 
 export type PeopleCache = { [string]: PersonDetail }
 
+//export type AccordionState = 'visible' | 'collapsing' | 'hidden' | 'expanding';
+export type AccordionState = 'balanced' | 'chart-only' | 'wiki-fade-out' | 'wiki-fade-in' | 'expanding-chart' | 'contracting-chart';
+
 export type Store = {
   currentWikiPageUri: Uri,
   errorMessage: ?string,
@@ -17,7 +20,7 @@ export type Store = {
   searchResults: Array<PersonDetail>,
   searchString: ?string,
   showAboutPage: bool,
-  wikiDivHidden: bool,
+  wikiAccordionState: AccordionState,
 }
 
 export const initialState = (): Store => {
@@ -34,7 +37,7 @@ export const initialState = (): Store => {
     searchInProgress: false,
     searchResults: [],
     searchString: null,
-    wikiDivHidden: false,
+    wikiAccordionState: 'visible',
   }
 }
 
@@ -57,8 +60,8 @@ export const setLoadInProgress = (subject: ?SubjectId): Action =>
   ({ type: 'SET_LOAD_IN_PROGRESS', subject })
 export const setSearchInProgress = (status: bool) =>
   ({ type: 'SET_SEARCH_IN_PROGRESS', status })
-export const setWikiDivHidden = (state: bool): Action =>
-  ({ type: 'SET_WIKI_DIV_HIDDEN', state })
+export const setAccordionState = (state: AccordionState): Action =>
+  ({ type: 'SET_WIKI_ACCORDION_STATE', state })
 export const setWikiUri = (uri: Uri): Action =>
   ({ type: 'SET_WIKI_URI', uri })
 export const toggleAboutPage = (): Action =>
@@ -74,7 +77,7 @@ export const searchInProgress = (store: Store): bool => store.searchInProgress
 export const searchResults = (store: Store): Array<PersonDetail> => store.searchResults
 export const searchString = (store: Store): ?string => store.searchString
 export const showAboutPage = (store: Store): bool => store.showAboutPage
-export const wikiDivHidden = (store: Store): bool => store.wikiDivHidden
+export const wikiAccordionState = (store: Store): AccordionState => store.wikiAccordionState
 export const wikiUri = (store: Store): Uri => store.currentWikiPageUri
 
 export const runState = (state?: Store = initialState(), action: any): Store => {
@@ -127,10 +130,10 @@ export const runState = (state?: Store = initialState(), action: any): Store => 
         errorMessage: action.msg,
       }
 
-    case 'SET_WIKI_DIV_HIDDEN':
+    case 'SET_WIKI_ACCORDION_STATE':
       return {
         ...state,
-        wikiDivHidden: action.state,
+        wikiAccordionState: action.state,
       }
 
     case 'SET_WIKI_URI':

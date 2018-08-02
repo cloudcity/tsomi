@@ -36,11 +36,13 @@ const WikiCollapse_ = ({ collapsed, setWikiDivHidden }: WikiCollapseProps): Elem
 
 const WikiCollapse = connect(
   (state) => ({
-    collapsed: store.wikiDivHidden(state),
+    collapsed: store.wikiDivState(state),
   }),
+  /*
   (dispatch) => ({
     setWikiDivHidden: state => dispatch(store.setWikiDivHidden(state)),
   }),
+  */
 )(WikiCollapse_)
 
 export default WikiCollapse

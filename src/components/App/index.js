@@ -7,6 +7,8 @@ import ErrorBox from '../ErrorBox'
 import InfluenceChart from '../InfluenceChart'
 import Navbar from '../Navbar/'
 import WikiCollapse from '../WikiCollapse'
+import { type WikiDivState } from '../../store'
+import * as store from '../../store'
 import { type Uri, type SubjectId, type PersonDetail, wikipediaMobileUri } from '../../types'
 import * as dbpedia from '../../clients/DBpedia'
 
@@ -16,9 +18,55 @@ const { connect } = require('react-redux')
 const { WikiDiv } = require('../Wikidiv/')
 const { About } = require('../About/')
 
-const store = require('../../store')
 
 require('./main.css')
+
+
+type AccordionEvent = 'None', 
+
+type ChartAccordionClass = 'chart-div-normal' | 'chart-div-expanding' | 'chart-div-expanded' | 'chart-div-contracing';
+type WikiAccordionClass = 'wiki-div-visible' | 'wiki-div-hidden' | 'wiki-div-fadeout' | 'wiki-div-fade-in';
+
+
+/*
+const runAccordionState = (initial: AccordionState): (AccordionState, ?TimeoutId) => {
+  switch (initial) {
+    case 'balanced':
+      return ('wiki-fade-out', setTimeout(() => )
+    case 'chart-only':
+      return ('
+    case 'wiki-fade-out':
+    case 'wiki-fade-in':
+    case 'expanding-chart':
+    case 'contracting-chart':
+    default:
+      throw Error('Invalid accordion state: ', initial)
+  }
+}
+*/
+
+
+/*
+const chartDivStateTag = (state: AccordionState): string => {
+  switch (state) {
+    case 'visible': return 'chart-div-normal'
+    case 'collapsing': return 'chart-div-expanding'
+    case 'hidden': return 'chart-div-expanded'
+    case 'expanding': return 'chart-div-contracting'
+    default: return 'chart-div-normal'
+  }
+}
+
+const wikiDivStateTag = (state: AccordionState): string => {
+  switch (state) {
+    case 'visible': return 'wiki-div-visible'
+    case 'collapsing': return 'wiki-div-hiding'
+    case 'hidden': return 'wiki-div-hidden'
+    case 'expanding': return 'wiki-div-appearing'
+    default: return 'wiki-div-visible'
+  }
+}
+*/
 
 /* eslint react/no-unused-state: off, react/no-unused-prop-types: off */
 type AppProps = {
@@ -27,7 +75,7 @@ type AppProps = {
   searchString: ?string,
   showAboutPage: bool,
   subjectId: string,
-  wikiDivHidden: bool,
+  wikiDivState: AccordionState,
   wikiUri: string,
 
   cachePerson: (SubjectId, PersonDetail) => void,
@@ -39,15 +87,18 @@ type AppProps = {
   setSearchInProgress: bool => void,
   setWikiUri: Uri => void,
   toggleAboutPage: void => void,
+  setAccordionState: AccordionState => void,
 }
 type AppState = {|
   errorTimer: ?TimeoutID,
+  animationTimer: ?TimeoutID,
 |}
 
 class App_ extends React.Component<AppProps, AppState> {
   static getDerivedStateFromProps(newProps: AppProps, prevState: AppState): AppState {
     if (newProps.errorMessage && prevState.errorTimer === null) {
       return {
+        ...prevState,
         errorTimer: setTimeout(
           () => {
             newProps.setErrorMessage(null)
@@ -56,7 +107,7 @@ class App_ extends React.Component<AppProps, AppState> {
         ),
       }
     } else if (!newProps.errorMessage) {
-      return { errorTimer: null }
+      return { ...prevState, errorTimer: null }
     }
     return prevState
   }
@@ -64,7 +115,7 @@ class App_ extends React.Component<AppProps, AppState> {
   constructor(props: AppProps) {
     super(props)
 
-    this.state = { errorTimer: null }
+    this.state = { animationTimer: null, errorTimer: null }
   }
 
   componentDidMount() {
@@ -142,6 +193,77 @@ class App_ extends React.Component<AppProps, AppState> {
       })
   }
 
+  animateToChartOnly() {
+    while (this.props.wikiDivState != 'chart-only') {
+      switch (this.props.wikiDivState) {
+        case 'balanced':
+          this.props.setAccordionState('wiki-fade-out')
+          await sleep(1000)
+          break
+        case 'wiki-fade-out':
+          this.props.setAccordionState('expanding-chart')
+          await sleep(1000)
+          break
+        case 'expanding-chart':
+          this.props.setAccordionState('chart-only')
+          break
+        default:
+          return
+      }
+    }
+  }
+
+  animateToBalanced() {
+    while (this.props.wikiDivState != 'balanced') {
+      switch (this.props.wikiDivState) {
+        case 'chart-only':
+          this.props.setAccordionState('contracting-chart')
+          await sleep(1000)
+        case 'contracting-chart':
+          this.props.setAccordionState('
+        case 'wiki-fade-in':
+        default:
+          return
+      }
+    }
+  }
+
+  toggleWikiDiv() {
+    new Promise((resolve, reject) => {
+      switch (this.props.wikiDivState) {
+        case 'balanced': {
+          this.animateToChartOnly()
+          /*
+          this.props.setAccordionState('collapsing')
+          const timer = setTimeout(() => {
+            this.setState({ animationTimer: null })
+            this.props.setAccordionState('hidden')
+          },
+          6 * 1000)
+          this.setState({ animationTimer: timer })
+          return
+          */
+          resolve()
+        }
+        case 'chart-only': {
+          this.animateToBalanced()
+          /*
+          this.props.setAccordionState('expanding')
+          const timer = setTimeout(() => {
+            this.setState({ animationTimer: null })
+            this.props.setAccordionState('visible')
+          },
+          10 * 1000)
+          this.setState({ animationTimer: timer })
+          return
+          */
+          resolve()
+        }
+        default:
+          reject()
+      }
+  }
+
   render() {
     const navbar = React.createElement(Navbar, {
       key: 'navbar',
@@ -168,15 +290,17 @@ class App_ extends React.Component<AppProps, AppState> {
       {
         key: 'chartdiv',
         id: 'chartdiv',
-        className: this.props.wikiDivHidden ? 'chart-div-expanded' : 'chart-div-normal',
+        className: chartDivStateTag(this.props.wikiDivState),
       },
       influenceChart,
     )
 
-    const wikiCollapse = React.createElement(WikiCollapse, { })
+    const wikiCollapse = React.createElement(WikiCollapse, {
+      setWikiDivHidden: () => this.toggleWikiDiv(),
+    })
 
     const wikiDiv = React.createElement(WikiDiv, {
-      hidden: this.props.wikiDivHidden,
+      className: wikiDivStateTag(this.props.wikiDivState),
       key: 'wikidiv',
       subject: this.props.subjectId,
       url: this.props.wikiUri,
@@ -197,21 +321,6 @@ class App_ extends React.Component<AppProps, AppState> {
         ErrorBox({ msg: this.props.errorMessage }),
       )
       : null
-
-    if (this.props.wikiDivHidden) {
-      return React.createElement(
-        'div',
-        {},
-        navbar,
-        React.createElement(
-          'div',
-          { id: 'main-content' },
-          chartDiv,
-          wikiCollapse,
-          errorBox,
-        ),
-      )
-    }
 
     return React.createElement(
       'div',
@@ -235,7 +344,7 @@ const App = connect(
     focusedSubject: store.focusedSubject(state),
     loadInProgress: store.loadInProgress(state),
     showAboutPage: store.showAboutPage(state),
-    wikiDivHidden: store.wikiDivHidden(state),
+    wikiDivState: store.wikiDivState(state),
     wikiUri: store.wikiUri(state),
   }),
   dispatch => ({
@@ -247,7 +356,7 @@ const App = connect(
       dispatch(store.saveSearchResults(str, results)),
     setErrorMessage: (msg: ?string) => dispatch(store.setErrorMessage(msg)),
     setSearchInProgress: (status: bool) => dispatch(store.setSearchInProgress(status)),
-    setWikiDivHidden: (status: bool) => dispatch(store.setWikiDivHidden(status)),
+    setAccordionState: (status: AccordionState) => dispatch(store.setAccordionState(status)),
     setWikiUri: uri => dispatch(store.setWikiUri(uri)),
     toggleAboutPage: () => dispatch(store.toggleAboutPage()),
   }),

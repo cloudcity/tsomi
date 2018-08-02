@@ -6,6 +6,7 @@
 * {
   margin: 0px;
   padding: 0px;
+  /* display: none; */
   border: 0px;
 }
 
@@ -46,6 +47,24 @@ body {
   width: 65%;
 }
 
+@keyframes chart_div_contract_animation {
+  0% {width: calc(100% - 31px); }
+  100% {width: 65%;}
+}
+
+@keyframes chart_div_expand_animation {
+  0%   {width: 65%;}
+  100% {width: calc(100% - 31px); }
+}
+
+.chart-div-contracting {
+  animation: chart_div_contract_animation 5s ease-in-out 1;
+}
+
+.chart-div-expanding {
+  animation: chart_div_expand_animation 0.5s ease-in-out 1;
+}
+
 .chart-div-expanded {
   width: calc(100% - 31px);
 }
@@ -57,9 +76,30 @@ body {
 }
 
 #wikidiv {
-  width: calc(35% - 31px);
 	height: 100%;
   float: right;
+}
+
+.wiki-div-visible {
+  width: calc(35% - 31px);
+  display: block;
+}
+
+.wiki-div-hidden {
+  display: none;
+}
+
+.wiki-div-appearing {
+  display: none;
+  opacity: 1;
+  transition: visibility 0s 5s, opacity 5s linear;
+}
+
+.wiki-div-hiding {
+  width: calc(35% - 31px);
+  visibility: hidden;
+  opacity: 0;
+  transition: visibility 0s 5s, opacity 5s linear;
 }
 
 #main-errors {
@@ -75,8 +115,22 @@ body {
     width: 70%;
   }
 
-  .chart-div-expanded {
-    width: calc(100% - 31px);
+  @keyframes chart_div_expand_animation {
+    from { width: 70%; }
+    to   { width: calc(100% - 31px); }
+  }
+
+  @keyframes chart_div_contract_animation {
+    from { width: calc(100% - 31px); }
+    to   { width: 70%; }
+  }
+
+  .wiki-div-hiding {
+    width: calc(30% - 31px);
+  }
+
+  .wiki-div-visible {
+    width: calc(30% - 31px);
   }
 }
 
@@ -85,11 +139,26 @@ body {
     width: 75%;
   }
 
-  .chart-div-expanded {
-    width: calc(100% - 31px);
+  @keyframes chart_div_expand_animation {
+    from { width: 75%; }
+    to   { width: calc(100% - 31px); }
+  }
+
+  @keyframes chart_div_contract_animation {
+    from { width: calc(100% - 31px); }
+    to   { width: 75%; }
+  }
+
+  .wiki-div-hiding {
+    width: calc(25% - 31px);
+  }
+
+  .wiki-div-visible {
+    width: calc(25% - 31px);
   }
 }
 
+/*
 @media only screen and (min-width: 1200px) {
   #wikidiv {
     width: calc(30% - 31px);
@@ -101,6 +170,7 @@ body {
     width: calc(25% - 31px);
   }
 }
+*/
 
 
 /*** THEME RULES ***/
