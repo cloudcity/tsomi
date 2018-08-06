@@ -346,7 +346,7 @@ const renderPeople = (
 
   const canvas = circle.classed('translate', true)
     .attr('id', (node: PersonNode): string => convertToSafeDOMId(node.person.id.asString()))
-    //.attr('transform', `translate(${dim.width / 2}, ${dim.height / 2})`)
+    .attr('transform', `translate(${dim.width / 2}, ${dim.height / 2})`)
     .append('g')
     .classed('scale', true)
     .attr('clip-path', 'url(#image-clip)')
@@ -375,16 +375,6 @@ const renderPeople = (
     .attr('width', IMAGE_SIZE)
     .attr('x', -IMAGE_SIZE / 2)
     .attr('y', -IMAGE_SIZE / 2)
-
-  /*
-  canvas.append('circle')
-    .classed('loading-circle', true)
-    .attr('fill', 'none')
-    .attr('visibility', (node: PersonNode) => (node.isLoading ? 'visible' : 'hidden'))
-    .attr('stroke', 'url(#loading-gradient)')
-    .attr('stroke-width', RIM_SIZE)
-    .attr('r', ((IMAGE_SIZE - RIM_SIZE) / 2) - (RIM_SIZE / 2))
-    */
 
   canvas.append('path')
     .attr('class', 'banner')
@@ -574,6 +564,9 @@ const updateInfluenceGraph = (
   const incomingPeople: HashSet<PersonDetail> = currentPeople.difference(oldPeople)
   const outgoingPeople: HashSet<PersonDetail> = oldPeople.difference(currentPeople)
 
+  console.log('[updateInfluenceGraph incoming]', incomingPeople)
+  console.log('[updateInfluenceGraph outgoing]', outgoingPeople)
+
   graph.removeLinks()
   outgoingPeople.values().forEach((p: PersonDetail) => graph.removePerson(p))
 
@@ -648,6 +641,7 @@ const RadialInfluenceAnimation = (endThreshold: number, g: TGraph, dim: Dimensio
     if (node.vy === 0) node.ty = null
   }
 
+  console.log('[RadialInfluenceAnimation]', graph.getLinks())
   const force = (alpha) => {
     const links = graph.getLinks()
     const focus = graph.getFocus()
@@ -815,6 +809,27 @@ class InfluenceCanvas {
           .style('stop-color', 'white')
           .style('stop-opacity', '0')
       })
+    this.definitions.append('svg:linearGradient')
+      .attr('id', 'loading-gradient-2')
+      .attr('x1', '0%')
+      .attr('y1', '0%')
+      .attr('x2', '100%')
+      .attr('y2', '0%')
+      .call((gradient) => {
+        gradient.append('svg:stop')
+          .attr('offset', '0%')
+          .style('stop-color', 'black')
+          .style('stop-opacity', '1')
+        gradient.append('svg:stop')
+          .attr('offset', '50%')
+          .style('stop-color', 'black')
+          .style('stop-opacity', '0')
+        gradient.append('svg:stop')
+          .attr('offset', '100%')
+          .style('stop-color', 'black')
+          .style('stop-opacity', '0')
+      })
+
 
     /* I've put these here so that I can force them to be rendered in a
      * particular order. If all of the links appear in one container, and all
@@ -871,25 +886,46 @@ class InfluenceCanvas {
     }
     this.dimensions = dimensions
     this.refreshCanvas()
-
   }
 
   setLoadInProgress(subject: ?SubjectId) {
-    this.graph.getVisibleNodes().forEach((n: PersonNode) => {
-      n.isLoading = subject ? subject.asString() === n.getId() : false
-      if (n.isLoading) {
-        this.nodesElem.select(`#${convertToSafeDOMId(n.getId())} .scale`)
-          .append('circle')
-          .classed('loading-circle', true)
-          .attr('fill', 'none')
-          .attr('visibility', 'visible')
-          .attr('stroke', 'url(#loading-gradient)')
-          .attr('stroke-width', RIM_SIZE)
-          .attr('r', ((IMAGE_SIZE - RIM_SIZE) / 2) - (RIM_SIZE / 2))
-      } else {
-        this.nodesElem.select(`#${convertToSafeDOMId(n.getId())} .loading-circle`).remove()
-      }
-    })
+    /* Get a list of nodes. If the person in question is not in the list, clear
+     * the influence graph and display the empty loading circle. */
+    let nodeUnderLoad = subject ? this.graph.nodes[subject.asString()] : null
+
+    console.log('[setLoadInProgress subject and nodeUnderLoad]', subject, nodeUnderLoad)
+    if (subject && nodeUnderLoad) {
+      console.log('[setLoadInProgress adding a loading circle]')
+      this.graph.getVisibleNodes().forEach((n: PersonNode) => {
+        n.isLoading = subject ? subject.asString() === n.getId() : false
+        if (n.isLoading) {
+          this.nodesElem.select(`#${convertToSafeDOMId(n.getId())} .scale`)
+            .append('circle')
+            .classed('loading-circle', true)
+            .attr('fill', 'none')
+            .attr('visibility', 'visible')
+            .attr('stroke', 'url(#loading-gradient)')
+            .attr('stroke-width', RIM_SIZE)
+            .attr('r', ((IMAGE_SIZE - RIM_SIZE) / 2) - (RIM_SIZE / 2))
+        }
+      })
+    } else if (subject && !nodeUnderLoad) {
+      console.log('[setLoadInProgress removing all nodes]')
+      this.graph.nodes = {}
+      this.graph.links = []
+      this.nodesElem.append('g')
+        .attr('transform', `translate(${this.dimensions.width / 2}, ${this.dimensions.height / 2})`)
+        .append('circle')
+        .classed('loading-circle', true)
+        .attr('fill', 'none')
+        .attr('visibility', 'visible')
+        .attr('stroke', 'url(#loading-gradient-2)')
+        .attr('stroke-width', RIM_SIZE)
+        .attr('r', ((IMAGE_SIZE - RIM_SIZE) / 2) - (RIM_SIZE / 2))
+    } else {
+      this.nodesElem.select('.loading-circle').remove()
+    }
+    this.refreshCanvas()
   }
 
   /* Set the currently focused person. This will restart the animation. */
@@ -942,6 +978,7 @@ class InfluenceCanvas {
       .selectAll('.scale')
       .attr('transform', d => (d.getId() === this.focus.id.asString() ? 'scale(1.0)' : 'scale(0.5)'))
 
+    console.log('[refreshCanvas this.graph.getLinks]', this.graph.getLinks())
     const linkSel = this.linksElem.selectAll('path')
       .data(this.graph.getLinks())
     renderLinks(linkSel.enter(), this.graph)
