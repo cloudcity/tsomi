@@ -13,32 +13,50 @@ import {
 import { mapObjKeys, parseDate } from '../../util'
 import { fetchWithTimeout, encodeFormBody } from '../../utils/http'
 import { last, maybe_, uniqueBy } from '../../utils/fp'
+import trace from '../../trace'
 
 require('isomorphic-fetch')
 
-export type PersonJSON = {
-  person: { [string]: any },
-  name: { [string]: any },
-  abstract: { [string]: any },
-  birthPlace?: { [string]: any },
-  birthDate?: { [string]: any },
-  deathDate?: { [string]: any },
-  influencedBy: { [string]: any },
-  influenced: { [string]: any },
-  wikipediaUri: { [string]: any },
-  thumbnail: { [string]: any },
-}
+/* TODO: turn this into a configuration option */
+export const DBPediaRootURI: string = 'http://dbpedia.org'
 
-type RDFTriple = {
+export const IsPrimaryTopicOfURI: Array<string> = [
+  'http://xmlns.com/foaf/0.1/isPrimaryTopicOf',
+]
+export const ThumbnailURI: Array<string> = [
+  `${DBPediaRootURI}/ontology/thumbnail`,
+]
+export const NameURI: Array<string> = [
+  `${DBPediaRootURI}/property/name`,
+  'http://xmlns.com/foaf/0.1/name',
+]
+export const BirthplaceURI: Array<string> = [
+  `${DBPediaRootURI}/ontology/birthPlace`,
+]
+export const BirthdateURI: Array<string> = [
+  `${DBPediaRootURI}/ontology/birthDate`,
+  `${DBPediaRootURI}/property/birthDate`,
+]
+export const DeathdateURI: Array<string> = [
+  `${DBPediaRootURI}/ontology/deathDate`,
+]
+export const AbstractURI: Array<string> = [
+  `${DBPediaRootURI}/ontology/abstract`,
+]
+
+type RDFSet = {|
   type: string,
-  value: any,
-  datatype: string,
-}
+  value: string,
+  datatype: ?string,
+  lang: ?string,
+|}
+
+type RDFTree = { [string]: { [string]: Array<RDFSet> } }
 
 // Handle a variety of different date format issues. Dates, especially in the
 // distant past, are somewhat uncertain and DBpedia returns dates in a few
 // different formats.
-const parseDBpediaDate = (triple: RDFTriple): ?moment => {
+const parseDBpediaDate = (triple: RDFSet): ?moment => {
   if (triple.datatype === 'http://www.w3.org/2001/XMLSchema#integer') {
     return moment({ year: triple.value })
   }
@@ -49,27 +67,46 @@ const parseDBpediaDate = (triple: RDFTriple): ?moment => {
     return parseDate(triple.value, 'YYYY-M-D')
   }
 
-  throw Error(`unexpected RDF triple type: ${triple.datatype}`)
+  throw Error(`unexpected RDF triple type: ${triple.datatype || triple.type}`)
 }
 
 const mkDataUrl = (s: SubjectId): string => {
   const subStr = encodeURIComponent(s.asString())
-  return `http://dbpedia.org/data/${subStr}.json`
+  return `${DBPediaRootURI}/data/${subStr}.json`
 }
 
-const mkResourceUrl = (s: SubjectId): string =>
-  `http://dbpedia.org/resource/${s.asString()}`
+const mkResourceUrl = (s: string): string => `${DBPediaRootURI}/resource/${s}`
+
+const mkOntologyUrl = (s: string): string => `${DBPediaRootURI}/ontology/${s}`
 
 const findByRelationship = (
   relationship: string,
   target: SubjectId,
-): (any => [SubjectId]) =>
+): (RDFTree => [SubjectId]) =>
   fp.compose(
     fp.map(([k]) => mkSubjectFromDBpediaUri(k)),
     fp.filter(
       ([, v]) =>
-        v[relationship] !== undefined &&
+        v[relationship] != null &&
         mkSubjectFromDBpediaUri(v[relationship][0].value).equals(target),
+    ),
+    Object.entries,
+  )
+
+const lookupRDFElements = (tree: any, keys: Array<string>): Array<RDFSet> =>
+  fp.flatten(fp.map((key: string): ?RDFSet => tree[key])(keys))
+
+const lookupFirstRDFElement = (tree: any, keys: Array<string>): ?RDFSet =>
+  fp.head(
+    fp.filter(v => v != null)(
+      fp.map(
+        (key: string): ?RDFSet => {
+          const res = maybe_(lst => fp.head(lst))(tree[key])
+          if (res != null) {
+            return res
+          }
+        },
+      )(keys),
     ),
   )
 
@@ -78,59 +115,74 @@ export const getPerson = (s: SubjectId): Promise<?PersonDetail> => {
 
   return fetch(dataUrl)
     .then(r => r.json())
-    .then(r => {
-      const person = mapObjKeys(i => last(i.split('/')), r[mkResourceUrl(s)])
+    .then(
+      (r: RDFTree): ?PersonDetail => {
+        const person: ?{ [string]: Array<RDFSet> } =
+          r[mkResourceUrl(s.asString())]
+        if (!person) {
+          return null
+        }
 
-      /* eslint no-underscore-dangle: off */
-      const influenced_ = person.influenced
-        ? person.influenced.map(i => mkSubjectFromDBpediaUri(i.value))
-        : []
-      const influenced__ = findByRelationship(
-        'http://dbpedia.org/ontology/influenced',
-        s,
-      )(Object.entries(r))
-      const influenced = Array.from(new Set(influenced_.concat(influenced__)))
+        /* eslint no-underscore-dangle: off */
+        const influenced_ = person.influenced
+          ? person.influenced.map(i => mkSubjectFromDBpediaUri(i.value))
+          : []
+        const influenced__ = findByRelationship(mkOntologyUrl('influenced'), s)(
+          r,
+        )
+        const influenced = Array.from(new Set(influenced_.concat(influenced__)))
 
-      const influencedBy_ = person.influencedBy
-        ? person.influencedBy.map(i => mkSubjectFromDBpediaUri(i.value))
-        : []
-      const influencedBy__ = findByRelationship(
-        'http://dbpedia.org/ontology/influencedBy',
-        s,
-      )(Object.entries(r))
-      const influencedBy = Array.from(
-        new Set(influencedBy_.concat(influencedBy__)),
-      )
+        const influencedBy_ = person.influencedBy
+          ? person.influencedBy.map(i => mkSubjectFromDBpediaUri(i.value))
+          : []
+        const influencedBy__ = findByRelationship(
+          mkOntologyUrl('influencedBy'),
+          s,
+        )(r)
+        const influencedBy = Array.from(
+          new Set(influencedBy_.concat(influencedBy__)),
+        )
 
-      const wikipediaUri = person.isPrimaryTopicOf
-        ? person.isPrimaryTopicOf[0].value
-        : null
+        const wikipediaUri: ?RDFSet = lookupFirstRDFElement(
+          person,
+          IsPrimaryTopicOfURI,
+        )
 
-      const thumbnail = person.thumbnail ? person.thumbnail[0].value : null
+        const thumbnail: ?RDFSet = lookupFirstRDFElement(person, ThumbnailURI)
 
-      const name = fp.head(person.name)
-      if (name === undefined) {
-        return null
-      }
+        const birthPlace: ?RDFSet = lookupFirstRDFElement(person, BirthplaceURI)
 
-      return mkPersonDetail({
-        id: s,
-        uri: mkResourceUrl(s),
-        wikipediaUri,
-        name: name.value,
-        abstract: fp.compose(
-          maybe_(n => n.value),
-          fp.head,
-          fp.filter(js => js.lang === 'en'),
-        )(person.abstract),
-        birthPlace: (maybe_(n => n.value)(fp.head(person.birthPlace)): ?string),
-        birthDate: maybe_(n => parseDBpediaDate(n))(fp.head(person.birthDate)),
-        deathDate: maybe_(n => parseDBpediaDate(n))(fp.head(person.deathDate)),
-        influencedBy,
-        influenced,
-        thumbnail,
-      })
-    })
+        const birthDate: ?RDFSet = lookupFirstRDFElement(person, BirthdateURI)
+
+        const deathDate: ?RDFSet = lookupFirstRDFElement(person, DeathdateURI)
+
+        const abstracts: Array<RDFSet> = lookupRDFElements(person, AbstractURI)
+
+        const name: ?RDFSet = lookupFirstRDFElement(person, NameURI)
+        if (name != null) {
+          return mkPersonDetail({
+            id: s,
+            uri: mkResourceUrl(s.asString()),
+            wikipediaUri: maybe_(v => v.value)(wikipediaUri),
+            name: name.value,
+            abstract: fp.compose(
+              maybe_(n => n.value),
+              fp.head,
+              fp.filter(js => js.lang === 'en'),
+            )(abstracts),
+            birthPlace: maybe_(n => n.value)(birthPlace),
+            birthDate: maybe_(n => parseDBpediaDate(n))(birthDate),
+            deathDate: maybe_(n => parseDBpediaDate(n))(deathDate),
+            influencedBy,
+            influenced,
+            thumbnail: maybe_(v => v.value)(thumbnail),
+          })
+        } else {
+          console.log('name is null')
+          return null
+        }
+      },
+    )
     .catch(err => console.log('[getPerson failed]', s, err))
 }
 

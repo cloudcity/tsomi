@@ -17,17 +17,15 @@ describe('DBpedia searches', () => {
     searchForPeople('Joyce Carol Oates')
       .then(lst => {
         expect(lst.length).toEqual(1) // should dedupe data
-        expect(lst[0].uri).toEqual(
-          'http://dbpedia.org/resource/Joyce_Carol_Oates',
-        )
+        expect(lst[0].uri.endsWith('resource/Joyce_Carol_Oates')).toBe(true)
         expect(lst[0].name).toEqual('Joyce Carol Oates')
-        expect(lst[0].birthPlace).toEqual(
-          'http://dbpedia.org/resource/Lockport_(city),_New_York',
-        )
+        expect(
+          lst[0].birthPlace.endsWith('resource/Lockport_(city),_New_York'),
+        ).toBe(true)
         expect(lst[0].birthDate.isSame(moment('1938-06-16'))).toBe(true)
         expect(lst[0].deathDate).toEqual(null)
-        expect(lst[0].influencedByCount).toEqual(18)
-        expect(lst[0].influencedCount).toEqual(6)
+        expect(lst[0].influencedByCount > 0).toBe(true)
+        expect(lst[0].influencedCount > 0).toBe(true)
         done()
       })
       .catch(err => {
@@ -126,8 +124,8 @@ describe('precise dbpedia gets', () => {
         )
         expect(person.birthDate.isSame(moment('1938-06-16'))).toBe(true)
         expect(person.deathDate).toBeFalsy()
-        expect(person.influencedBy.length).toEqual(18)
-        expect(person.influenced.length).toEqual(6)
+        expect(person.influencedBy.length > 0).toBe(true)
+        expect(person.influenced.length > 0).toBe(true)
         done()
       })
       .catch(err => {
@@ -179,6 +177,7 @@ describe('precise dbpedia gets', () => {
         expect(person.name).toEqual('Edward John Moreton Drax Plunkett Dunsany')
         expect(person.birthDate.isSame(moment('1878-07-24'))).toBe(true)
         expect(person.abstract).toBeDefined()
+        expect(person.abstract).not.toBeNull()
         expect(
           person.abstract.startsWith(
             'Edward John Moreton Drax Plunkett, 18th Baron of Dunsany',
