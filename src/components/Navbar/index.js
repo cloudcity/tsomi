@@ -16,6 +16,7 @@ type NavbarProps = {
   goHome: () => void,
   toggleAbout: () => void,
   submitSearch: string => void,
+  showAboutPage: boolean,
 }
 
 class Navbar extends React.Component<NavbarProps, NavbarState> {
@@ -31,9 +32,16 @@ class Navbar extends React.Component<NavbarProps, NavbarState> {
       goHome,
       submitSearch,
       toggleAbout,
+      showAboutPage,
     } = this.props
 
-    const about = React.createElement('a', { onClick: toggleAbout }, 'About')
+    const about = React.createElement(
+      'a',
+      showAboutPage
+        ? { className: 'shown', onClick: () => null }
+        : { onClick: toggleAbout },
+      'About',
+    )
     const logo = React.createElement(
       'div',
       { onClick: goHome },

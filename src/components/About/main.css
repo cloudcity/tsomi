@@ -2,9 +2,9 @@ div.about-container {
   position: absolute;
   z-index: 100000;
   background-color: white;
-  top: 0;
+  top: 60px;
   left: 0;
-  height: 100vh;
+  height: calc(100vh - 60px);
   width: 100vw;
   display: flex;
   justify-content: center;
