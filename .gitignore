@@ -1,4 +1,5 @@
 node_modules/
 src/**/*.swp
-dist/
+js/
+src/config.js
 
