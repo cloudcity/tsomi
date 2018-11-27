@@ -14,7 +14,7 @@ div.about-container {
 }
 
 div.about-container p,
-div.about-container li, 
+div.about-container li,
 div.about-container h2 {
   font-size: 1.6em;
 }
@@ -72,5 +72,15 @@ div.about-container button {
 
 div.about-container button:hover {
   background-color: rgb(62, 190, 135);
-  box-shadow: 3px 3px 15px 4px rgba(0, 0, 0, 0.10);
+  box-shadow: 3px 3px 15px 4px rgba(0, 0, 0, 0.1);
+}
+
+p.wiki-edit-cta {
+  position: absolute;
+  bottom: 0;
+  left: 3vw;
+  width: calc(100vw - 6vw);
+  text-align: center !important;
+  font-size: 1.3em !important;
+  color: #999 !important;
 }

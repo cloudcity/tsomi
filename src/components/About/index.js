@@ -66,7 +66,7 @@ const About = ({ goBack, focusPerson }: AboutProps) => {
     trebor,
     ' and ',
     ccd,
-    ', TSOMI was hand-crafted ' + 'using ',
+    ', TSOMI was hand-crafted using ',
     react,
     d3,
     ' and ',
@@ -121,6 +121,12 @@ const About = ({ goBack, focusPerson }: AboutProps) => {
     'Return to TSOMI',
   )
 
+  const editText = React.createElement(
+    'p',
+    { className: 'wiki-edit-cta' },
+    'See a typo, missed citation, or incorrect information? Editing wikipedia directly helps TSOMI display well-cited, factual data.',
+  )
+
   const contents = React.createElement(
     'div',
     {},
@@ -130,6 +136,7 @@ const About = ({ goBack, focusPerson }: AboutProps) => {
     explain,
     list,
     button,
+    editText,
   )
 
   return React.createElement('div', { className: 'about-container' }, contents)
