@@ -13,9 +13,16 @@ nav {
   color: white;
 }
 
-nav > * { flex: 1; }
-nav > div { display: flex; align-items: center; }
-nav > div h1 { cursor: pointer; }
+nav > * {
+  flex: 1;
+}
+nav > div {
+  display: flex;
+  align-items: center;
+}
+nav > div h1 {
+  cursor: pointer;
+}
 
 nav img {
   height: 40px;
@@ -35,5 +42,11 @@ nav a {
   cursor: pointer;
 }
 
-nav div.right { display: flex; justify-content: flex-end; }
+nav div.right {
+  display: flex;
+  justify-content: flex-end;
+}
 
+nav a.shown {
+  color: rgba(180, 200, 255, 0.35);
+}

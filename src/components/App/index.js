@@ -171,6 +171,7 @@ class App_ extends React.Component<AppProps, AppState> {
       focusPerson: subjectId => this.focusPerson(subjectId),
       goHome: () => this.props.goHome(),
       toggleAbout: () => this.props.toggleAboutPage(),
+      showAboutPage: this.props.showAboutPage,
       submitSearch: name => this.submitSearch(name),
       searchString: this.props.searchString,
     })
