@@ -2,6 +2,7 @@
 /* eslint no-restricted-globals: off, no-console: off, no-underscore-dangle: off */
 
 import * as fp from 'lodash/fp'
+import queryString from 'query-string'
 
 import ErrorBox from '../ErrorBox'
 import InfluenceChart from '../InfluenceChart'
@@ -165,12 +166,24 @@ class App_ extends React.Component<AppProps, AppState> {
   }
 
   render() {
+    const decoratedToggleAboutPage = () => {
+      const query = window.location.search
+
+      if (!this.props.showAboutPage) {
+        window.history.pushState({}, '', `/about/${query}`)
+      } else {
+        window.history.pushState({}, '', `/${query}`)
+      }
+
+      this.props.toggleAboutPage()
+    }
+
     const navbar = React.createElement(Navbar, {
       key: 'navbar',
       closeSearch: () => this.props.saveSearchResults(null, []),
       focusPerson: subjectId => this.focusPerson(subjectId),
       goHome: () => this.props.goHome(),
-      toggleAbout: () => this.props.toggleAboutPage(),
+      toggleAbout: decoratedToggleAboutPage,
       showAboutPage: this.props.showAboutPage,
       submitSearch: name => this.submitSearch(name),
       searchString: this.props.searchString,
@@ -185,7 +198,7 @@ class App_ extends React.Component<AppProps, AppState> {
       },
       React.createElement(About, {
         key: 'about',
-        goBack: () => this.props.toggleAboutPage(),
+        goBack: decoratedToggleAboutPage,
         focusPerson: n => this.focusPerson(n),
       }),
     )
@@ -194,6 +207,7 @@ class App_ extends React.Component<AppProps, AppState> {
       label: 'influencechart',
       selectPerson: (n: SubjectId): void => this.focusPerson(n),
     })
+
     const chartDiv = React.createElement(
       'div',
       {
@@ -258,6 +272,7 @@ const App = connect(
       dispatch(store.setLoadInProgress(subject)),
     saveSearchResults: (str: ?string, results: Array<PersonDetail>): void =>
       dispatch(store.saveSearchResults(str, results)),
+    searchParams: queryString.parse(location.search),
     setErrorMessage: (msg: ?string) => dispatch(store.setErrorMessage(msg)),
     setSearchInProgress: (status: boolean) =>
       dispatch(store.setSearchInProgress(status)),
