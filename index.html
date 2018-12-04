@@ -10,6 +10,16 @@
   <body>
     <div id="container"></div>
 
+    <script>
+      var localStorageKey = 'tsomi-api-key'
+
+      // check if the user came here from the "about" page link:
+      var page = window.localStorage.getItem(localStorageKey)
+      if ( page !== null ) {
+        window.history.pushState({}, null, window.location.origin + '/about')
+      } 
+    </script>
+
     <script type="text/javascript" src="js/bundle.js"></script>
 
     <!-- google analytics   -->
