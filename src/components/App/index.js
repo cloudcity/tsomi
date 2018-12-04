@@ -74,6 +74,8 @@ class App_ extends React.Component<AppProps, AppState> {
   }
 
   componentDidMount() {
+    if (this.checkIfAboutPage()) this.props.toggleAboutPage()
+
     this.getAndCachePerson_(this.props.focusedSubject).then(
       (person: ?PersonDetail) => {
         if (person !== null && person !== undefined) {
@@ -111,14 +113,16 @@ class App_ extends React.Component<AppProps, AppState> {
       .then((person: ?PersonDetail) => {
         if (person === null || person === undefined) return
 
-        try {
-          window.history.pushState(
-            '',
-            n,
-            `${location.origin}${location.pathname}?subject=${n.asString()}`,
-          )
-        } catch (error) {
-          console.error('Cannot modify window history: ', error)
+        if (!this.props.showAboutPage) {
+          try {
+            window.history.pushState(
+              '',
+              n,
+              `${location.origin}${location.pathname}?subject=${n.asString()}`,
+            )
+          } catch (error) {
+            console.error('Cannot modify window history: ', error)
+          }
         }
         if (person.wikipediaUri) {
           const uri = person.wikipediaUri
@@ -165,14 +169,22 @@ class App_ extends React.Component<AppProps, AppState> {
       })
   }
 
+  checkIfAboutPage() {
+    return window.location.href.includes('/about')
+  }
+
   render() {
     const decoratedToggleAboutPage = () => {
-      const query = window.location.search
+      // this conditional seems backward, because it is. this fn
+      // operates from the "before" state -- if `showAboutPage`
+      // is true, we need to transition to a state wherein
+      // `showAboutPage` is false.
 
-      if (!this.props.showAboutPage) {
-        window.history.pushState({}, '', `/about/${query}`)
+      if (this.props.showAboutPage) {
+        const { id } = this.props.focusedSubject
+        window.history.pushState({}, '', `/?subject=${id}`)
       } else {
-        window.history.pushState({}, '', `/${query}`)
+        window.history.pushState({}, '', `/about`)
       }
 
       this.props.toggleAboutPage()
