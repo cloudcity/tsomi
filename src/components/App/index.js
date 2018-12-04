@@ -75,7 +75,7 @@ class App_ extends React.Component<AppProps, AppState> {
   }
 
   componentDidMount() {
-    if (this.checkIfAboutPage()) this.props.toggleAboutPage()
+    if (App_.checkIfAboutPage()) this.props.toggleAboutPage()
 
     this.getAndCachePerson_(this.props.focusedSubject).then(
       (person: ?PersonDetail) => {
@@ -166,7 +166,7 @@ class App_ extends React.Component<AppProps, AppState> {
       })
   }
 
-  checkIfAboutPage() {
+  static checkIfAboutPage() {
     return window.location.href.includes('/about')
   }
 
@@ -181,7 +181,7 @@ class App_ extends React.Component<AppProps, AppState> {
         const { id } = this.props.focusedSubject
         window.history.pushState({}, '', `/?subject=${id}`)
       } else {
-        window.history.pushState({}, '', `/about`)
+        window.history.pushState({}, '', '/about')
       }
 
       this.props.toggleAboutPage()

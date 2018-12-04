@@ -61,7 +61,8 @@
       "linebreak-style": [
         "error",
         "unix"
-      ]
+      ],
+      "react/sort-comp": "off"
     }
   },
   "prettier": {
