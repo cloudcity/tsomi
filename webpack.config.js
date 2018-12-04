@@ -1,5 +1,5 @@
 const path = require('path')
-const webpack = require('webpack')
+// eslint-disable-next-line no-unused-vars
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 
 module.exports = {

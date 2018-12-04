@@ -2,17 +2,20 @@ import moment from 'moment'
 import { SubjectId } from '../../types'
 
 import config from '../../config'
+
 const { getPerson, searchForPeople } = require('./')
 
 describe('DBpedia searches', () => {
-  var originalTimeout
+  let originalTimeout
 
   beforeEach(() => {
     originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 30000
   })
 
-  afterEach(() => (jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout))
+  afterEach(() => {
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout
+  })
 
   it('retrieves an individual result', done => {
     searchForPeople('Joyce Carol Oates')
@@ -27,7 +30,7 @@ describe('DBpedia searches', () => {
         expect(lst[0].deathDate).toEqual(null)
         expect(lst[0].influencedByCount > 0).toBe(true)
         // Disabled since in live Joyce Carol Oates has not influenced anyone
-        //expect(lst[0].influencedCount > 0).toBe(true)
+        // expect(lst[0].influencedCount > 0).toBe(true)
         done()
       })
       .catch(err => {
@@ -128,7 +131,7 @@ describe('precise dbpedia gets', () => {
         expect(person.deathDate).toBeFalsy()
         expect(person.influencedBy.length > 0).toBe(true)
         // Disabled since in live Joyce Carol Oates has not influenced anyone
-        //expect(person.influenced.length > 0).toBe(true)
+        // expect(person.influenced.length > 0).toBe(true)
         done()
       })
       .catch(err => {

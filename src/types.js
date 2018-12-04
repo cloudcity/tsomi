@@ -4,7 +4,7 @@
 import moment from 'moment'
 import { Hashable } from 'luminescent-dreams-base'
 
-//import { Hashable } from './interfaces'
+// import { Hashable } from './interfaces'
 
 export type Uri = string
 

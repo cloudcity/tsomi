@@ -3,6 +3,7 @@
 
 import * as fp from 'lodash/fp'
 import queryString from 'query-string'
+import type TimeoutID from 'flow'
 
 import ErrorBox from '../ErrorBox'
 import InfluenceChart from '../InfluenceChart'
@@ -51,6 +52,12 @@ type AppState = {|
 |}
 
 class App_ extends React.Component<AppProps, AppState> {
+  constructor(props: AppProps) {
+    super(props)
+
+    this.state = { errorTimer: null }
+  }
+
   static getDerivedStateFromProps(
     newProps: AppProps,
     prevState: AppState,
@@ -65,12 +72,6 @@ class App_ extends React.Component<AppProps, AppState> {
       return { errorTimer: null }
     }
     return prevState
-  }
-
-  constructor(props: AppProps) {
-    super(props)
-
-    this.state = { errorTimer: null }
   }
 
   componentDidMount() {
@@ -111,7 +112,7 @@ class App_ extends React.Component<AppProps, AppState> {
     this.props.setLoadInProgress(n)
     this.getAndCachePerson_(n)
       .then((person: ?PersonDetail) => {
-        if (person === null || person === undefined) return
+        if (person === null || person === undefined) return undefined
 
         if (!this.props.showAboutPage) {
           window.history.pushState(
@@ -135,7 +136,7 @@ class App_ extends React.Component<AppProps, AppState> {
         this.props.focusOnPerson(n)
         this.props.setLoadInProgress(null)
       })
-      .catch(err => {
+      .catch(() => {
         this.props.setErrorMessage(
           `Oops! Focusing on ${n.asString()} failed. Give us a few minutes and please try again.`,
         )

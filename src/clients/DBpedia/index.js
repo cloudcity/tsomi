@@ -11,10 +11,9 @@ import {
   SubjectId,
   mkSubjectFromDBpediaUri,
 } from '../../types'
-import { mapObjKeys, parseDate } from '../../util'
+import { parseDate } from '../../util'
 import { fetchWithTimeout, encodeFormBody } from '../../utils/http'
-import { last, maybe_, uniqueBy } from '../../utils/fp'
-import trace from '../../trace'
+import { maybe_, uniqueBy } from '../../utils/fp'
 
 require('isomorphic-fetch')
 
@@ -105,6 +104,8 @@ const lookupFirstRDFElement = (tree: any, keys: Array<string>): ?RDFSet =>
           if (res != null) {
             return res
           }
+
+          return undefined
         },
       )(keys),
     ),
@@ -177,10 +178,9 @@ export const getPerson = (s: SubjectId): Promise<?PersonDetail> => {
             influenced,
             thumbnail: maybe_(v => v.value)(thumbnail),
           })
-        } else {
-          console.log('name is null')
-          return null
         }
+        console.log('name is null')
+        return null
       },
     )
     .catch(err => console.log('[getPerson failed]', s, err))

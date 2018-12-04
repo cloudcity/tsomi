@@ -1,5 +1,4 @@
 const Jasmine = require('jasmine')
-const path = require('path')
 
 require('isomorphic-fetch')
 
