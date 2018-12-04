@@ -713,10 +713,6 @@ const RadialInfluenceAnimation = (
       focus.tx = center.x
       focus.ty = center.y
       for (let i = 0; i < links.length; i += 1) {
-        // if (links[i].source.getId() === "Susanna_Clarke"
-        //   || links[i].target.getId() === "Susanna_Clarke") {
-        //   debugger
-        // }
         const angle = angleSlice * i - maxAngle
         links[i].middle.tx = center.x + (radius / 2) * Math.cos(angle)
         links[i].middle.ty = center.y + (radius / 2) * Math.sin(angle)
@@ -1136,7 +1132,6 @@ class InfluenceChart_ extends React.Component<
 
     const { d3Elem, domElem } = prevState
 
-    // debugger
     if (focus != null) {
       if (domElem != null && d3Elem != null) {
         const canvas = prevState.canvas
@@ -1177,8 +1172,6 @@ class InfluenceChart_ extends React.Component<
    * canvas and to attach the window resize listener.
    */
   componentDidMount() {
-    // debugger
-
     this.state.domElem = document.getElementById(this.props.label)
     this.state.d3Elem = d3.select(`#${this.props.label}`)
 
