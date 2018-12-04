@@ -114,15 +114,11 @@ class App_ extends React.Component<AppProps, AppState> {
         if (person === null || person === undefined) return
 
         if (!this.props.showAboutPage) {
-          try {
-            window.history.pushState(
-              '',
-              n,
-              `${location.origin}${location.pathname}?subject=${n.asString()}`,
-            )
-          } catch (error) {
-            console.error('Cannot modify window history: ', error)
-          }
+          window.history.pushState(
+            '',
+            n,
+            `${location.origin}${location.pathname}?subject=${n.asString()}`,
+          )
         }
         if (person.wikipediaUri) {
           const uri = person.wikipediaUri
