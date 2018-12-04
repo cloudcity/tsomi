@@ -16,6 +16,7 @@
       // check if the user came here from the "about" page link:
       var page = window.localStorage.getItem(localStorageKey)
       if ( page !== null ) {
+        window.localStorage.removeItem(localStorageKey)
         window.history.pushState({}, null, window.location.origin + '/about')
       } 
     </script>
