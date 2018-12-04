@@ -1,4 +1,5 @@
 const { spawn } = require('child_process')
+
 const exec = (cmd, args) =>
   spawn(cmd, args, { shell: true, stdio: ['inherit', 'inherit', 'inherit'] })
 
@@ -17,6 +18,7 @@ const commands = {
   },
 }
 
+// eslint-disable-next-line
 console.log(`running ${command} with config from ${env}...`)
 const { cmd, args } = commands[command]
 exec(cmd, args)

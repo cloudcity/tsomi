@@ -1,8 +1,7 @@
 // @flow
 
 import fp from 'lodash/fp'
-import React from 'react'
-import { type Element } from 'react'
+import React, { type Element } from 'react'
 
 import { type PersonDetail, SubjectId } from '../../types'
 import CloseButton from '../../components/CloseButton'

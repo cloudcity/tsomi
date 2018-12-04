@@ -3,7 +3,6 @@
 import React from 'react'
 import { connect } from 'react-redux'
 
-import { inputElement } from '../../eventtypes'
 import * as store from '../../store'
 import { type PersonDetail, SubjectId } from '../../types'
 import Spinner from '../Spinner/'
@@ -93,7 +92,7 @@ const Search = connect(
     searchString: store.searchString(state),
     searchResults: store.searchResults(state),
   }),
-  dispatch => ({}),
+  () => ({}),
 )(Search_)
 
 export default Search

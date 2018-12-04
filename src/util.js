@@ -85,8 +85,9 @@ export const populatePath = (path: string, points: Array<Point>): string => {
     const [p, ...pts_] = pts
     if (pe === null || pe === undefined) return []
     if (p === null || pe === undefined) return pathElems
-    if (pe.startsWith('X') || pe.startsWith('Y'))
+    if (pe.startsWith('X') || pe.startsWith('Y')) {
       return [p.toString()].concat(populatePath_(elems, pts_))
+    }
     return [pe].concat(populatePath_(elems, pts))
   }
   return populatePath_(

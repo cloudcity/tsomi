@@ -26,32 +26,17 @@ import {
   dimensionsEq,
 } from '../../types'
 
-const {
-  angleRadians,
-  convertToSafeDOMId,
-  largest,
-  populatePath,
-  radial,
-  smallest,
-} = require('../../util')
+const { convertToSafeDOMId, populatePath, smallest } = require('../../util')
 
 const {
   ALPHA,
   BANNER_SIZE,
   BANNER_X,
   BANNER_Y,
-  CHARGE_BASE,
-  CHARGE_HIDDEN,
-  CHARGE_RANDOM,
   DEFAULT_ANIMATION_DURATION,
-  GRAVITY,
   IMAGE_SIZE,
-  LINK_MIN_OFFSET,
-  LINK_RANDOM,
-  LINK_STRENGTH,
   MARGIN,
   MAX_SCREEN_NODES,
-  NODE_SIZE,
   RIM_SIZE,
   TIMELINE_Y,
 } = require('../../constants')
@@ -272,26 +257,11 @@ const createTimeline = (
   return { scale, axis }
 }
 
-/* Calculate how much a node should be scaled by from information such as the
- * whether the node is the focus and whether the mouse is currently hovering
- * over the node. */
-const calculateNodeScale = (
-  node: PersonNode,
-  centerId: string,
-  isMouseOver: boolean,
-): number => (node.getId() === centerId || isMouseOver ? 1.0 : 0.5)
-
 /* Given a full link, calculate the visual path that the link should take. */
-const calculateLinkPath = (link: TLink, centerId: string): string => {
+const calculateLinkPath = (link: TLink): string => {
   const s = link.source
   const m = link.middle
   const t = link.target
-
-  const angle = angleRadians(t, m)
-  const nodeRadius = (IMAGE_SIZE / 2) * calculateNodeScale(t, centerId, false)
-
-  //const tip = radial(t, nodeRadius, angle)
-
   return populatePath('M X0 Y0 Q X1 Y1 X2 Y2', [s, m, t])
 }
 
@@ -450,7 +420,7 @@ const renderLinks = (
       (link: TLink): boolean => link.target.getId() === graph.focusId,
     )
     .attr('visibity', 'visible')
-    .attr('d', (link: TLink): string => calculateLinkPath(link, graph.focusId))
+    .attr('d', (link: TLink): string => calculateLinkPath(link))
     .attr(
       'id',
       (link: TLink): string => `${link.source.getId()}-${link.target.getId()}`,
@@ -700,36 +670,32 @@ const RadialInfluenceAnimation = (
 
   /* Possibly something that does an accelaration curve, speeding up until
    * alpha == 0.5 and then slowing down again? */
-  const calculateVelocity = (
-    current: number,
-    target: ?number,
-    alpha: number,
-  ): number =>
+  const calculateVelocity = (current: number, target: ?number): number =>
     target != null
       ? Math.abs(target - current) > endThreshold
         ? (target - current) * 0.05
         : 0
       : 0
 
-  const translateNode = (node: PersonNode | InvisibleNode, alpha: number) => {
-    node.vx = calculateVelocity(node.x, node.tx, alpha)
-    node.vy = calculateVelocity(node.y, node.ty, alpha)
+  const translateNode = (node: PersonNode | InvisibleNode) => {
+    node.vx = calculateVelocity(node.x, node.tx)
+    node.vy = calculateVelocity(node.y, node.ty)
 
     if (node.vx === 0) node.tx = null
     if (node.vy === 0) node.ty = null
   }
 
-  const force = alpha => {
+  const force = () => {
     const links = graph.getLinks()
     const focus = graph.getFocus()
 
     if (focus != null) {
-      translateNode(focus, alpha)
+      translateNode(focus)
       for (let i = 0; i < links.length; i += 1) {
         if (focus.person.id.equals(links[i].target.person.id)) {
-          translateNode(links[i].source, alpha)
+          translateNode(links[i].source)
         } else {
-          translateNode(links[i].target, alpha)
+          translateNode(links[i].target)
         }
       }
     }
@@ -747,10 +713,6 @@ const RadialInfluenceAnimation = (
       focus.tx = center.x
       focus.ty = center.y
       for (let i = 0; i < links.length; i += 1) {
-        // if (links[i].source.getId() === "Susanna_Clarke"
-        //   || links[i].target.getId() === "Susanna_Clarke") {
-        //   debugger
-        // }
         const angle = angleSlice * i - maxAngle
         links[i].middle.tx = center.x + (radius / 2) * Math.cos(angle)
         links[i].middle.ty = center.y + (radius / 2) * Math.sin(angle)
@@ -964,11 +926,7 @@ class InfluenceCanvas {
     if (this.focus != null) {
       this.linksElem
         .selectAll('path')
-        .attr(
-          'd',
-          (link: TLink): string =>
-            calculateLinkPath(link, this.focus.id.asString()),
-        )
+        .attr('d', (link: TLink): string => calculateLinkPath(link))
     }
 
     this.lifelinesElem
@@ -992,7 +950,7 @@ class InfluenceCanvas {
   setLoadInProgress(subject: ?SubjectId) {
     /* Get a list of nodes. If the person in question is not in the list, clear
      * the influence graph and display the empty loading circle. */
-    let nodeUnderLoad = subject ? this.graph.nodes[subject.asString()] : null
+    const nodeUnderLoad = subject ? this.graph.nodes[subject.asString()] : null
 
     if (subject && nodeUnderLoad) {
       this.graph.getVisibleNodes().forEach((n: PersonNode) => {
@@ -1076,7 +1034,7 @@ class InfluenceCanvas {
 
     this.radialAnimation.updateAnimation(this.dimensions)
     this.fdl.nodes(this.graph.getNodes())
-    //this.fdlLinks.links(this.graph.getLinkSegments())
+    // this.fdlLinks.links(this.graph.getLinkSegments())
 
     const nodeSel = this.nodesElem
       .selectAll('.translate')
@@ -1123,9 +1081,9 @@ class InfluenceCanvas {
 type InfluenceChartProps = {
   label: string,
   focusedId: SubjectId,
-  loadInProgress: ?SubjectId,
   people: store.PeopleCache,
   selectPerson: SubjectId => void,
+  loadInProgress: SubjectId,
 }
 
 type InfluenceChartState = {
@@ -1154,6 +1112,17 @@ class InfluenceChart_ extends React.Component<
   /* React property or redux state changes will trigger this function, which is
    * a natural place to convert those changes into underlying canvas changes.
    * */
+  constructor(props: InfluenceChartProps) {
+    super(props)
+
+    this.state = {
+      domElem: null,
+      d3Elem: null,
+      canvas: null,
+      loadInProgress: null,
+    }
+  }
+
   static getDerivedStateFromProps(
     newProps: InfluenceChartProps,
     prevState: InfluenceChartState,
@@ -1163,7 +1132,6 @@ class InfluenceChart_ extends React.Component<
 
     const { d3Elem, domElem } = prevState
 
-    //debugger
     if (focus != null) {
       if (domElem != null && d3Elem != null) {
         const canvas = prevState.canvas
@@ -1196,17 +1164,6 @@ class InfluenceChart_ extends React.Component<
     return prevState
   }
 
-  constructor(props: InfluenceChartProps) {
-    super(props)
-
-    this.state = {
-      domElem: null,
-      d3Elem: null,
-      canvas: null,
-      loadInProgress: null,
-    }
-  }
-
   /* This gets called The drawing area needs to know its dimensions and the
    * real DOM element and D3 selection in which it will work. That information
    * is not available in the `render` method on first render, but
@@ -1215,8 +1172,6 @@ class InfluenceChart_ extends React.Component<
    * canvas and to attach the window resize listener.
    */
   componentDidMount() {
-    //debugger
-
     this.state.domElem = document.getElementById(this.props.label)
     this.state.d3Elem = d3.select(`#${this.props.label}`)
 

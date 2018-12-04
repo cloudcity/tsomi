@@ -1,11 +1,11 @@
 // @flow
 
-import React from 'react'
-import { type Element } from 'react'
+import React, { type Element } from 'react'
 import { connect } from 'react-redux'
 
 import config from '../../config'
 import * as store from '../../store'
+
 require('./main.css')
 
 type WikiCollapseProps = {

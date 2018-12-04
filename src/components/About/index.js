@@ -73,7 +73,7 @@ const About = ({ goBack, focusPerson }: AboutProps) => {
     sparql,
     ' to query the ',
     dbpedia,
-    ' for influence links ' + 'between persons who appear in Wikipedia.',
+    ' for influence links between persons who appear in Wikipedia.',
   )
 
   const focusAndDismiss = (n: SubjectId) => {

@@ -4,8 +4,6 @@
 import moment from 'moment'
 import { Hashable } from 'luminescent-dreams-base'
 
-//import { Hashable } from './interfaces'
-
 export type Uri = string
 
 export type Dimensions = { width: number, height: number }
