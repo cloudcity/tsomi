@@ -1,26 +1,37 @@
 # The Sphere of My Influence
+
 ###### Concept [Stephanie Geerlings](https://twitter.com/geerlinger) Implementation [Robert Harris](https://twitter.com/trebor)
 
-
 ### About
-[**The Sphere of My Influence**](http://trebor.github.io/tsomi/) is a tool for exploring people on Wikipedia, and how they influece each other.  [The visualization](http://trebor.github.io/tsomi/) starts at Joice Carol Oates by default, however an alternate starting point can be specified by appending `?subject=Wikipedia_Name` to the URL.  For example:
 
-  - [Albert Einstein](http://trebor.github.io/tsomi/?subject=Albert_Einstein)
-  - [Joni Mitchell](http://trebor.github.io/tsomi/?subject=Joni_Mitchell)
-  - [Teresa of Ávila](http://trebor.github.io/tsomi/?subject=Teresa_of_Ávila)
-  - [Immanuel Kant](http://trebor.github.io/tsomi/?subject=Immanuel_Kant)
+[**The Sphere of My Influence**](http://trebor.github.io/tsomi/) is a tool for exploring people on Wikipedia, and how they influece each other. [The visualization](http://trebor.github.io/tsomi/) starts at Joice Carol Oates by default, however an alternate starting point can be specified by appending `?subject=Wikipedia_Name` to the URL. For example:
+
+- [Albert Einstein](http://trebor.github.io/tsomi/?subject=Albert_Einstein)
+- [Joni Mitchell](http://trebor.github.io/tsomi/?subject=Joni_Mitchell)
+- [Teresa of Ávila](http://trebor.github.io/tsomi/?subject=Teresa_of_Ávila)
+- [Immanuel Kant](http://trebor.github.io/tsomi/?subject=Immanuel_Kant)
 
 ### Data
+
 The data for this visualization comes from [Wikipedia](http://wikipedia.org) by way of [DBpedia](http://dbpedia.org).
 
 ### Future
-This project is fairly bare bones, and could use some love.  Some ideas for future features:
 
-  - Search
-  - Better Documentation
-  - URL update to current subject
+This project is fairly bare bones, and could use some love. Some ideas for future features:
 
-This project is opensourced under the [MIT License](http://opensource.org/licenses/MIT).  Your contributions are encouraged, please clone and fork.
+- Search
+- Better Documentation
+- URL update to current subject
+
+This project is opensourced under the [MIT License](http://opensource.org/licenses/MIT). Your contributions are encouraged, please clone and fork.
+
+# DBpedia Database Selection
+
+- Production: Archive DBpedia (http://dbpedia.org/)
+- Staging: Archive DBpedia (http://dbpedia.org/)
+- Dev: Live DBpedia (http://live.dbpedia.org/)
+
+DBpedia database selection is the `dbpediaRoot` key in the configuration. Configuration files are stored in `configs/`. The default configuration file is `dev.js`. To select a different configuration file, set the `CONFIG_FILE` environment variable.
 
 # Development
 
@@ -39,4 +50,3 @@ Staging: The [staging application](http://tsomi-staging.cloudcity.io/) lives in 
 Production: The [production application](http://tsomi.cloudcity.io/) lives in the `gh-pages` branch of the repository. Do not commit directly to that branch. Commits to master will be automatically built and pushed to `gh-pages`.
 
 Old note (possibly no longer relevant?): Go to Travis and select "More Options > Trigger Build". This will cause a build, merge, and commit of the final result in `gh-pages` and a deployment to staging within a few minutes.
-
